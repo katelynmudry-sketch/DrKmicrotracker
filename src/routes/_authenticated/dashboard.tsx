@@ -1,8 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
@@ -20,6 +32,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: PatientDashboard,
 });
 
+type Meal = {
+  id: string;
+  mealLabel: string | null;
+  eatenAt: string;
+  status: string;
+  storagePath: string;
+  analysis: unknown;
+};
+
 function PatientDashboard() {
   const { user, isDoctor } = useAuth();
   const qc = useQueryClient();
@@ -31,16 +52,16 @@ function PatientDashboard() {
   const [uploading, setUploading] = useState(false);
 
   const meals = useQuery({
-    queryKey: ["meals", user?.id],
+    queryKey: ["meals", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("meals")
-        .select("id, meal_label, eaten_at, status, storage_path, analysis")
-        .eq("patient_id", user!.id)
-        .order("eaten_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const q = query(
+        collection(db, "meals"),
+        where("patientId", "==", user!.uid),
+        orderBy("eatenAt", "desc"),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Meal);
     },
   });
 
@@ -50,37 +71,33 @@ function PatientDashboard() {
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("meal-photos")
-        .upload(path, file, { contentType: file.type });
-      if (upErr) throw upErr;
-      const { data: meal, error: insErr } = await supabase
-        .from("meals")
-        .insert({
-          patient_id: user.id,
-          storage_path: path,
-          meal_label: label || null,
-          patient_notes: notes || null,
-          status: "analyzing",
-        })
-        .select()
-        .single();
-      if (insErr) throw insErr;
+      const path = `meal-photos/${user.uid}/${Date.now()}.${ext}`;
+      await uploadBytes(ref(storage, path), file, { contentType: file.type });
+      const mealRef = await addDoc(collection(db, "meals"), {
+        patientId: user.uid,
+        storagePath: path,
+        mealLabel: label || null,
+        patientNotes: notes || null,
+        doctorNotes: null,
+        status: "analyzing",
+        analysis: null,
+        eatenAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+      });
       toast.success("Photo uploaded — analyzing…");
       setLabel("");
       setNotes("");
       if (fileRef.current) fileRef.current.value = "";
-      qc.invalidateQueries({ queryKey: ["meals", user.id] });
-      analyzeFn({ data: { mealId: meal.id } })
+      qc.invalidateQueries({ queryKey: ["meals", user.uid] });
+      analyzeFn({ data: { mealId: mealRef.id } })
         .then(() => {
           toast.success("Analysis ready");
-          qc.invalidateQueries({ queryKey: ["meals", user.id] });
+          qc.invalidateQueries({ queryKey: ["meals", user.uid] });
         })
         .catch((e) => {
           toast.error(e?.message ?? "Analysis failed");
-          supabase.from("meals").update({ status: "failed" }).eq("id", meal.id).then(() => {
-            qc.invalidateQueries({ queryKey: ["meals", user.id] });
+          updateDoc(doc(db, "meals", mealRef.id), { status: "failed" }).then(() => {
+            qc.invalidateQueries({ queryKey: ["meals", user.uid] });
           });
         });
     } catch (e: any) {
@@ -172,15 +189,15 @@ function PatientDashboard() {
                   onClick={() => navigate({ to: "/meals/$mealId", params: { mealId: m.id } })}
                   className="group overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-accent/50"
                 >
-                  <MealPhoto path={m.storage_path} className="h-40 w-full object-cover" />
+                  <MealPhoto path={m.storagePath} className="h-40 w-full object-cover" />
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold">
-                          {m.meal_label ?? "Untitled meal"}
+                          {m.mealLabel ?? "Untitled meal"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(m.eaten_at).toLocaleString()}
+                          {new Date(m.eatenAt).toLocaleString()}
                         </p>
                       </div>
                       <StatusBadge status={m.status} />

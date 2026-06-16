@@ -1,7 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import {
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, db } from "@/integrations/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +21,18 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+async function ensureUserProfile(uid: string, email: string | null, fullName?: string | null) {
+  const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return;
+  await setDoc(ref, {
+    email: email ?? null,
+    fullName: fullName ?? null,
+    role: "patient",
+    createdAt: serverTimestamp(),
+  });
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -22,40 +41,43 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
-    });
+    if (auth.currentUser) navigate({ to: "/dashboard" });
   }, [navigate]);
 
   const signIn = async () => {
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    navigate({ to: "/dashboard" });
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate({ to: "/dashboard" });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign in failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const signUp = async () => {
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Account created — check your email to confirm, then sign in.");
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      if (fullName) await updateProfile(cred.user, { displayName: fullName });
+      await ensureUserProfile(cred.user.uid, cred.user.email, fullName);
+      navigate({ to: "/dashboard" });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign up failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const google = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (r.error) toast.error(r.error.message ?? "Sign in failed");
-    if (!r.redirected && !r.error) navigate({ to: "/dashboard" });
+    try {
+      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+      await ensureUserProfile(cred.user.uid, cred.user.email, cred.user.displayName);
+      navigate({ to: "/dashboard" });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign in failed");
+    }
   };
 
   return (

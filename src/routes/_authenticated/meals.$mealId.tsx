@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { AnalysisView } from "@/components/app/analysis-view";
@@ -18,13 +19,9 @@ function MealDetail() {
   const meal = useQuery({
     queryKey: ["meal", mealId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("meals")
-        .select("*")
-        .eq("id", mealId)
-        .single();
-      if (error) throw error;
-      return data;
+      const snap = await getDoc(doc(db, "meals", mealId));
+      if (!snap.exists()) throw new Error("Meal not found");
+      return { id: snap.id, ...snap.data() } as any;
     },
   });
 
@@ -45,26 +42,26 @@ function MealDetail() {
         <div className="grid gap-6 md:grid-cols-[1fr_1.5fr]">
           <div className="space-y-3">
             <Card className="overflow-hidden">
-              <MealPhoto path={meal.data.storage_path} className="h-80 w-full object-cover" />
+              <MealPhoto path={meal.data.storagePath} className="h-80 w-full object-cover" />
             </Card>
             <Card className="p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                {new Date(meal.data.eaten_at).toLocaleString()}
+                {new Date(meal.data.eatenAt).toLocaleString()}
               </p>
               <h1 className="text-xl font-semibold tracking-tight">
-                {meal.data.meal_label ?? "Untitled meal"}
+                {meal.data.mealLabel ?? "Untitled meal"}
               </h1>
-              {meal.data.patient_notes && (
+              {meal.data.patientNotes && (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {meal.data.patient_notes}
+                  {meal.data.patientNotes}
                 </p>
               )}
-              {meal.data.doctor_notes && (
+              {meal.data.doctorNotes && (
                 <div className="mt-3 rounded-md border border-accent/40 bg-accent/5 p-3 text-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Doctor notes
                   </p>
-                  <p className="mt-1">{meal.data.doctor_notes}</p>
+                  <p className="mt-1">{meal.data.doctorNotes}</p>
                 </div>
               )}
             </Card>

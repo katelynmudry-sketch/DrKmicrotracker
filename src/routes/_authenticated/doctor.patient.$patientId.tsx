@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { AnalysisView } from "@/components/app/analysis-view";
@@ -23,26 +24,21 @@ function PatientView() {
   const profile = useQuery({
     queryKey: ["profile", patientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", patientId)
-        .single();
-      if (error) throw error;
-      return data;
+      const snap = await getDoc(doc(db, "users", patientId));
+      return { id: snap.id, ...snap.data() } as { id: string; fullName: string | null; email: string | null };
     },
   });
 
   const meals = useQuery({
     queryKey: ["doctor", "meals", patientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("meals")
-        .select("*")
-        .eq("patient_id", patientId)
-        .order("eaten_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const q = query(
+        collection(db, "meals"),
+        where("patientId", "==", patientId),
+        orderBy("eatenAt", "desc"),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as any);
     },
   });
 
@@ -61,7 +57,7 @@ function PatientView() {
     >
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight">
-          {profile.data?.full_name ?? profile.data?.email ?? "Patient"}
+          {profile.data?.fullName ?? profile.data?.email ?? "Patient"}
         </h1>
         <p className="text-sm text-muted-foreground">{profile.data?.email}</p>
       </div>
@@ -82,10 +78,10 @@ function PatientView() {
                 }`}
               >
                 <p className="text-sm font-medium">
-                  {m.meal_label ?? "Untitled meal"}
+                  {m.mealLabel ?? "Untitled meal"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(m.eaten_at).toLocaleString()}
+                  {new Date(m.eatenAt).toLocaleString()}
                 </p>
               </button>
             ))
@@ -100,34 +96,35 @@ function PatientView() {
 }
 
 function MealReview({ meal }: { meal: any }) {
-  const [notes, setNotes] = useState<string>(meal.doctor_notes ?? "");
+  const [notes, setNotes] = useState<string>(meal.doctorNotes ?? "");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     setSaving(true);
-    const { error } = await supabase
-      .from("meals")
-      .update({ doctor_notes: notes })
-      .eq("id", meal.id);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Notes saved");
+    try {
+      await updateDoc(doc(db, "meals", meal.id), { doctorNotes: notes });
+      toast.success("Notes saved");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save notes");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
       <div className="space-y-3">
         <Card className="overflow-hidden">
-          <MealPhoto path={meal.storage_path} className="h-72 w-full object-cover" />
+          <MealPhoto path={meal.storagePath} className="h-72 w-full object-cover" />
         </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {new Date(meal.eaten_at).toLocaleString()}
+            {new Date(meal.eatenAt).toLocaleString()}
           </p>
-          <p className="font-semibold">{meal.meal_label ?? "Untitled meal"}</p>
-          {meal.patient_notes && (
+          <p className="font-semibold">{meal.mealLabel ?? "Untitled meal"}</p>
+          {meal.patientNotes && (
             <p className="mt-2 text-sm text-muted-foreground">
-              Patient note: {meal.patient_notes}
+              Patient note: {meal.patientNotes}
             </p>
           )}
           <div className="mt-4 space-y-2">

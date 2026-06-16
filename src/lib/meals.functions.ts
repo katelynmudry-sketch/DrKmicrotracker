@@ -1,51 +1,38 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
-import type { Json } from "@/integrations/supabase/types";
 
-const AnalyzeInput = z.object({ mealId: z.string().uuid() });
+const AnalyzeInput = z.object({ mealId: z.string().min(1) });
 
 export const analyzeMeal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => AnalyzeInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const { adminDb, adminStorage } = await import("@/integrations/firebase/admin.server");
 
-    const { data: meal, error: mealErr } = await supabase
-      .from("meals")
-      .select("id, patient_id, storage_path, meal_label, patient_notes")
-      .eq("id", data.mealId)
-      .single();
-    if (mealErr || !meal) throw new Error("Meal not found");
-    if (meal.patient_id !== userId) {
-      const { data: roleRows } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "doctor");
-      if (!roleRows || roleRows.length === 0) throw new Error("Forbidden");
+    const mealRef = adminDb.collection("meals").doc(data.mealId);
+    const mealSnap = await mealRef.get();
+    if (!mealSnap.exists) throw new Error("Meal not found");
+    const meal = mealSnap.data()!;
+
+    if (meal.patientId !== userId) {
+      const userSnap = await adminDb.collection("users").doc(userId).get();
+      if (userSnap.data()?.role !== "doctor") throw new Error("Forbidden");
     }
 
-    // Use service role to download the image (private bucket)
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: blob, error: dlErr } = await supabaseAdmin.storage
-      .from("meal-photos")
-      .download(meal.storage_path);
-    if (dlErr || !blob) throw new Error("Could not load meal photo");
-    const buf = Buffer.from(await blob.arrayBuffer());
-    const mime = blob.type || "image/jpeg";
-    const dataUrl = `data:${mime};base64,${buf.toString("base64")}`;
+    const file = adminStorage.bucket().file(meal.storagePath);
+    const [buf] = await file.download();
+    const [meta] = await file.getMetadata();
+    const mime = meta.contentType || "image/jpeg";
+    const base64 = buf.toString("base64");
 
-    // Pull active rubrics for AI context
-    const { data: rubrics } = await supabaseAdmin
-      .from("rubrics")
-      .select("title, description, extracted_text")
-      .eq("is_active", true);
-    const rubricContext = (rubrics ?? [])
-      .map(
-        (r) =>
-          `### ${r.title}\n${r.description ?? ""}\n${r.extracted_text ?? ""}`.trim(),
-      )
+    const rubricsSnap = await adminDb.collection("rubrics").where("isActive", "==", true).get();
+    const rubricContext = rubricsSnap.docs
+      .map((d) => {
+        const r = d.data();
+        return `### ${r.title}\n${r.description ?? ""}\n${r.extractedText ?? ""}`.trim();
+      })
       .join("\n\n---\n\n");
 
     const systemPrompt = `You are a clinical nutrition assistant supporting a naturopathic doctor.
@@ -69,80 +56,65 @@ Return ONLY the JSON object, no markdown fences, no preface.
 DOCTOR'S RUBRIC AND DIETARY GUIDELINES:
 ${rubricContext || "(no rubric provided yet — use evidence-based naturopathic nutrition defaults)"}`;
 
-    const userText = `Patient label: ${meal.meal_label ?? "(none)"}\nPatient notes: ${meal.patient_notes ?? "(none)"}\nPlease analyze the attached meal photo.`;
+    const userText = `Patient label: ${meal.mealLabel ?? "(none)"}\nPatient notes: ${meal.patientNotes ?? "(none)"}\nPlease analyze the attached meal photo.`;
 
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("AI service is not configured");
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": apiKey,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: userText },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const anthropic = new Anthropic({ apiKey });
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: userText },
+            {
+              type: "image",
+              source: { type: "base64", media_type: mime as "image/jpeg" | "image/png" | "image/webp" | "image/gif", data: base64 },
+            },
+          ],
+        },
+      ],
     });
 
-    if (resp.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
-    if (resp.status === 402) throw new Error("AI credits exhausted. Please add credits in workspace settings.");
-    if (!resp.ok) {
-      const t = await resp.text();
-      throw new Error(`AI error ${resp.status}: ${t.slice(0, 200)}`);
-    }
-
-    const json = await resp.json();
-    const content: string = json?.choices?.[0]?.message?.content ?? "{}";
-    let analysis: Json;
+    const textBlock = response.content.find((b) => b.type === "text");
+    const content = textBlock && textBlock.type === "text" ? textBlock.text : "{}";
+    let analysis: unknown;
     try {
-      analysis = JSON.parse(content) as Json;
+      analysis = JSON.parse(content);
     } catch {
       const m = content.match(/\{[\s\S]*\}/);
-      analysis = m ? (JSON.parse(m[0]) as Json) : ({ raw: content } as Json);
+      analysis = m ? JSON.parse(m[0]) : { raw: content };
     }
 
-    const { error: upErr } = await supabase
-      .from("meals")
-      .update({ analysis, status: "analyzed" })
-      .eq("id", meal.id);
-    if (upErr) throw upErr;
+    await mealRef.update({ analysis, status: "analyzed" });
 
-    return { ok: true, analysis } as { ok: true; analysis: Json };
+    return { ok: true, analysis };
   });
 
 const SignInput = z.object({ path: z.string().min(1) });
 
 export const getMealPhotoUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => SignInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    // Check access: path must start with userId or caller must be doctor
-    const owns = data.path.startsWith(`${userId}/`);
+    const { userId } = context;
+    const { adminDb, adminStorage } = await import("@/integrations/firebase/admin.server");
+
+    const owns = data.path.startsWith(`meal-photos/${userId}/`);
     if (!owns) {
-      const { data: roleRows } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "doctor");
-      if (!roleRows || roleRows.length === 0) throw new Error("Forbidden");
+      const userSnap = await adminDb.collection("users").doc(userId).get();
+      if (userSnap.data()?.role !== "doctor") throw new Error("Forbidden");
     }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: signed, error } = await supabaseAdmin.storage
-      .from("meal-photos")
-      .createSignedUrl(data.path, 60 * 60);
-    if (error || !signed) throw new Error("Could not sign URL");
-    return { url: signed.signedUrl };
+
+    const [url] = await adminStorage
+      .bucket()
+      .file(data.path)
+      .getSignedUrl({ action: "read", expires: Date.now() + 60 * 60 * 1000 });
+    return { url };
   });

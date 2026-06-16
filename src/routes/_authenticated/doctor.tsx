@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app/app-shell";
 import { Card } from "@/components/ui/card";
@@ -38,26 +39,21 @@ function DoctorHome() {
     queryKey: ["doctor", "patients"],
     enabled: isDoctor,
     queryFn: async () => {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "patient");
-      const ids = (roles ?? []).map((r) => r.user_id);
-      if (ids.length === 0) return [];
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, created_at")
-        .in("id", ids);
-      if (error) throw error;
-      const { data: counts } = await supabase
-        .from("meals")
-        .select("patient_id")
-        .in("patient_id", ids);
-      const byPatient = new Map<string, number>();
-      (counts ?? []).forEach((m) => {
-        byPatient.set(m.patient_id, (byPatient.get(m.patient_id) ?? 0) + 1);
+      const patientsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "patient")));
+      const patients = patientsSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as {
+        id: string;
+        fullName: string | null;
+        email: string | null;
       });
-      return (data ?? []).map((p) => ({ ...p, mealCount: byPatient.get(p.id) ?? 0 }));
+      if (patients.length === 0) return [];
+
+      const mealsSnap = await getDocs(collection(db, "meals"));
+      const byPatient = new Map<string, number>();
+      mealsSnap.docs.forEach((d) => {
+        const patientId = d.data().patientId as string;
+        byPatient.set(patientId, (byPatient.get(patientId) ?? 0) + 1);
+      });
+      return patients.map((p) => ({ ...p, mealCount: byPatient.get(p.id) ?? 0 }));
     },
   });
 
@@ -106,7 +102,7 @@ function DoctorHome() {
               params={{ patientId: p.id }}
               className="rounded-xl border border-border bg-card p-4 transition hover:border-accent/50"
             >
-              <p className="text-sm font-semibold">{p.full_name ?? p.email}</p>
+              <p className="text-sm font-semibold">{p.fullName ?? p.email}</p>
               <p className="text-xs text-muted-foreground">{p.email}</p>
               <p className="mt-3 text-xs text-muted-foreground">
                 {p.mealCount} meal{p.mealCount === 1 ? "" : "s"} logged

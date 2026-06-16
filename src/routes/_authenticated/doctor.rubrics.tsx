@@ -1,7 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { deleteObject, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "@/integrations/firebase/client";
 import { AppShell } from "@/components/app/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -18,6 +30,16 @@ export const Route = createFileRoute("/_authenticated/doctor/rubrics")({
   component: Rubrics,
 });
 
+type Rubric = {
+  id: string;
+  title: string;
+  description: string | null;
+  extractedText: string | null;
+  fileName: string;
+  storagePath: string;
+  isActive: boolean;
+};
+
 function Rubrics() {
   const { isDoctor, loading, user } = useAuth();
   const qc = useQueryClient();
@@ -31,12 +53,8 @@ function Rubrics() {
     queryKey: ["rubrics"],
     enabled: isDoctor,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("rubrics")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const snap = await getDocs(query(collection(db, "rubrics"), orderBy("createdAt", "desc")));
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Rubric);
     },
   });
 
@@ -44,22 +62,18 @@ function Rubrics() {
     if (!file || !title.trim() || !user) return toast.error("Title and file are required");
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "pdf";
-      const path = `${user.id}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage
-        .from("rubrics")
-        .upload(path, file, { contentType: file.type });
-      if (upErr) throw upErr;
-      const { error } = await supabase.from("rubrics").insert({
-        uploaded_by: user.id,
+      const path = `rubrics/${user.uid}/${Date.now()}-${file.name}`;
+      await uploadBytes(ref(storage, path), file, { contentType: file.type });
+      await addDoc(collection(db, "rubrics"), {
+        uploadedBy: user.uid,
         title,
         description: description || null,
-        extracted_text: extracted || null,
-        storage_path: path,
-        file_name: file.name,
-        is_active: true,
+        extractedText: extracted || null,
+        storagePath: path,
+        fileName: file.name,
+        isActive: true,
+        createdAt: serverTimestamp(),
       });
-      if (error) throw error;
       toast.success("Rubric uploaded");
       setTitle("");
       setDescription("");
@@ -74,13 +88,13 @@ function Rubrics() {
   };
 
   const toggle = async (id: string, active: boolean) => {
-    await supabase.from("rubrics").update({ is_active: active }).eq("id", id);
+    await updateDoc(doc(db, "rubrics", id), { isActive: active });
     qc.invalidateQueries({ queryKey: ["rubrics"] });
   };
 
   const remove = async (id: string, path: string) => {
-    await supabase.storage.from("rubrics").remove([path]);
-    await supabase.from("rubrics").delete().eq("id", id);
+    await deleteObject(ref(storage, path)).catch(() => {});
+    await deleteDoc(doc(db, "rubrics", id));
     qc.invalidateQueries({ queryKey: ["rubrics"] });
   };
 
@@ -166,7 +180,7 @@ function Rubrics() {
                         {r.title}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {r.file_name}
+                        {r.fileName}
                       </p>
                       {r.description && (
                         <p className="mt-1 text-sm">{r.description}</p>
@@ -176,14 +190,14 @@ function Rubrics() {
                       <div className="flex items-center gap-2 text-xs">
                         Active
                         <Switch
-                          checked={r.is_active}
+                          checked={r.isActive}
                           onCheckedChange={(c) => toggle(r.id, c)}
                         />
                       </div>
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => remove(r.id, r.storage_path)}
+                        onClick={() => remove(r.id, r.storagePath)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
