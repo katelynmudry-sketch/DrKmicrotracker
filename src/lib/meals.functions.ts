@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { Json } from "@/integrations/supabase/types";
 
 const AnalyzeInput = z.object({ mealId: z.string().uuid() });
 
@@ -104,21 +105,21 @@ ${rubricContext || "(no rubric provided yet — use evidence-based naturopathic 
 
     const json = await resp.json();
     const content: string = json?.choices?.[0]?.message?.content ?? "{}";
-    let analysis: unknown;
+    let analysis: Json;
     try {
-      analysis = JSON.parse(content);
+      analysis = JSON.parse(content) as Json;
     } catch {
       const m = content.match(/\{[\s\S]*\}/);
-      analysis = m ? JSON.parse(m[0]) : { raw: content };
+      analysis = m ? (JSON.parse(m[0]) as Json) : ({ raw: content } as Json);
     }
 
     const { error: upErr } = await supabase
       .from("meals")
-      .update({ analysis: analysis as object, status: "analyzed" })
+      .update({ analysis, status: "analyzed" })
       .eq("id", meal.id);
     if (upErr) throw upErr;
 
-    return { ok: true, analysis };
+    return { ok: true, analysis } as { ok: true; analysis: Json };
   });
 
 const SignInput = z.object({ path: z.string().min(1) });
