@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMealsMealIdRouteImport } from './routes/_authenticated/meals.$mealId'
+import { Route as AuthenticatedDoctorRubricsRouteImport } from './routes/_authenticated/doctor.rubrics'
 import { Route as AuthenticatedDoctorPatientPatientIdRouteImport } from './routes/_authenticated/doctor.patient.$patientId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -47,6 +48,12 @@ const AuthenticatedMealsMealIdRoute =
     path: '/meals/$mealId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDoctorRubricsRoute =
+  AuthenticatedDoctorRubricsRouteImport.update({
+    id: '/rubrics',
+    path: '/rubrics',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
 const AuthenticatedDoctorPatientPatientIdRoute =
   AuthenticatedDoctorPatientPatientIdRouteImport.update({
     id: '/patient/$patientId',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/doctor/patient/$patientId': typeof AuthenticatedDoctorPatientPatientIdRoute
 }
@@ -67,6 +75,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/doctor/patient/$patientId': typeof AuthenticatedDoctorPatientPatientIdRoute
 }
@@ -77,6 +86,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/_authenticated/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/_authenticated/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/_authenticated/doctor/patient/$patientId': typeof AuthenticatedDoctorPatientPatientIdRoute
 }
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/doctor'
+    | '/doctor/rubrics'
     | '/meals/$mealId'
     | '/doctor/patient/$patientId'
   fileRoutesByTo: FileRoutesByTo
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/doctor'
+    | '/doctor/rubrics'
     | '/meals/$mealId'
     | '/doctor/patient/$patientId'
   id:
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctor'
+    | '/_authenticated/doctor/rubrics'
     | '/_authenticated/meals/$mealId'
     | '/_authenticated/doctor/patient/$patientId'
   fileRoutesById: FileRoutesById
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMealsMealIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/doctor/rubrics': {
+      id: '/_authenticated/doctor/rubrics'
+      path: '/rubrics'
+      fullPath: '/doctor/rubrics'
+      preLoaderRoute: typeof AuthenticatedDoctorRubricsRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
     '/_authenticated/doctor/patient/$patientId': {
       id: '/_authenticated/doctor/patient/$patientId'
       path: '/patient/$patientId'
@@ -169,10 +189,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedDoctorRouteChildren {
+  AuthenticatedDoctorRubricsRoute: typeof AuthenticatedDoctorRubricsRoute
   AuthenticatedDoctorPatientPatientIdRoute: typeof AuthenticatedDoctorPatientPatientIdRoute
 }
 
 const AuthenticatedDoctorRouteChildren: AuthenticatedDoctorRouteChildren = {
+  AuthenticatedDoctorRubricsRoute: AuthenticatedDoctorRubricsRoute,
   AuthenticatedDoctorPatientPatientIdRoute:
     AuthenticatedDoctorPatientPatientIdRoute,
 }
