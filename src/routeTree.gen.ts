@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMealsMealIdRouteImport } from './routes/_authenticated/meals.$mealId'
+import { Route as AuthenticatedDoctorPatientPatientIdRouteImport } from './routes/_authenticated/doctor.patient.$patientId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -46,20 +47,28 @@ const AuthenticatedMealsMealIdRoute =
     path: '/meals/$mealId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDoctorPatientPatientIdRoute =
+  AuthenticatedDoctorPatientPatientIdRouteImport.update({
+    id: '/patient/$patientId',
+    path: '/patient/$patientId',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/doctor': typeof AuthenticatedDoctorRoute
+  '/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
+  '/doctor/patient/$patientId': typeof AuthenticatedDoctorPatientPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/doctor': typeof AuthenticatedDoctorRoute
+  '/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
+  '/doctor/patient/$patientId': typeof AuthenticatedDoctorPatientPatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -67,14 +76,27 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/doctor': typeof AuthenticatedDoctorRoute
+  '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/_authenticated/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
+  '/_authenticated/doctor/patient/$patientId': typeof AuthenticatedDoctorPatientPatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/doctor' | '/meals/$mealId'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/doctor'
+    | '/meals/$mealId'
+    | '/doctor/patient/$patientId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/doctor' | '/meals/$mealId'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/doctor'
+    | '/meals/$mealId'
+    | '/doctor/patient/$patientId'
   id:
     | '__root__'
     | '/'
@@ -83,6 +105,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/doctor'
     | '/_authenticated/meals/$mealId'
+    | '/_authenticated/doctor/patient/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,18 +158,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMealsMealIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/doctor/patient/$patientId': {
+      id: '/_authenticated/doctor/patient/$patientId'
+      path: '/patient/$patientId'
+      fullPath: '/doctor/patient/$patientId'
+      preLoaderRoute: typeof AuthenticatedDoctorPatientPatientIdRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
   }
 }
 
+interface AuthenticatedDoctorRouteChildren {
+  AuthenticatedDoctorPatientPatientIdRoute: typeof AuthenticatedDoctorPatientPatientIdRoute
+}
+
+const AuthenticatedDoctorRouteChildren: AuthenticatedDoctorRouteChildren = {
+  AuthenticatedDoctorPatientPatientIdRoute:
+    AuthenticatedDoctorPatientPatientIdRoute,
+}
+
+const AuthenticatedDoctorRouteWithChildren =
+  AuthenticatedDoctorRoute._addFileChildren(AuthenticatedDoctorRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRoute
+  AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRouteWithChildren
   AuthenticatedMealsMealIdRoute: typeof AuthenticatedMealsMealIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedDoctorRoute: AuthenticatedDoctorRoute,
+  AuthenticatedDoctorRoute: AuthenticatedDoctorRouteWithChildren,
   AuthenticatedMealsMealIdRoute: AuthenticatedMealsMealIdRoute,
 }
 
