@@ -35,7 +35,9 @@ export const mockMeals: MockMeal[] = [
         { name: "Vitamin D", amount: "12mcg", daily_value_pct: 60 },
       ],
       rubric_notes: ["Aligned with anti-inflammatory protocol — good omega-3 source."],
-      naturopathic_recommendations: ["Add a source of vitamin C to improve iron absorption from spinach."],
+      naturopathic_recommendations: [
+        "Add a source of vitamin C to improve iron absorption from spinach.",
+      ],
       concerns: [],
       overall_score: 8,
     },
@@ -53,10 +55,19 @@ export const mockMeals: MockMeal[] = [
       meal_name: "Oatmeal with mixed berries",
       identified_items: ["Oats", "Blueberries", "Strawberries", "Chia seeds"],
       estimated_portion: "~300g",
-      macros: { calories_kcal: 340, protein_g: 10, carbs_g: 58, fat_g: 8, fiber_g: 11, sugar_g: 14 },
+      macros: {
+        calories_kcal: 340,
+        protein_g: 10,
+        carbs_g: 58,
+        fat_g: 8,
+        fiber_g: 11,
+        sugar_g: 14,
+      },
       key_micros: [{ name: "Vitamin C", amount: "45mg", daily_value_pct: 50 }],
       rubric_notes: ["Good fiber content."],
-      naturopathic_recommendations: ["Consider adding a protein source to slow the glucose response."],
+      naturopathic_recommendations: [
+        "Consider adding a protein source to slow the glucose response.",
+      ],
       concerns: ["Moderate sugar from fruit — fine given the fiber content."],
       overall_score: 7,
     },
@@ -91,6 +102,119 @@ export const mockPatients: MockPatient[] = [
   { id: MOCK_PATIENT_ID, fullName: "Preview Patient", email: "preview@example.com" },
   { id: "patient-2", fullName: "Casey Rivera", email: "casey@example.com" },
   { id: "patient-3", fullName: null, email: "sam@example.com" },
+];
+
+export type MockPantryItem = {
+  id: string;
+  patientId: string;
+  foodName: string;
+  quantity: number | null;
+  unit: string | null;
+  cnfFoodCode: number | null;
+  matchConfidence: "high" | "low" | null;
+  source: "photo" | "voice" | "manual";
+  addedAt: string;
+  depletedAt: string | null;
+  status: "active" | "depleted" | "removed";
+};
+
+export const mockPantryItems: MockPantryItem[] = [
+  {
+    id: "pantry-1",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Rolled oats",
+    quantity: 1,
+    unit: "bag",
+    cnfFoodCode: 1011,
+    matchConfidence: "high",
+    source: "photo",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    depletedAt: null,
+    status: "active",
+  },
+  {
+    id: "pantry-2",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Canned chickpeas",
+    quantity: 3,
+    unit: "cans",
+    cnfFoodCode: 2306,
+    matchConfidence: "high",
+    source: "photo",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    depletedAt: null,
+    status: "active",
+  },
+  {
+    id: "pantry-3",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Spinach",
+    quantity: 1,
+    unit: "bag",
+    cnfFoodCode: null,
+    matchConfidence: null,
+    source: "voice",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    depletedAt: null,
+    status: "active",
+  },
+  {
+    id: "pantry-4",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Almond milk",
+    quantity: 0,
+    unit: "carton",
+    cnfFoodCode: null,
+    matchConfidence: null,
+    source: "manual",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    depletedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    status: "depleted",
+  },
+];
+
+export type MockGroceryListItem = {
+  id: string;
+  patientId: string;
+  foodName: string;
+  cnfFoodCode: number | null;
+  reason: "depleted" | "gap-fill" | "manual";
+  addedAt: string;
+  checkedAt: string | null;
+  sourcePantryItemId: string | null;
+};
+
+export const mockGroceryListItems: MockGroceryListItem[] = [
+  {
+    id: "grocery-1",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Almond milk",
+    cnfFoodCode: null,
+    reason: "depleted",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    checkedAt: null,
+    sourcePantryItemId: "pantry-4",
+  },
+  {
+    id: "grocery-2",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Oranges",
+    cnfFoodCode: null,
+    reason: "gap-fill",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    checkedAt: null,
+    sourcePantryItemId: null,
+  },
+  {
+    id: "grocery-3",
+    patientId: MOCK_PATIENT_ID,
+    foodName: "Paper towels",
+    cnfFoodCode: null,
+    reason: "manual",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    checkedAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+    sourcePantryItemId: null,
+  },
 ];
 
 export type MockRubric = {

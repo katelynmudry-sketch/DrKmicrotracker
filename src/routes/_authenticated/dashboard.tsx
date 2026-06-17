@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Camera, Loader2, Sparkles, Stethoscope } from "lucide-react";
+import { Camera, Loader2, Package, Sparkles, Stethoscope } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -114,14 +114,22 @@ function PatientDashboard() {
   return (
     <AppShell
       nav={
-        isDoctor ? (
+        <>
           <Button size="sm" variant="outline" asChild>
-            <Link to="/doctor">
-              <Stethoscope className="mr-1 h-4 w-4" />
-              Doctor view
+            <Link to="/pantry">
+              <Package className="mr-1 h-4 w-4" />
+              Pantry
             </Link>
           </Button>
-        ) : null
+          {isDoctor && (
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/doctor">
+                <Stethoscope className="mr-1 h-4 w-4" />
+                Doctor view
+              </Link>
+            </Button>
+          )}
+        </>
       }
     >
       <div className="grid gap-8 md:grid-cols-[1fr_2fr]">
