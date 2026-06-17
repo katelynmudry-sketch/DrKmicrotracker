@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dr. K's Kitchen — Sunny Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sun: #ffb84d;
+    --sun-deep: #f3962a;
+    --coral: #ff7a5c;
+    --coral-deep: #e9583a;
+    --leaf: #5fb88a;
+    --leaf-deep: #3f9468;
+    --cream: #fffaf0;
+    --ink: #3d2c1e;
+    --ink-soft: #8a7a68;
+    --card: #ffffff;
+    --line: #ffe4be;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Quicksand', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.5;
+    background-image: radial-gradient(circle at 10% 10%, #fff3da 0%, transparent 40%),
+                       radial-gradient(circle at 90% 0%, #ffe3d6 0%, transparent 35%);
+  }
+  h1, h2, h3, .display { font-family: 'Baloo 2', sans-serif; font-weight: 700; }
+  a { text-decoration: none; color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  header { padding: 26px 0; }
+  .nav { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 1.3rem; font-weight: 800; color: var(--coral-deep); }
+  .brand-mark {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--sun);
+    display: grid; place-items: center;
+    font-size: 22px;
+    box-shadow: 0 4px 0 var(--sun-deep);
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: 'Baloo 2', sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: transform .15s ease;
+  }
+  .btn:hover { transform: translateY(-2px) scale(1.02); }
+  .btn-primary { background: var(--coral); color: white; box-shadow: 0 5px 0 var(--coral-deep); }
+  .btn-ghost { background: white; color: var(--coral-deep); border: 2px solid var(--line); }
+
+  .hero { padding: 50px 0 80px; }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+  }
+  .sticker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--leaf);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transform: rotate(-3deg);
+    margin-bottom: 22px;
+    box-shadow: 0 4px 0 var(--leaf-deep);
+  }
+  .hero h1 {
+    font-size: 3.3rem;
+    line-height: 1.05;
+  }
+  .hero h1 .pop { color: var(--coral-deep); }
+  .hero h1 .pop2 { color: var(--leaf-deep); }
+  .hero p.lede {
+    margin-top: 20px;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    max-width: 480px;
+    font-weight: 500;
+  }
+  .hero-ctas { margin-top: 30px; display: flex; gap: 14px; flex-wrap: wrap; }
+
+  .polaroid-stack { position: relative; height: 420px; }
+  .polaroid {
+    position: absolute;
+    width: 230px;
+    background: white;
+    border-radius: 16px;
+    padding: 14px 14px 22px;
+    box-shadow: 0 16px 30px -10px rgba(61,44,30,0.25);
+  }
+  .polaroid img, .polaroid .ph {
+    width: 100%; height: 150px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 2.6rem;
+    margin-bottom: 10px;
+  }
+  .polaroid p { font-size: 0.85rem; font-weight: 700; text-align: center; }
+  .p1 { top: 0; left: 30px; transform: rotate(-8deg); background: #fff; }
+  .p1 .ph { background: linear-gradient(135deg,#ffe0b8,#ffb084); }
+  .p2 { top: 60px; left: 220px; transform: rotate(6deg); z-index: 2; }
+  .p2 .ph { background: linear-gradient(135deg,#d7f0e1,#9adcb9); }
+  .p3 { top: 230px; left: 80px; transform: rotate(-3deg); }
+  .p3 .ph { background: linear-gradient(135deg,#ffd9d0,#ff9c87); }
+  .badge {
+    position: absolute;
+    bottom: 10px; right: 0;
+    width: 90px; height: 90px;
+    background: var(--sun);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-family: 'Baloo 2';
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: var(--coral-deep);
+    transform: rotate(8deg);
+    box-shadow: 0 6px 0 var(--sun-deep);
+    line-height: 1.1;
+    z-index: 3;
+  }
+
+  section { padding: 70px 0; }
+  .section-head { text-align: center; max-width: 640px; margin: 0 auto 50px; }
+  .section-head .tag {
+    display: inline-block;
+    color: var(--leaf-deep);
+    background: #e3f5ea;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .section-head h2 { font-size: 2.4rem; margin-top: 16px; }
+  .section-head p { margin-top: 14px; color: var(--ink-soft); font-weight: 500; }
+
+  .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 26px; }
+  .step-card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 32px 24px;
+    text-align: center;
+    border: 3px solid var(--line);
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .step-card:hover { transform: translateY(-6px) rotate(-1deg); border-color: var(--sun); }
+  .step-emoji {
+    width: 70px; height: 70px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 2rem;
+  }
+  .step-card:nth-child(1) .step-emoji { background: #fff0db; }
+  .step-card:nth-child(2) .step-emoji { background: #ffe3da; }
+  .step-card:nth-child(3) .step-emoji { background: #ddf3e6; }
+  .step-card h3 { font-size: 1.25rem; margin-bottom: 8px; }
+  .step-card p { color: var(--ink-soft); font-size: 0.95rem; font-weight: 500; }
+
+  .banner {
+    background: var(--leaf);
+    border-radius: 28px;
+    padding: 50px;
+    color: white;
+    text-align: center;
+    position: relative;
+  }
+  .banner h2 { font-size: 2rem; margin-bottom: 12px; }
+  .banner p { opacity: 0.95; font-weight: 500; max-width: 520px; margin: 0 auto; }
+  .emoji-row { display: flex; justify-content: center; gap: 18px; margin-top: 22px; font-size: 1.8rem; }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .feature {
+    background: white;
+    border: 3px solid var(--line);
+    border-radius: 20px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .feature .ic { font-size: 1.8rem; margin-bottom: 10px; }
+  .feature h3 { font-size: 1.05rem; margin-bottom: 6px; }
+  .feature p { font-size: 0.88rem; color: var(--ink-soft); font-weight: 500; }
+
+  .cta-final {
+    text-align: center;
+    background: linear-gradient(135deg, var(--sun), var(--coral));
+    border-radius: 32px;
+    padding: 64px 40px;
+    color: white;
+  }
+  .cta-final h2 { font-size: 2.5rem; }
+  .cta-final p { margin: 14px auto 28px; max-width: 460px; font-weight: 600; opacity: 0.95; }
+  .cta-final .btn-primary { background: white; color: var(--coral-deep); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
+
+  footer { padding: 40px 0 60px; text-align: center; color: var(--ink-soft); font-weight: 600; font-size: 0.9rem; }
+
+  @media (max-width: 900px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .polaroid-stack { display: none; }
+    .steps, .features { grid-template-columns: 1fr 1fr; }
+    .hero h1 { font-size: 2.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <nav class="nav">
+    <a href="#" class="brand">
+      <span class="brand-mark">🍳</span>
+      Dr. K's Kitchen
+    </a>
+    <div style="display:flex; gap:10px;">
+      <a href="#" class="btn btn-ghost">Sign in</a>
+      <a href="#" class="btn btn-primary">Join in!</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero wrap">
+  <div class="hero-inner">
+    <div>
+      <span class="sticker">🎉 Naturopathic care that's actually fun</span>
+      <h1>Snap it. <span class="pop">Track it.</span><br><span class="pop2">Feel it!</span></h1>
+      <p class="lede">Take a quick pic of your meal and Dr. K's Kitchen turns it into a friendly, colorful breakdown of what your body's loving — no boring spreadsheets, ever.</p>
+      <div class="hero-ctas">
+        <a href="#" class="btn btn-primary">📸 Snap your first meal</a>
+        <a href="#" class="btn btn-ghost">How it works</a>
+      </div>
+    </div>
+    <div class="polaroid-stack">
+      <div class="polaroid p1"><div class="ph">🥑</div><p>Avocado toast</p></div>
+      <div class="polaroid p2"><div class="ph">🥗</div><p>Garden bowl</p></div>
+      <div class="polaroid p3"><div class="ph">🍲</div><p>Veggie soup</p></div>
+      <div class="badge">+12g<br>fibre!</div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="section-head">
+    <span class="tag">It's this easy</span>
+    <h2>Three steps to feeling great</h2>
+    <p>Seriously, that's it. No food logs, no guessing games.</p>
+  </div>
+  <div class="steps">
+    <div class="step-card">
+      <div class="step-emoji">📷</div>
+      <h3>Snap your plate</h3>
+      <p>Right before you eat, from your phone, in like 5 seconds.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-emoji">🎊</div>
+      <h3>Get your scoop</h3>
+      <p>A fun, friendly breakdown of macros, micros, and how it matches your plan.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-emoji">💬</div>
+      <h3>Chat with Dr. K</h3>
+      <p>Bring it all to your appointment — no more "what did I even eat last week?"</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="banner">
+    <h2>Built by a real naturopathic doctor, for real humans</h2>
+    <p>Dr. Katelyn Mudry, ND made this so her patients in Kimberley & Cranbrook (and everywhere on telehealth!) could see their progress without the clinical stiffness.</p>
+    <div class="emoji-row">🌿 🥕 🍓 🫘 🌻</div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="section-head">
+    <span class="tag">Why you'll love it</span>
+    <h2>All the good stuff, none of the guilt</h2>
+  </div>
+  <div class="features">
+    <div class="feature"><div class="ic">🎯</div><h3>Your own rubric</h3><p>Scored to YOUR plan, not a generic database.</p></div>
+    <div class="feature"><div class="ic">📊</div><h3>Friendly trends</h3><p>Pretty charts, zero judgment.</p></div>
+    <div class="feature"><div class="ic">🔒</div><h3>Totally private</h3><p>Just you and your care team, always.</p></div>
+    <div class="feature"><div class="ic">☀️</div><h3>Plain-spoken</h3><p>Reports that feel like a text from a friend.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="cta-final">
+    <h2>Ready to make eating fun again?</h2>
+    <p>Ask Dr. K for your invite, or jump back in if you're already a patient.</p>
+    <a href="#" class="btn btn-primary">Let's go! 🚀</a>
+  </div>
+</section>
+
+<footer class="wrap">
+  Made with 🍓 by Dr. K's Kitchen
+</footer>
+
+</body>
+</html>
