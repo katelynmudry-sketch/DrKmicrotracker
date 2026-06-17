@@ -217,6 +217,34 @@ export const mockGroceryListItems: MockGroceryListItem[] = [
   },
 ];
 
+export type MockNutrientSuggestion = {
+  nutrient: string;
+  avgDailyValuePct: number;
+  basicTier: Array<{ food_code: number; food_name: string; amount: number | null }>;
+  expandedTier: Array<{ food_code: number; food_name: string; amount: number | null }>;
+};
+
+export const mockNutrientSuggestions: MockNutrientSuggestion[] = [
+  {
+    nutrient: "Vitamin C",
+    avgDailyValuePct: 42,
+    basicTier: [{ food_code: 1001, food_name: "Spinach, raw", amount: 28.1 }],
+    expandedTier: [
+      { food_code: 2002, food_name: "Red bell pepper, raw", amount: 127.7 },
+      { food_code: 2003, food_name: "Orange, raw", amount: 53.2 },
+    ],
+  },
+  {
+    nutrient: "Vitamin D",
+    avgDailyValuePct: 58,
+    basicTier: [],
+    expandedTier: [
+      { food_code: 2004, food_name: "Salmon, cooked", amount: 14.5 },
+      { food_code: 2005, food_name: "Egg, whole, cooked", amount: 2.0 },
+    ],
+  },
+];
+
 export type MockRubric = {
   id: string;
   title: string;

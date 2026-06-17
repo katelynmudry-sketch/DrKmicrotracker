@@ -121,6 +121,12 @@ function PatientDashboard() {
               Pantry
             </Link>
           </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/suggestions">
+              <Sparkles className="mr-1 h-4 w-4" />
+              Suggestions
+            </Link>
+          </Button>
           {isDoctor && (
             <Button size="sm" variant="outline" asChild>
               <Link to="/doctor">

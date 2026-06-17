@@ -10,12 +10,13 @@ import { isMockMode } from "@/lib/mock-mode";
 import { mockPantryItems, type MockPantryItem } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { PantryItemCard } from "@/components/app/pantry-item-card";
+import { VoiceCapture } from "@/components/app/voice-capture";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Loader2, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, ShoppingCart, Sparkles } from "lucide-react";
 import {
   analyzePantryPhoto,
   confirmPantryScan,
@@ -23,6 +24,7 @@ import {
   markPantryItemDepleted,
   removePantryItem,
 } from "@/lib/pantry.functions";
+import { parseVoiceTranscript } from "@/lib/pantry-voice.functions";
 
 export const Route = createFileRoute("/_authenticated/pantry")({
   head: () => ({ meta: [{ title: "Your pantry — Nourish" }] }),
@@ -40,9 +42,11 @@ function PantryPage() {
   const manualAddFn = useServerFn(addPantryItemManual);
   const depleteFn = useServerFn(markPantryItemDepleted);
   const removeFn = useServerFn(removePantryItem);
+  const parseVoiceFn = useServerFn(parseVoiceTranscript);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [parsingVoice, setParsingVoice] = useState(false);
   const [pendingScan, setPendingScan] = useState<{ scanId: string; items: ParsedItem[] } | null>(
     null,
   );
@@ -91,6 +95,23 @@ function PantryPage() {
       toast.error(e instanceof Error ? e.message : "Scan failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const parseTranscript = async (transcript: string) => {
+    if (isMockMode) return toast.info("Preview mode — voice logging isn't saved.");
+    setParsingVoice(true);
+    try {
+      const result = await parseVoiceFn({ data: { transcript } });
+      if (result.items.length === 0) {
+        toast.error("Couldn't identify any items — try rephrasing.");
+        return;
+      }
+      setPendingScan({ scanId: result.scanId, items: result.items });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't parse transcript");
+    } finally {
+      setParsingVoice(false);
     }
   };
 
@@ -152,6 +173,12 @@ function PantryPage() {
               Grocery list
             </Link>
           </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/suggestions">
+              <Sparkles className="mr-1 h-4 w-4" />
+              Suggestions
+            </Link>
+          </Button>
           <Button size="sm" variant="ghost" asChild>
             <Link to="/dashboard">
               <ArrowLeft className="mr-1 h-4 w-4" />
@@ -179,6 +206,21 @@ function PantryPage() {
                 Scan photo
               </Button>
             </div>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="mb-1 text-base font-semibold">Or tell us out loud</h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              List off what's in your pantry — we'll turn it into items to confirm.
+            </p>
+            {parsingVoice ? (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Identifying items…
+              </p>
+            ) : (
+              <VoiceCapture onSubmit={parseTranscript} />
+            )}
           </Card>
 
           {pendingScan && (
