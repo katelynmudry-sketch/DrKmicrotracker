@@ -14,6 +14,8 @@ import {
 } from "firebase/firestore";
 import { deleteObject, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "@/integrations/firebase/client";
+import { isMockMode } from "@/lib/mock-mode";
+import { mockRubrics } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -53,6 +55,7 @@ function Rubrics() {
     queryKey: ["rubrics"],
     enabled: isDoctor,
     queryFn: async () => {
+      if (isMockMode) return mockRubrics as Rubric[];
       const snap = await getDocs(query(collection(db, "rubrics"), orderBy("createdAt", "desc")));
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Rubric);
     },
@@ -60,6 +63,7 @@ function Rubrics() {
 
   const upload = async () => {
     if (!file || !title.trim() || !user) return toast.error("Title and file are required");
+    if (isMockMode) return toast.info("Preview mode — uploads aren't saved.");
     setUploading(true);
     try {
       const path = `rubrics/${user.uid}/${Date.now()}-${file.name}`;
@@ -88,11 +92,13 @@ function Rubrics() {
   };
 
   const toggle = async (id: string, active: boolean) => {
+    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
     await updateDoc(doc(db, "rubrics", id), { isActive: active });
     qc.invalidateQueries({ queryKey: ["rubrics"] });
   };
 
   const remove = async (id: string, path: string) => {
+    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
     await deleteObject(ref(storage, path)).catch(() => {});
     await deleteDoc(doc(db, "rubrics", id));
     qc.invalidateQueries({ queryKey: ["rubrics"] });

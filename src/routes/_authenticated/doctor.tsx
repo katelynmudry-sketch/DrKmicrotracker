@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isMockMode } from "@/lib/mock-mode";
+import { mockMeals, mockPatients } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ function DoctorHome() {
   const claim = useServerFn(claimDoctorIfNone);
 
   useEffect(() => {
+    if (isMockMode) return;
     if (!loading && user && !isDoctor) {
       claim({})
         .then((r) => {
@@ -39,6 +42,11 @@ function DoctorHome() {
     queryKey: ["doctor", "patients"],
     enabled: isDoctor,
     queryFn: async () => {
+      if (isMockMode) {
+        const byPatient = new Map<string, number>();
+        mockMeals.forEach((m) => byPatient.set(m.patientId, (byPatient.get(m.patientId) ?? 0) + 1));
+        return mockPatients.map((p) => ({ ...p, mealCount: byPatient.get(p.id) ?? 0 }));
+      }
       const patientsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "patient")));
       const patients = patientsSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as {
         id: string;

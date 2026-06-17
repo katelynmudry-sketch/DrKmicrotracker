@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
+import { isMockMode, setMockRole } from "@/lib/mock-mode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +19,43 @@ import { Leaf } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Nourish" }] }),
-  component: AuthPage,
+  component: isMockMode ? MockAuthPage : AuthPage,
 });
+
+function MockAuthPage() {
+  const navigate = useNavigate();
+  const enter = (role: "patient" | "doctor") => {
+    setMockRole(role);
+    navigate({ to: role === "doctor" ? "/doctor" : "/dashboard" });
+  };
+  return (
+    <div className="grid min-h-screen place-items-center bg-background px-4 py-10">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-accent-foreground">
+            <Leaf className="h-4 w-4" />
+          </span>
+          <span className="text-base font-semibold tracking-tight">Nourish</span>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <p className="mb-1 text-sm font-semibold">Preview mode</p>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Firebase isn't configured yet, so sign-in is skipped — pick a view to
+            browse the UI with sample data.
+          </p>
+          <div className="space-y-2">
+            <Button className="w-full" onClick={() => enter("patient")}>
+              Continue as patient
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => enter("doctor")}>
+              Continue as doctor
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 async function ensureUserProfile(uid: string, email: string | null, fullName?: string | null) {
   const ref = doc(db, "users", uid);

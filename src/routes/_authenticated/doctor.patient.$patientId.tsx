@@ -2,6 +2,8 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { isMockMode } from "@/lib/mock-mode";
+import { mockMeals, mockPatients } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { AnalysisView } from "@/components/app/analysis-view";
@@ -24,6 +26,7 @@ function PatientView() {
   const profile = useQuery({
     queryKey: ["profile", patientId],
     queryFn: async () => {
+      if (isMockMode) return mockPatients.find((p) => p.id === patientId) ?? { id: patientId, fullName: null, email: null };
       const snap = await getDoc(doc(db, "users", patientId));
       return { id: snap.id, ...snap.data() } as { id: string; fullName: string | null; email: string | null };
     },
@@ -32,6 +35,7 @@ function PatientView() {
   const meals = useQuery({
     queryKey: ["doctor", "meals", patientId],
     queryFn: async () => {
+      if (isMockMode) return mockMeals;
       const q = query(
         collection(db, "meals"),
         where("patientId", "==", patientId),
@@ -100,6 +104,7 @@ function MealReview({ meal }: { meal: any }) {
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
+    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
     setSaving(true);
     try {
       await updateDoc(doc(db, "meals", meal.id), { doctorNotes: notes });

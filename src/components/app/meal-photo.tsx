@@ -12,9 +12,13 @@ export function MealPhoto({
   alt?: string;
 }) {
   const sign = useServerFn(getMealPhotoUrl);
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(path.startsWith("http") ? path : null);
 
   useEffect(() => {
+    if (path.startsWith("http")) {
+      setUrl(path);
+      return;
+    }
     let cancelled = false;
     sign({ data: { path } })
       .then((r) => {

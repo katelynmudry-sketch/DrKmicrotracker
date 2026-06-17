@@ -16,6 +16,8 @@ import {
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isMockMode } from "@/lib/mock-mode";
+import { mockMeals } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { Button } from "@/components/ui/button";
@@ -55,6 +57,7 @@ function PatientDashboard() {
     queryKey: ["meals", user?.uid],
     enabled: !!user,
     queryFn: async () => {
+      if (isMockMode) return mockMeals as unknown as Meal[];
       const q = query(
         collection(db, "meals"),
         where("patientId", "==", user!.uid),
@@ -68,6 +71,7 @@ function PatientDashboard() {
   const upload = async () => {
     const file = fileRef.current?.files?.[0];
     if (!file || !user) return toast.error("Select a meal photo first");
+    if (isMockMode) return toast.info("Preview mode — uploads aren't saved.");
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";

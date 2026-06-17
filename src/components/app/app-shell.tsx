@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Leaf, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { isMockMode, setMockRole } from "@/lib/mock-mode";
 
 export function AppShell({
   children,
@@ -17,9 +18,31 @@ export function AppShell({
     await signOut();
     navigate({ to: "/auth" });
   };
+  const switchMockRole = (role: "patient" | "doctor") => {
+    setMockRole(role);
+    navigate({ to: role === "doctor" ? "/doctor" : "/dashboard" });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {isMockMode && (
+        <div className="flex items-center justify-center gap-2 bg-accent/10 px-4 py-1.5 text-xs text-accent-foreground">
+          Preview mode — sample data, no backend connected.
+          <button
+            className={`underline ${!isDoctor ? "font-semibold" : ""}`}
+            onClick={() => switchMockRole("patient")}
+          >
+            Patient view
+          </button>
+          ·
+          <button
+            className={`underline ${isDoctor ? "font-semibold" : ""}`}
+            onClick={() => switchMockRole("doctor")}
+          >
+            Doctor view
+          </button>
+        </div>
+      )}
       <header className="border-b border-border bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">

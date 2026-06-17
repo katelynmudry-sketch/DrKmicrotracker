@@ -2,6 +2,8 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { isMockMode } from "@/lib/mock-mode";
+import { mockMeals } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { AnalysisView } from "@/components/app/analysis-view";
@@ -19,6 +21,11 @@ function MealDetail() {
   const meal = useQuery({
     queryKey: ["meal", mealId],
     queryFn: async () => {
+      if (isMockMode) {
+        const m = mockMeals.find((m) => m.id === mealId);
+        if (!m) throw new Error("Meal not found");
+        return m;
+      }
       const snap = await getDoc(doc(db, "meals", mealId));
       if (!snap.exists()) throw new Error("Meal not found");
       return { id: snap.id, ...snap.data() } as any;
