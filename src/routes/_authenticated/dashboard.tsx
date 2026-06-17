@@ -27,7 +27,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera, Loader2, Package, Sparkles, Stethoscope } from "lucide-react";
-import { analyzeMeal } from "@/lib/meals.functions";
+import { analyzeMeal, logMealManual } from "@/lib/meals.functions";
+import { searchFoodReference } from "@/lib/food-reference.functions";
+import { ManualMealLog } from "@/components/app/manual-meal-log";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Your meals — Nourish" }] }),
@@ -39,7 +41,7 @@ type Meal = {
   mealLabel: string | null;
   eatenAt: string;
   status: string;
-  storagePath: string;
+  storagePath: string | null;
   analysis: unknown;
 };
 
@@ -48,6 +50,8 @@ function PatientDashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const analyzeFn = useServerFn(analyzeMeal);
+  const searchFn = useServerFn(searchFoodReference);
+  const logManualFn = useServerFn(logMealManual);
   const fileRef = useRef<HTMLInputElement>(null);
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
@@ -111,6 +115,27 @@ function PatientDashboard() {
     }
   };
 
+  const handleSearch = async (query: string) => {
+    if (isMockMode) return [];
+    const result = await searchFn({ data: { query } });
+    return result.results;
+  };
+
+  const handleLogManual = async (items: { food_code: number; grams: number }[]) => {
+    if (!user) return;
+    if (isMockMode) {
+      toast.info("Preview mode — manual logs aren't saved.");
+      return;
+    }
+    try {
+      await logManualFn({ data: { items } });
+      toast.success("Meal logged");
+      qc.invalidateQueries({ queryKey: ["meals", user.uid] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't log meal");
+    }
+  };
+
   return (
     <AppShell
       nav={
@@ -139,55 +164,58 @@ function PatientDashboard() {
       }
     >
       <div className="grid gap-8 md:grid-cols-[1fr_2fr]">
-        <Card className="h-fit p-5">
-          <h2 className="mb-1 text-base font-semibold">Log a meal</h2>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Snap or upload a photo. Analysis runs in the background.
-          </p>
-          <div className="space-y-3">
-            <div>
-              <Label className="mb-1.5">Photo</Label>
-              <Input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-              />
+        <div className="space-y-6">
+          <Card className="h-fit p-5">
+            <h2 className="mb-1 text-base font-semibold">Log a meal</h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Snap or upload a photo. Analysis runs in the background.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <Label className="mb-1.5">Photo</Label>
+                <Input ref={fileRef} type="file" accept="image/*" capture="environment" />
+              </div>
+              <div>
+                <Label className="mb-1.5">Label (optional)</Label>
+                <Input
+                  placeholder="Lunch — Tuesday"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="mb-1.5">Notes</Label>
+                <Textarea
+                  placeholder="How you felt, hunger, time of day…"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <Button className="w-full" onClick={upload} disabled={uploading}>
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
+                Upload meal
+              </Button>
             </div>
-            <div>
-              <Label className="mb-1.5">Label (optional)</Label>
-              <Input
-                placeholder="Lunch — Tuesday"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label className="mb-1.5">Notes</Label>
-              <Textarea
-                placeholder="How you felt, hunger, time of day…"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <Button className="w-full" onClick={upload} disabled={uploading}>
-              {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Camera className="h-4 w-4" />
-              )}
-              Upload meal
-            </Button>
-          </div>
-        </Card>
+          </Card>
+
+          <Card className="h-fit p-5">
+            <h2 className="mb-1 text-base font-semibold">Log manually</h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Search a whole food and log it by weight — no photo needed.
+            </p>
+            <ManualMealLog onSearch={handleSearch} onLog={handleLogManual} />
+          </Card>
+        </div>
 
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold">Your meal history</h2>
-            <span className="text-xs text-muted-foreground">
-              {meals.data?.length ?? 0} meals
-            </span>
+            <span className="text-xs text-muted-foreground">{meals.data?.length ?? 0} meals</span>
           </div>
           {meals.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
@@ -211,9 +239,7 @@ function PatientDashboard() {
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold">
-                          {m.mealLabel ?? "Untitled meal"}
-                        </p>
+                        <p className="text-sm font-semibold">{m.mealLabel ?? "Untitled meal"}</p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(m.eatenAt).toLocaleString()}
                         </p>
@@ -239,7 +265,9 @@ function StatusBadge({ status }: { status: string }) {
     failed: "bg-destructive/15 text-destructive",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${map[status] ?? "bg-secondary"}`}>
+    <span
+      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${map[status] ?? "bg-secondary"}`}
+    >
       {status}
     </span>
   );

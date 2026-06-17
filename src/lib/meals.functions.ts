@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
+import type { FoodReferenceRow } from "@/lib/food-reference.functions";
+import { NUTRIENT_DISPLAY, type NutrientColumn } from "@/lib/nutrient-reference";
 
 const AnalyzeInput = z.object({ mealId: z.string().min(1) });
 
@@ -75,7 +77,11 @@ ${rubricContext || "(no rubric provided yet — use evidence-based naturopathic 
             { type: "text", text: userText },
             {
               type: "image",
-              source: { type: "base64", media_type: mime as "image/jpeg" | "image/png" | "image/webp" | "image/gif", data: base64 },
+              source: {
+                type: "base64",
+                media_type: mime as "image/jpeg" | "image/png" | "image/webp" | "image/gif",
+                data: base64,
+              },
             },
           ],
         },
@@ -117,4 +123,109 @@ export const getMealPhotoUrl = createServerFn({ method: "POST" })
       .file(data.path)
       .getSignedUrl({ action: "read", expires: Date.now() + 60 * 60 * 1000 });
     return { url };
+  });
+
+const MACRO_COLUMNS = [
+  "calories_kcal",
+  "protein_g",
+  "carbs_g",
+  "fat_g",
+  "fiber_g",
+  "sugar_g",
+] as const;
+
+const LogManualInput = z.object({
+  items: z.array(z.object({ food_code: z.number(), grams: z.number().positive() })).min(1),
+  mealLabel: z.string().nullable().optional(),
+  patientNotes: z.string().nullable().optional(),
+});
+
+/**
+ * "Analog mode" meal logging: no AI, no photo — just whole foods from the
+ * CNF food_reference table scaled by grams and summed. Produces the same
+ * analysis shape AnalysisView expects so manually-logged and photo-analyzed
+ * meals render identically.
+ */
+export const logMealManual = createServerFn({ method: "POST" })
+  .middleware([requireFirebaseAuth])
+  .inputValidator((input: unknown) => LogManualInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { isSupabaseConfigured, supabaseAdmin } =
+      await import("@/integrations/supabase/admin.server");
+    if (!isSupabaseConfigured) throw new Error("Food database isn't configured yet");
+
+    const codes = data.items.map((i) => i.food_code);
+    const { data: rows, error } = await supabaseAdmin
+      .from("food_reference")
+      .select("*")
+      .in("food_code", codes);
+    if (error || !rows) throw new Error("Couldn't load food data");
+    const byCode = new Map((rows as FoodReferenceRow[]).map((r) => [r.food_code, r]));
+
+    const macros: Record<(typeof MACRO_COLUMNS)[number], number> = {
+      calories_kcal: 0,
+      protein_g: 0,
+      carbs_g: 0,
+      fat_g: 0,
+      fiber_g: 0,
+      sugar_g: 0,
+    };
+    const microTotals = new Map<NutrientColumn, number>();
+    const identifiedItems: string[] = [];
+
+    for (const item of data.items) {
+      const food = byCode.get(item.food_code);
+      if (!food) continue;
+      const factor = item.grams / 100;
+      identifiedItems.push(`${food.food_name} (${item.grams}g)`);
+      for (const column of MACRO_COLUMNS) {
+        macros[column] += (food[column] ?? 0) * factor;
+      }
+      for (const column of Object.keys(NUTRIENT_DISPLAY) as NutrientColumn[]) {
+        const amount = food[column];
+        if (amount == null) continue;
+        microTotals.set(column, (microTotals.get(column) ?? 0) + amount * factor);
+      }
+    }
+
+    if (identifiedItems.length === 0) throw new Error("None of the selected foods were found");
+
+    const roundedMacros = Object.fromEntries(
+      MACRO_COLUMNS.map((column) => [column, Math.round(macros[column] * 10) / 10]),
+    );
+
+    const keyMicros = [...microTotals.entries()].map(([column, amount]) => {
+      const meta = NUTRIENT_DISPLAY[column];
+      return {
+        name: meta.label,
+        amount: `${Math.round(amount * 10) / 10}${meta.unit}`,
+        daily_value_pct: Math.round((amount / meta.dailyValue) * 100),
+      };
+    });
+
+    const analysis = {
+      meal_name: data.mealLabel || identifiedItems.join(", "),
+      identified_items: identifiedItems,
+      estimated_portion: identifiedItems.join(", "),
+      macros: roundedMacros,
+      key_micros: keyMicros,
+      rubric_notes: [],
+      naturopathic_recommendations: [],
+      concerns: [],
+    };
+
+    const { adminDb } = await import("@/integrations/firebase/admin.server");
+    const mealRef = await adminDb.collection("meals").add({
+      patientId: context.userId,
+      mealLabel: data.mealLabel || null,
+      patientNotes: data.patientNotes || null,
+      doctorNotes: null,
+      status: "analyzed",
+      storagePath: null,
+      analysis,
+      eatenAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    });
+
+    return { id: mealRef.id };
   });

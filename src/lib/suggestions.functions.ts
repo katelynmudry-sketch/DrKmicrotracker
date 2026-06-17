@@ -2,27 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
 import type { FoodReferenceRow } from "@/lib/food-reference.functions";
-
-export type NutrientColumn =
-  | "vitamin_a_rae_mcg"
-  | "vitamin_c_mg"
-  | "vitamin_d_mcg"
-  | "iron_mg"
-  | "calcium_mg"
-  | "zinc_mg"
-  | "magnesium_mg"
-  | "potassium_mg";
-
-const NUTRIENT_NAME_TO_COLUMN: Record<string, NutrientColumn> = {
-  "vitamin a": "vitamin_a_rae_mcg",
-  "vitamin c": "vitamin_c_mg",
-  "vitamin d": "vitamin_d_mcg",
-  iron: "iron_mg",
-  calcium: "calcium_mg",
-  zinc: "zinc_mg",
-  magnesium: "magnesium_mg",
-  potassium: "potassium_mg",
-};
+import { NUTRIENT_NAME_TO_COLUMN, type NutrientColumn } from "@/lib/nutrient-reference";
 
 export type MealMicroEntry = { name: string; daily_value_pct: number | null };
 export type MealAnalysisLike = { key_micros?: MealMicroEntry[] | null } | null | undefined;

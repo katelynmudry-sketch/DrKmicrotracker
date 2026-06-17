@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getMealPhotoUrl } from "@/lib/meals.functions";
+import { UtensilsCrossed } from "lucide-react";
 
 export function MealPhoto({
   path,
   className,
   alt = "Meal",
 }: {
-  path: string;
+  path: string | null;
   className?: string;
   alt?: string;
 }) {
   const sign = useServerFn(getMealPhotoUrl);
-  const [url, setUrl] = useState<string | null>(path.startsWith("http") ? path : null);
+  const [url, setUrl] = useState<string | null>(path?.startsWith("http") ? path : null);
 
   useEffect(() => {
-    if (path.startsWith("http")) {
-      setUrl(path);
+    if (!path || path.startsWith("http")) {
+      setUrl(path?.startsWith("http") ? path : null);
       return;
     }
     let cancelled = false;
@@ -30,13 +31,21 @@ export function MealPhoto({
     };
   }, [path, sign]);
 
-  if (!url)
+  if (!path)
     return (
       <div
         className={
-          "animate-pulse rounded-lg bg-secondary " + (className ?? "h-40 w-full")
+          "grid place-items-center bg-secondary text-muted-foreground " +
+          (className ?? "h-40 w-full")
         }
-      />
+      >
+        <UtensilsCrossed className="h-6 w-6" />
+      </div>
+    );
+
+  if (!url)
+    return (
+      <div className={"animate-pulse rounded-lg bg-secondary " + (className ?? "h-40 w-full")} />
     );
   return <img src={url} alt={alt} className={className} loading="lazy" />;
 }

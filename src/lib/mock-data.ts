@@ -5,7 +5,7 @@ export type MockMeal = {
   mealLabel: string | null;
   eatenAt: string;
   status: "analyzed" | "analyzing" | "failed";
-  storagePath: string;
+  storagePath: string | null;
   patientNotes: string | null;
   doctorNotes: string | null;
   analysis: unknown;
@@ -93,6 +93,36 @@ export const mockMeals: MockMeal[] = [
     patientNotes: null,
     doctorNotes: null,
     analysis: null,
+  },
+  {
+    id: "meal-5",
+    patientId: MOCK_PATIENT_ID,
+    mealLabel: "Manually logged — tomato & cucumber",
+    eatenAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    status: "analyzed",
+    storagePath: null,
+    patientNotes: null,
+    doctorNotes: null,
+    analysis: {
+      meal_name: "Tomato (150g), Cucumber (100g)",
+      identified_items: ["Tomato (150g)", "Cucumber (100g)"],
+      estimated_portion: "Tomato (150g), Cucumber (100g)",
+      macros: {
+        calories_kcal: 41,
+        protein_g: 1.9,
+        carbs_g: 8.5,
+        fat_g: 0.3,
+        fiber_g: 2.1,
+        sugar_g: 4.8,
+      },
+      key_micros: [
+        { name: "Vitamin C", amount: "24.5mg", daily_value_pct: 27 },
+        { name: "Potassium", amount: "377mg", daily_value_pct: 11 },
+      ],
+      rubric_notes: [],
+      naturopathic_recommendations: [],
+      concerns: [],
+    },
   },
 ];
 
