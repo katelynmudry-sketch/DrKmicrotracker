@@ -1,5 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -25,8 +28,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Camera, Loader2, Sparkles, Stethoscope } from "lucide-react";
+import { Camera, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -39,9 +43,17 @@ type Meal = {
   mealLabel: string | null;
   eatenAt: string;
   status: string;
-  storagePath: string;
+  storagePath: string | null;
+  inputMethod?: "photo" | "text";
   analysis: unknown;
 };
+
+const TextMealSchema = z.object({
+  mealLabel: z.string().optional(),
+  patientNotes: z.string().optional(),
+  mealDescription: z.string().min(3, "Describe what you ate"),
+});
+type TextMealValues = z.infer<typeof TextMealSchema>;
 
 function PatientDashboard() {
   const { user, isDoctor } = useAuth();
@@ -52,6 +64,12 @@ function PatientDashboard() {
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  const textForm = useForm<TextMealValues>({
+    resolver: zodResolver(TextMealSchema),
+    defaultValues: { mealLabel: "", patientNotes: "", mealDescription: "" },
+  });
+  const [logging, setLogging] = useState(false);
 
   const meals = useQuery({
     queryKey: ["meals", user?.uid],
@@ -68,6 +86,21 @@ function PatientDashboard() {
     },
   });
 
+  const afterLog = (mealId: string) => {
+    qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
+    analyzeFn({ data: { mealId } })
+      .then(() => {
+        toast.success("Analysis ready");
+        qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
+      })
+      .catch((e) => {
+        toast.error(e?.message ?? "Analysis failed");
+        updateDoc(doc(db, "meals", mealId), { status: "failed" }).then(() => {
+          qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
+        });
+      });
+  };
+
   const upload = async () => {
     const file = fileRef.current?.files?.[0];
     if (!file || !user) return toast.error("Select a meal photo first");
@@ -80,6 +113,8 @@ function PatientDashboard() {
       const mealRef = await addDoc(collection(db, "meals"), {
         patientId: user.uid,
         storagePath: path,
+        inputMethod: "photo",
+        mealDescription: null,
         mealLabel: label || null,
         patientNotes: notes || null,
         doctorNotes: null,
@@ -92,22 +127,39 @@ function PatientDashboard() {
       setLabel("");
       setNotes("");
       if (fileRef.current) fileRef.current.value = "";
-      qc.invalidateQueries({ queryKey: ["meals", user.uid] });
-      analyzeFn({ data: { mealId: mealRef.id } })
-        .then(() => {
-          toast.success("Analysis ready");
-          qc.invalidateQueries({ queryKey: ["meals", user.uid] });
-        })
-        .catch((e) => {
-          toast.error(e?.message ?? "Analysis failed");
-          updateDoc(doc(db, "meals", mealRef.id), { status: "failed" }).then(() => {
-            qc.invalidateQueries({ queryKey: ["meals", user.uid] });
-          });
-        });
+      afterLog(mealRef.id);
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const logTextMeal = async (values: TextMealValues) => {
+    if (!user) return;
+    if (isMockMode) return toast.info("Preview mode — uploads aren't saved.");
+    setLogging(true);
+    try {
+      const mealRef = await addDoc(collection(db, "meals"), {
+        patientId: user.uid,
+        storagePath: null,
+        inputMethod: "text",
+        mealDescription: values.mealDescription,
+        mealLabel: values.mealLabel || null,
+        patientNotes: values.patientNotes || null,
+        doctorNotes: null,
+        status: "analyzing",
+        analysis: null,
+        eatenAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Meal logged — analyzing…");
+      textForm.reset();
+      afterLog(mealRef.id);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Logging failed");
+    } finally {
+      setLogging(false);
     }
   };
 
@@ -128,52 +180,90 @@ function PatientDashboard() {
         <Card className="h-fit p-5">
           <h2 className="mb-1 text-base font-semibold">Log a meal</h2>
           <p className="mb-4 text-xs text-muted-foreground">
-            Snap or upload a photo. Analysis runs in the background.
+            Snap a photo or describe what you ate. Analysis runs in the background.
           </p>
-          <div className="space-y-3">
-            <div>
-              <Label className="mb-1.5">Photo</Label>
-              <Input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-              />
-            </div>
-            <div>
-              <Label className="mb-1.5">Label (optional)</Label>
-              <Input
-                placeholder="Lunch — Tuesday"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label className="mb-1.5">Notes</Label>
-              <Textarea
-                placeholder="How you felt, hunger, time of day…"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <Button className="w-full" onClick={upload} disabled={uploading}>
-              {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Camera className="h-4 w-4" />
-              )}
-              Upload meal
-            </Button>
-          </div>
+          <Tabs defaultValue="photo">
+            <TabsList className="mb-3 grid w-full grid-cols-2">
+              <TabsTrigger value="photo">Photo</TabsTrigger>
+              <TabsTrigger value="text">Describe instead</TabsTrigger>
+            </TabsList>
+            <TabsContent value="photo">
+              <div className="space-y-3">
+                <div>
+                  <Label className="mb-1.5">Photo</Label>
+                  <Input ref={fileRef} type="file" accept="image/*" capture="environment" />
+                </div>
+                <div>
+                  <Label className="mb-1.5">Label (optional)</Label>
+                  <Input
+                    placeholder="Lunch — Tuesday"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1.5">Notes</Label>
+                  <Textarea
+                    placeholder="How you felt, hunger, time of day…"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <Button className="w-full" onClick={upload} disabled={uploading}>
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                  Upload meal
+                </Button>
+              </div>
+            </TabsContent>
+            <TabsContent value="text">
+              <form className="space-y-3" onSubmit={textForm.handleSubmit(logTextMeal)}>
+                <div>
+                  <Label className="mb-1.5">What did you eat?</Label>
+                  <Textarea
+                    placeholder="2 eggs, 2 slices whole wheat toast, avocado, black coffee, about 1 plate"
+                    rows={3}
+                    {...textForm.register("mealDescription")}
+                  />
+                  {textForm.formState.errors.mealDescription && (
+                    <p className="mt-1 text-xs text-destructive">
+                      {textForm.formState.errors.mealDescription.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="mb-1.5">Label (optional)</Label>
+                  <Input placeholder="Lunch — Tuesday" {...textForm.register("mealLabel")} />
+                </div>
+                <div>
+                  <Label className="mb-1.5">Notes</Label>
+                  <Textarea
+                    placeholder="How you felt, hunger, time of day…"
+                    rows={3}
+                    {...textForm.register("patientNotes")}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={logging}>
+                  {logging ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <NotebookPen className="h-4 w-4" />
+                  )}
+                  Log meal
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </Card>
 
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold">Your meal history</h2>
-            <span className="text-xs text-muted-foreground">
-              {meals.data?.length ?? 0} meals
-            </span>
+            <span className="text-xs text-muted-foreground">{meals.data?.length ?? 0} meals</span>
           </div>
           {meals.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
@@ -193,13 +283,17 @@ function PatientDashboard() {
                   onClick={() => navigate({ to: "/meals/$mealId", params: { mealId: m.id } })}
                   className="group overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-accent/50"
                 >
-                  <MealPhoto path={m.storagePath} className="h-40 w-full object-cover" />
+                  {m.storagePath ? (
+                    <MealPhoto path={m.storagePath} className="h-40 w-full object-cover" />
+                  ) : (
+                    <div className="grid h-40 w-full place-items-center bg-secondary">
+                      <NotebookPen className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold">
-                          {m.mealLabel ?? "Untitled meal"}
-                        </p>
+                        <p className="text-sm font-semibold">{m.mealLabel ?? "Untitled meal"}</p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(m.eatenAt).toLocaleString()}
                         </p>
@@ -225,7 +319,9 @@ function StatusBadge({ status }: { status: string }) {
     failed: "bg-destructive/15 text-destructive",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${map[status] ?? "bg-secondary"}`}>
+    <span
+      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${map[status] ?? "bg-secondary"}`}
+    >
       {status}
     </span>
   );

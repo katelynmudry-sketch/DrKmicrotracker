@@ -1,6 +1,15 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { isMockMode } from "@/lib/mock-mode";
 import { mockMeals, mockPatients } from "@/lib/mock-data";
@@ -26,9 +35,20 @@ function PatientView() {
   const profile = useQuery({
     queryKey: ["profile", patientId],
     queryFn: async () => {
-      if (isMockMode) return mockPatients.find((p) => p.id === patientId) ?? { id: patientId, fullName: null, email: null };
+      if (isMockMode)
+        return (
+          mockPatients.find((p) => p.id === patientId) ?? {
+            id: patientId,
+            fullName: null,
+            email: null,
+          }
+        );
       const snap = await getDoc(doc(db, "users", patientId));
-      return { id: snap.id, ...snap.data() } as { id: string; fullName: string | null; email: string | null };
+      return { id: snap.id, ...snap.data() } as {
+        id: string;
+        fullName: string | null;
+        email: string | null;
+      };
     },
   });
 
@@ -67,9 +87,7 @@ function PatientView() {
       </div>
       <div className="grid gap-6 md:grid-cols-[260px_1fr]">
         <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Meals
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Meals</p>
           {meals.data?.length ? (
             meals.data.map((m) => (
               <button
@@ -81,9 +99,7 @@ function PatientView() {
                     : "border-border bg-card hover:border-accent/40"
                 }`}
               >
-                <p className="text-sm font-medium">
-                  {m.mealLabel ?? "Untitled meal"}
-                </p>
+                <p className="text-sm font-medium">{m.mealLabel ?? "Untitled meal"}</p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(m.eatenAt).toLocaleString()}
                 </p>
@@ -93,13 +109,14 @@ function PatientView() {
             <p className="text-sm text-muted-foreground">No meals yet.</p>
           )}
         </div>
-        {active ? <MealReview key={active.id} meal={active} /> : null}
+        {active ? <MealReview key={active.id} meal={active} patientId={patientId} /> : null}
       </div>
     </AppShell>
   );
 }
 
-function MealReview({ meal }: { meal: any }) {
+function MealReview({ meal, patientId }: { meal: any; patientId: string }) {
+  const qc = useQueryClient();
   const [notes, setNotes] = useState<string>(meal.doctorNotes ?? "");
   const [saving, setSaving] = useState(false);
 
@@ -120,7 +137,13 @@ function MealReview({ meal }: { meal: any }) {
     <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
       <div className="space-y-3">
         <Card className="overflow-hidden">
-          <MealPhoto path={meal.storagePath} className="h-72 w-full object-cover" />
+          {meal.storagePath ? (
+            <MealPhoto path={meal.storagePath} className="h-72 w-full object-cover" />
+          ) : (
+            <div className="grid h-72 w-full place-items-center bg-secondary text-sm text-muted-foreground">
+              Logged via description
+            </div>
+          )}
         </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -128,9 +151,7 @@ function MealReview({ meal }: { meal: any }) {
           </p>
           <p className="font-semibold">{meal.mealLabel ?? "Untitled meal"}</p>
           {meal.patientNotes && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Patient note: {meal.patientNotes}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Patient note: {meal.patientNotes}</p>
           )}
           <div className="mt-4 space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -149,7 +170,12 @@ function MealReview({ meal }: { meal: any }) {
         </Card>
       </div>
       <Card className="p-6">
-        <AnalysisView analysis={meal.analysis} />
+        <AnalysisView
+          analysis={meal.analysis}
+          mealId={meal.id}
+          editable
+          onSaved={() => qc.invalidateQueries({ queryKey: ["doctor", "meals", patientId] })}
+        />
       </Card>
     </div>
   );

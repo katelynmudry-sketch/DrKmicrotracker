@@ -5,10 +5,14 @@ export type MockMeal = {
   mealLabel: string | null;
   eatenAt: string;
   status: "analyzed" | "analyzing" | "failed";
-  storagePath: string;
+  storagePath: string | null;
+  inputMethod: "photo" | "text";
+  mealDescription: string | null;
   patientNotes: string | null;
   doctorNotes: string | null;
   analysis: unknown;
+  analysisEditedAt: string | null;
+  analysisEditedBy: string | null;
 };
 
 const photo = (seed: string) => `https://picsum.photos/seed/${seed}/640/480`;
@@ -23,8 +27,12 @@ export const mockMeals: MockMeal[] = [
     eatenAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
     status: "analyzed",
     storagePath: photo("salmon"),
+    inputMethod: "photo",
+    mealDescription: null,
     patientNotes: "Felt good, not too full.",
     doctorNotes: null,
+    analysisEditedAt: null,
+    analysisEditedBy: null,
     analysis: {
       meal_name: "Grilled salmon bowl",
       identified_items: ["Salmon", "Quinoa", "Spinach", "Avocado"],
@@ -35,7 +43,9 @@ export const mockMeals: MockMeal[] = [
         { name: "Vitamin D", amount: "12mcg", daily_value_pct: 60 },
       ],
       rubric_notes: ["Aligned with anti-inflammatory protocol — good omega-3 source."],
-      naturopathic_recommendations: ["Add a source of vitamin C to improve iron absorption from spinach."],
+      naturopathic_recommendations: [
+        "Add a source of vitamin C to improve iron absorption from spinach.",
+      ],
       concerns: [],
       overall_score: 8,
     },
@@ -47,16 +57,29 @@ export const mockMeals: MockMeal[] = [
     eatenAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
     status: "analyzed",
     storagePath: photo("oatmeal"),
+    inputMethod: "photo",
+    mealDescription: null,
     patientNotes: null,
     doctorNotes: "Great consistent breakfast choice — keep it up.",
+    analysisEditedAt: null,
+    analysisEditedBy: null,
     analysis: {
       meal_name: "Oatmeal with mixed berries",
       identified_items: ["Oats", "Blueberries", "Strawberries", "Chia seeds"],
       estimated_portion: "~300g",
-      macros: { calories_kcal: 340, protein_g: 10, carbs_g: 58, fat_g: 8, fiber_g: 11, sugar_g: 14 },
+      macros: {
+        calories_kcal: 340,
+        protein_g: 10,
+        carbs_g: 58,
+        fat_g: 8,
+        fiber_g: 11,
+        sugar_g: 14,
+      },
       key_micros: [{ name: "Vitamin C", amount: "45mg", daily_value_pct: 50 }],
       rubric_notes: ["Good fiber content."],
-      naturopathic_recommendations: ["Consider adding a protein source to slow the glucose response."],
+      naturopathic_recommendations: [
+        "Consider adding a protein source to slow the glucose response.",
+      ],
       concerns: ["Moderate sugar from fruit — fine given the fiber content."],
       overall_score: 7,
     },
@@ -68,8 +91,12 @@ export const mockMeals: MockMeal[] = [
     eatenAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
     status: "analyzing",
     storagePath: photo("pasta"),
+    inputMethod: "photo",
+    mealDescription: null,
     patientNotes: "Date night, didn't track exact portions.",
     doctorNotes: null,
+    analysisEditedAt: null,
+    analysisEditedBy: null,
     analysis: null,
   },
   {
@@ -79,9 +106,40 @@ export const mockMeals: MockMeal[] = [
     eatenAt: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(),
     status: "failed",
     storagePath: photo("mystery"),
+    inputMethod: "photo",
+    mealDescription: null,
     patientNotes: null,
     doctorNotes: null,
+    analysisEditedAt: null,
+    analysisEditedBy: null,
     analysis: null,
+  },
+  {
+    id: "meal-5",
+    patientId: MOCK_PATIENT_ID,
+    mealLabel: "Snack — described, no photo",
+    eatenAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    status: "analyzed",
+    storagePath: null,
+    inputMethod: "text",
+    mealDescription: "A handful of almonds and an apple, eaten at my desk.",
+    patientNotes: null,
+    doctorNotes: null,
+    analysisEditedAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+    analysisEditedBy: MOCK_PATIENT_ID,
+    analysis: {
+      meal_name: "Almonds and apple",
+      identified_items: ["Almonds", "Apple"],
+      estimated_portion: "~30g almonds, 1 medium apple",
+      macros: { calories_kcal: 260, protein_g: 7, carbs_g: 28, fat_g: 14, fiber_g: 6, sugar_g: 19 },
+      key_micros: [{ name: "Vitamin E", amount: "7.5mg", daily_value_pct: 50 }],
+      rubric_notes: ["Good fiber-to-sugar ratio for a snack."],
+      naturopathic_recommendations: [
+        "Pair with a protein source if eaten more than 2 hours before a meal.",
+      ],
+      concerns: [],
+      overall_score: 7,
+    },
   },
 ];
 
