@@ -1,326 +1,339 @@
-# Nourish — The Dr. K Micronutrient Tracker: Ethos, Gaps, and Build Plan
+# Dr. K's Kitchen — Ethos, Design System, and Build Plan
+
+*(Supersedes the earlier "Nourish" plan. Decisions confirmed by Katelyn: the app is
+**Dr. K's Kitchen**; visual direction is **Garden Warmth + Botanical Clinic — no Sunny
+Kitchen elements**; analysis wording is the **Blend** system below; nutrient-gap
+suggestions ship in the demo, the rest of the pantry suite right after.)*
 
 ## Part 1 — The ethos (what this app believes)
 
 This is not a calorie counter. It is the opposite of one.
 
-Dr. K's clinical philosophy (from the Notion "Guide to Eating More Plants" material and
-TODO.md) translated into product principles that govern every screen, every AI prompt, and
-every chart:
+Dr. K's clinical philosophy (Notion "Eating More Plants" material + the three design
+drafts + TODO.md) as product principles governing every screen, prompt, and chart:
 
-1. **No calories. Anywhere. Ever.** The app never counts, displays, stores, or charts
-   calories. The story is what a meal *gives you* — micronutrients, protein, fiber, colour,
-   variety — never what it "costs."
-2. **No grades.** No 1–10 scores, no red/yellow/green verdicts, no "you failed today."
-   Feedback is observational and warm: what this meal did well, what could make it work even
-   harder, how it fits the doctor's plan. "Information, not failure" — Dr. K's own words
-   about transition symptoms apply to every piece of feedback the app gives.
-3. **Micronutrients are the plot.** The nutrients that actually matter in her practice:
-   iron (+ the vitamin C pairing rule), B12, vitamin D, calcium (food-first — she rarely
-   recommends supplements), omega-3/ALA, iodine, zinc, choline, magnesium, protein
-   (grams matter — "protein at every meal is a hormonal intervention"), and fiber.
-   And per her explicit position: **never flag selenium** as a gap for whole-food eaters.
-4. **Absorption intelligence is the superpower.** Dr. K's clinical spine is full of
-   pairing rules no consumer app knows: vitamin C with iron; coffee/tea an hour away from
-   iron-rich meals; cooked brassicas for Hashimoto's patients; oxalates limiting spinach's
-   calcium; phytates and soaking/sprouting for zinc; carminative spices with beans. The AI
-   should surface these as gentle, specific tips on real meals — this is what makes the app
-   unlike anything else.
-5. **Cravings and gaps are data, not sins.** Low on iron this week? The app suggests
-   pumpkin seeds and blackstrap molasses, it doesn't scold. Chocolate craving? That's
-   often iron + magnesium talking — the app can say so.
-6. **Plant-forward, not plant-policing.** More vegetables, more colours, more variety,
-   more whole foods — celebrate additions ("3 colours on that plate!", "12 different plants
-   this week"), never shame inclusions.
-7. **The doctor's rubric is the lens, the doctor is the human in the loop.** Every analysis
-   is read through Dr. K's uploaded guidelines; she reviews, corrects, and annotates. The AI
-   assists her practice — it doesn't replace her judgment.
+1. **No calories. Anywhere. Ever.** Never counted, displayed, stored, or charted. The
+   story is what a meal *gives you* — micronutrients, protein, fiber, colour, variety.
+2. **No grades.** No 1–10 scores, no red/yellow/green verdicts. The drafts say it best:
+   *"without scores designed to shame"*, *"no spreadsheets, no guilt, no clinical
+   coldness — just gentle clarity between visits."* Protocol fit is expressed
+   qualitatively ("Aligned"), never numerically.
+3. **Micronutrients are the plot.** Iron (+ the vitamin C pairing rule), B12, vitamin D,
+   calcium (food-first — she rarely recommends supplements), omega-3/ALA, iodine, zinc,
+   choline, magnesium, protein (grams matter — "protein at every meal is a hormonal
+   intervention"), fiber. Per her explicit position: **never flag selenium**.
+4. **Absorption intelligence is the superpower.** Vitamin C with iron; coffee/tea an hour
+   away from iron-rich meals; cooked brassicas for Hashimoto's; oxalates vs spinach
+   calcium; phytates and soaking/sprouting for zinc; carminative spices with beans.
+   Surfaced as gentle, specific tips on real meals — no other app does this.
+5. **Cravings and gaps are data, not sins.** Low iron week → suggest pumpkin seeds and
+   blackstrap molasses; chocolate craving → that's often iron + magnesium talking.
+6. **Plant-forward, not plant-policing.** Celebrate additions ("beautiful colours on
+   that plate", "12 different plants this week"), never shame inclusions.
+7. **The doctor's rubric is the lens; the doctor is the human in the loop.** Every
+   reading is scored against *her* written protocol — "Scored to YOUR plan, not a
+   generic database" — and she reviews, corrects, annotates, and re-runs.
 
-**Voice rule for all app copy and AI output:** warm, clinically grounded, zero judgment,
-first-person-plural where natural — Katelyn's handout voice, not an app's nagging voice.
+**Voice rule:** warm, clinically grounded, zero judgment — "like a note from your ND."
+One warm opening line (the *"love note from your body"* moment), then quiet clear detail.
+Emoji sparing. First-person-plural where natural.
 
 ---
 
-## Part 2 — What the app is (plain-English)
+## Part 2 — Name, design system, and vocabulary (now decided)
 
-**Patients:** snap a photo of a meal (or describe it in words) → the AI reads it through
-Dr. K's rubric → they see a nourishment breakdown: what the meal provided, which key
-micronutrients it delivered, gentle food-first suggestions, absorption tips. Over time they
-see their patterns: micronutrient coverage, plant variety, colour diversity, logging streaks.
+### Name: **Dr. K's Kitchen**
+Replaces "Nourish" everywhere: app header/logo, PWA install name, login + landing copy,
+manifest, README. Practitioner line: Dr. Katelyn Mudry, ND — Kimberley & Cranbrook, BC.
 
-**Dr. K:** uploads/edits her dietary rubrics (per program or per patient type) → opens any
-patient → sees their meal history, their nutrient-coverage trends, adds visit notes, corrects
-any AI estimate, re-runs analysis after a rubric change → eventually exports a summary for
-the chart.
+### Design system: Garden Warmth skin × Botanical Clinic structure — **no Sunny Kitchen**
+Source of truth: `design-drafts/1-garden-warmth.html` and `3-botanical-clinic.html` on
+branch `claude/drkmudry-html-drafts-2ssq76` (bring the drafts folder onto the working
+branch for reference).
+- **Palette (from Garden Warmth):** cream background `#fbf6ec` / deep cream `#f3e9d4`,
+  terracotta primary `#d97a52` (deep `#b85f3a`), sage `#7c9473` (deep `#56684c`),
+  ink `#3a352b`, soft ink `#6b6557`, hairline `#e3d8c2`. Mapped into the existing
+  Tailwind token system in `src/styles.css` (convert to oklch, keep semantic token names
+  so every component inherits the reskin).
+- **Type:** Fraunces (display, serif, italic accents) + Nunito (body) — self-hosted
+  (PWA must work offline; no Google Fonts CDN at runtime).
+- **Shape:** generous radii (cards ~22px, pill buttons), warm cards, dashed dividers used
+  sparingly — but adopt Botanical Clinic's *restraint*: thin hairlines, whitespace,
+  no blobs/rotations/confetti, no achievement badges, minimal emoji.
+- **Signature components (from the drafts):**
+  - **Meal card** = photo hero + attribute pills ("Iron-rich", "Anti-inflammatory",
+    "Fibre +12g") + dashed-top note in Dr. K's voice (Garden Warmth hero card).
+  - **Reading rows** = label → qualitative value: "Iron → Strong source",
+    "Inflammatory load → Low", "Protocol fit → Aligned" (Botanical Clinic report panel).
+  - **Protocol tag chips**: Fertility care · Anti-inflammatory · Gut healing · Hormone
+    support (Botanical Clinic).
+  - Landing page rebuilt from the drafts' shared skeleton, reusing their best verbatim
+    copy (below).
 
-**The machinery (for the non-coder):**
-- **Frontend** — the React web app (installable on a phone like a native app). All screens
-  already exist structurally: landing, login, patient dashboard, meal detail, doctor pages.
-- **Backend** — Firebase handles login, the database (Firestore), and photo storage. Small
-  "server functions" bundled with the app do the privileged work and talk to the AI. The AI
-  key never reaches anyone's browser (already true today).
-- **AI engine** — Claude reads the photo/description plus the rubric and writes the entire
-  analysis in a strict, typed format.
+### Vocabulary system (the Blend — used by UI, AI prompt, and all docs)
+| Concept | The word |
+|---|---|
+| The analysis | **a reading** |
+| What it contains | **What this meal offered** |
+| Suggestions | **Worth trying** |
+| Doctor's notes | **Notes from Dr. K** |
+| Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
+| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Uncertainty | "We couldn't quite see…" |
+| Trends page | **Patterns** |
+| Gap suggestions | "In your pantry" / "Try something new" (from the pantry branch — already perfectly phrased) |
 
-### Do we need a backup food database? **No — and doubly no given the ethos.**
-The classic reason to bolt on a nutrient database (Canadian Nutrient File / USDA) is exact
-milligram math on weighed portions. That's a huge sub-project (food matching, portion
-modeling, database maintenance) that would make the app *worse* here, because:
-- Nobody weighs food from a photo. Database precision on a guessed portion is fake precision.
-- The product isn't milligram accounting — it's coverage, patterns, pairings, and the
-  doctor's lens. Claude is genuinely good at "this meal is a strong iron source but the tea
-  will inhibit it" — a database knows nothing about that.
-- The doctor is the accuracy backstop: every value is editable, and her review loop catches
-  anything odd (already built).
-**Mitigations instead of a database:** the AI reports honest ranges/levels rather than
-false-precision decimals, flags uncertainty explicitly, cites what it recognized in the
-photo, and everything stays editable. If the pilot ever shows a real accuracy problem, a
-lightweight spot-check against a reference table can be added later — it's an add-on, not a
-foundation, so nothing we build now gets thrown away.
+**Microcopy bank (preserve verbatim from the drafts):** "Snap your meal, get a little
+love note from your body." · "This bowl is doing exactly what we hoped for your energy
+this week — nice work!" · "No spreadsheets, no guilt, no clinical coldness — just gentle
+clarity between visits." · "See trends over weeks, not just one snapshot — without
+judgment, just information." · "Without scores designed to shame." · "Three steps, zero
+stress." · "Considered, not clinical." · "Food is medicine — but only when you can
+actually see what it's doing for you." — Dr. Katelyn Mudry, ND
 
----
-
-## Part 3 — Where the code is today, and where it fights the ethos
-
-### Solid and keepable
-Every screen exists and works: landing → auth (email + Google, plus a no-backend preview
-mode) → patient dashboard (camera + text logging, history) → meal detail with editable
-analysis → doctor patient list / per-patient review with notes / rubric upload. The AI
-pipeline (photo → Claude → saved analysis) works end to end. PWA and Vercel build are
-configured. This skeleton is genuinely good — the plan keeps essentially all of it.
-
-### Ethos violations (found in code — must change)
-- `analyzeMeal` (src/lib/meals.functions.ts) demands `calories_kcal` and
-  `overall_score: number // 1-10` from the AI, and the UI (analysis-view.tsx) renders a
-  calories tile and a "Rubric score X/10" badge. **Both concepts get removed entirely** —
-  schema, prompt, UI, mock data.
-- The prompt's "concerns" framing invites deficit-speak; it gets rewritten into Dr. K's
-  observational voice, and her clinical positions (vitamin C rule, no selenium flags,
-  cravings-as-data, carminatives, cooked brassicas for Hashimoto's) get baked into the
-  system prompt as the permanent clinical spine, with her uploaded rubrics layered on top.
-
-### Engineering loopholes (found in code review — must fix)
-1. **No database security rules exist in the repo at all** (`firestore.rules`,
-   `storage.rules`, `firebase.json` missing). The browser talks to the database directly, so
-   rules are the only thing stopping patient A from reading patient B's meals — and the
-   user's role is currently written from the browser, so nothing stops self-promotion to
-   "doctor" (src/hooks/use-auth.ts).
-2. **Stuck meals:** the AI call is fire-and-forget from the browser; close the tab
-   mid-analysis and the meal spins "analyzing…" forever. No retry, no timeout; a malformed
-   AI reply can save junk as the analysis.
-3. **First-visitor-wins doctor:** whoever opens /doctor first becomes THE doctor.
-4. **Untyped analysis** (`unknown` end-to-end) → known TypeScript error, `as any` casts.
-5. `getMealPhotoUrl` lets any doctor sign a link to ANY stored file (unscoped).
-6. Rubric upload doesn't read the PDF — the doctor must hand-paste a summary.
-7. Polish debt: PWA install colours are dark against a light app; stale copy about a
-   nonexistent "Doctor Setup page"; dead code (old `supabase/` backend, demo endpoints,
-   duplicate lockfiles); no README/setup docs/CI/demo data.
+### Do we need a backup food database? **Not for readings — but yes to a small food catalog.**
+- **No database for meal analysis.** Claude remains the reading engine; database math on a
+  photo-guessed portion is fake precision, and the product is coverage/patterns/pairings.
+  The doctor's editable review loop is the accuracy backstop.
+- **Yes to the whole-foods catalog the pantry branch already built:** a trimmed Canadian
+  Nutrient File (CNF) list used *only* to rank suggestion foods ("worth adding for
+  iron: pumpkin seeds…") and match pantry items — never to grade meals. Port it off the
+  branch's Supabase into a **bundled static JSON** (whole foods only, ~8 tracked
+  nutrients), killing the second backend. Its fuzzy-matching and ranking code is reusable
+  as-is.
 
 ---
 
-## Part 4 — The full feature spectrum
+## Part 3 — What exists today (verified across all 6 branches)
 
-Everything from TODO.md's backlog plus what the ethos demands, mapped to when it lands:
+### On `main` (working)
+Landing → auth (email + Google; no-backend preview mode) → patient dashboard (photo +
+describe-in-text logging, history) → meal detail with editable analysis → doctor patient
+list / per-patient review + notes / rubric upload. Server fns for analysis, edits, signed
+photo URLs, rubrics. PWA + Vercel build configured.
+
+### On other branches (discovered, feeding this plan)
+- `claude/drkmudry-html-drafts-2ssq76` — the three Dr. K's Kitchen design drafts
+  (now the design source of truth).
+- `claude/pantry-inventory-nutrients-xdqaru` — complete pantry suite: pantry inventory
+  (add by form / photo scan / **voice** via browser speech + Claude parsing), grocery
+  list with reasons, **nutrient-gap suggestions** (pure-function gap math + two-tier
+  pantry-first suggestions), CNF food reference (on Supabase — must be ported), analog
+  CNF meal logging. Forked before main's latest work → **port by re-implementing on
+  main, never git-merge** (it would revert main's editable analysis + text entry).
+- `claude/extra-prd-prioritization-o6npca`, `claude/new-app-loveable-review-qlf9pd` —
+  no unique commits; ignore.
+
+### Ethos violations in current code (must change)
+- Analysis schema demands `calories_kcal` and `overall_score` (1–10); UI shows a calories
+  tile and "Rubric score X/10" badge (`src/lib/meals.functions.ts`,
+  `src/components/app/analysis-view.tsx`). Remove both concepts everywhere.
+- "Concerns" framing → rewritten to observational Dr. K voice; her clinical positions
+  become the permanent prompt spine.
+- App name/branding says "Nourish" with a generic clinic-minimal theme → becomes
+  Dr. K's Kitchen with the design system above.
+
+### Engineering loopholes (must fix)
+1. **No Firestore/Storage security rules in the repo at all** — browser reads/writes the
+   DB directly; the user's role is client-writable (self-promotion to doctor possible).
+2. **Stuck meals** — client fire-and-forget AI call; closed tab = stuck "analyzing"; no
+   retry/timeout; malformed reply can save junk.
+3. **First-visitor-wins doctor** (`claimDoctorIfNone`).
+4. Untyped analysis (`unknown` end-to-end; known tsc error, `as any` casts).
+5. `getMealPhotoUrl` lets a doctor sign ANY storage path.
+6. Rubric PDF isn't read — doctor hand-pastes a summary.
+7. Dead code (`supabase/` dir on main, demo endpoints, duplicate lockfiles), PWA colours
+   mismatch, no README/CI/docs/seed data.
+
+---
+
+## Part 4 — Feature spectrum → when it lands
 
 | Feature | Source | When |
 |---|---|---|
-| Photo + text meal logging with AI analysis | built | keep |
-| Editable analysis (patient/doctor corrections, audit trail) | built | keep |
-| Rubric upload + active-rubric injection | built | keep |
-| Doctor patient review + notes | built | keep |
-| Preview/mock mode (UI review with no backend) | built | keep |
-| **Calorie-free, grade-free analysis in Dr. K's voice** | ethos | **Demo** |
-| **Absorption/pairing tips on every meal** | ethos | **Demo** |
+| Photo + text meal logging → AI reading | built (main) | keep |
+| Editable reading (patient/doctor corrections, audit trail) | built (main) | keep |
+| Rubric upload + injection | built (main) | keep |
+| Doctor review + notes | built (main) | keep |
+| Preview/mock mode | built (main) | keep |
+| **Dr. K's Kitchen rebrand + design system + landing page** | drafts | **Demo** |
+| **Calorie-free, grade-free reading in the Blend vocabulary** | ethos | **Demo** |
+| **Absorption/pairing tips on every reading** | ethos | **Demo** |
 | Security rules + real role management | loophole | **Demo** |
-| Reliable analysis (no stuck meals, retry) | loophole | **Demo** |
-| Re-analyze after rubric change (doctor-triggered) | TODO #1 | **Demo** |
-| Rubric PDF auto-extraction (no hand-pasting) | TODO gap | **Demo** |
-| **Nourishment trends: micro coverage, plant variety ("30 plants/week"), colour diversity, streaks — counts, never grades** | TODO #4 + ethos | **Demo** |
-| Demo seed data + demo walkthrough script | new | **Demo** |
-| Meal-logging reminders/notifications | TODO #5 | Pilot |
-| Edit history / versioning of corrections | TODO #2 | Pilot |
-| Per-patient rubric assignment (multi-rubric) | TODO #6 | Pilot |
-| Structured per-ingredient entry (optional alt to free text) | TODO #3 | Later |
-| Doctor export/reporting (PDF/CSV for the chart) | TODO #7 | Later |
-| Visual reskin (the "combo of UI examples" — owner decides) + dark mode wiring | pending owner | Later |
-| Optional nutrient-table spot-check layer | Part 2 answer | Only if pilot shows need |
+| Reliable analysis (server status, retry, schema-enforced) | loophole | **Demo** |
+| Re-analyze with current rubric (doctor button) | TODO #1 | **Demo** |
+| Rubric PDF auto-extraction | TODO gap | **Demo** |
+| **Patterns page: micro coverage, plant variety, colour diversity, streaks — counts, never grades** | TODO #4 + ethos | **Demo** |
+| **Nutrient-gap suggestions ("In your pantry" / "Try something new")** | pantry branch | **Demo** (CNF→bundled JSON) |
+| Demo seed data + walkthrough script | new | **Demo** |
+| **Pantry inventory (form / photo scan / voice) + grocery list** | pantry branch | **Post-demo #1** (port ≈2 sessions) |
+| Voice meal describe (reuse voice-capture on the meal flow) | extension | Post-demo |
+| Meal reminders/notifications | TODO #5 | Pilot |
+| Edit history / versioning | TODO #2 | Pilot |
+| Per-patient rubric assignment | TODO #6 | Pilot |
+| Analog CNF meal logging (third tab) | pantry branch | Later (only if Dr. K wants gram-precise entry) |
+| Doctor export/reporting (PDF/CSV) | TODO #7 | Later |
+| Dark mode wiring | tokens exist | Later |
 
 ---
 
-## Part 5 — The build plan (5 phases)
+## Part 5 — Build phases
 
-### Phase 1 — Foundations: accounts, cleanup, security *(≈2 sessions + ~1 hr owner)*
+### Phase 1 — Foundations *(≈2 sessions + ~1 hr owner)*
+- **1a. `docs/SETUP.md` + owner accounts** (~45 min owner): Firebase project (Auth
+  email+Google, Firestore production mode, Storage), copy 6 web + 4 server values into
+  `.env` (exact multi-line key instructions), Anthropic key (~$20 + spend cap), publish
+  rules from repo (console paste or 2 CLI commands — doc shows both).
+- **1b. Cleanup**: delete `supabase/` (main), `src/lib/api/example.functions.ts`, bun
+  lockfiles, `.lovable/`; fix stale "Doctor Setup page" copy; build green. Cherry-pick
+  `design-drafts/` onto the working branch for reference.
+- **1c. Security rules** (the most important deliverable): `firebase.json` +
+  `firestore.rules` + `storage.rules` + indexes matched to every client query — role
+  never client-writable (also remove role write in `src/hooks/use-auth.ts`); meals
+  created only by owner, analysis/status server-only, doctor edits limited to notes;
+  rubrics doctor-only; photos owner-upload-only, reads via signed URLs; scope
+  `getMealPhotoUrl` to `meal-photos/`. **Doctor management:** delete `claimDoctorIfNone`;
+  `DOCTOR_EMAILS` env allowlist + `ensureRole` server fn; wire existing `promoteToDoctor`
+  as an "add a doctor" card. Risk mitigation: enumerate every client query vs the rules
+  matrix; test against real Firebase in dev before publishing.
 
-**1a. `docs/SETUP.md` + owner account creation** *(Claude writes; owner clicks through, ~45 min)*
-Non-coder checklist: create the Firebase project (enable Authentication with
-Email/Password + Google, Firestore in production mode, Storage) → copy the 6 web-app values
-and 4 service-account values into `.env` (template exists in `.env.example`, with exact
-multi-line-key paste instructions) → create an Anthropic API key at console.anthropic.com
-(~$20 credit + a monthly spend cap) → publish the security rules from the repo (console
-paste, or two CLI commands — doc shows both).
+### Phase 2 — The reading engine, rebuilt on the ethos *(≈2 sessions; the heart)*
+One coherent rewrite of `analyzeMeal`:
+- **2a. New schema** (`src/lib/analysis.schema.ts`, zod, shared server/UI/mocks):
+  `meal_name`, `identified_items`, `estimated_portion`; `opening_note` (the one-line
+  love-note in Dr. K's voice); `building_blocks` (protein g, fiber g, healthy-fat
+  sources, complex-vs-refined carbs — **no calories field exists**); `micronutrients[]`
+  ({nutrient, level: strong|present|light|not_seen, from: which food}); `offered`
+  (nourishment highlights); `worth_trying` (food-first additions); `absorption_notes`;
+  `protocol_fit` ({tier: aligned|getting_there|worth_a_look, note}); `uncertainty`.
+  Removed concepts: calories, sugar-as-shame, numeric score, "concerns".
+- **2b. The Dr. K clinical spine** (`src/lib/clinical-spine.ts`, editable without touching
+  engine code): her positions (vitamin C+iron, coffee/tea timing, never flag selenium,
+  carminatives, cooked brassicas only for Hashimoto's, cravings-as-data, celebrate
+  colours/variety) + the voice rule + vocabulary; uploaded rubrics layered on top.
+- **2c. Bulletproofing**: server owns status (`pending → analyzing → analyzed | failed` +
+  readable error; client never writes status); structured outputs so the reply always
+  matches the schema; validation before save + one corrective retry + timeout; model via
+  `ANTHROPIC_MODEL` env (default claude-sonnet-4-6); "Retry" for failed/stalled meals;
+  doctor "Re-analyze with current rubric" button; record rubric IDs used per reading.
+- **2d. Typed end-to-end**: kill `unknown`/`as any`; `typecheck` script passes; minimal CI.
 
-**1b. Cleanup** *(Claude, small)* — delete the dead `supabase/` folder, the unauthenticated
-demo endpoints (`src/lib/api/example.functions.ts`), duplicate bun lockfiles, `.lovable/`;
-fix the stale "Doctor Setup page" login copy; `npm run build` green.
-
-**1c. Security rules — the most important single deliverable** *(Claude, medium)*
-New `firebase.json` + `firestore.rules` + `storage.rules` + indexes, matched to every
-existing client query:
-- `users`: readable by self or doctor; **role never writable from a browser** (also remove
-  the role write from `src/hooks/use-auth.ts`).
-- `meals`: created only by their owner (fresh status, no analysis); readable by owner or
-  doctor; analysis/status fields writable only by the server; doctor edits limited to notes.
-- `rubrics`: doctor-only. Photos: uploadable only to your own folder (images only, <10MB);
-  all viewing through short-lived signed links; scope `getMealPhotoUrl` so even doctors can
-  only sign meal-photo paths.
-- **Real doctor management**: delete first-visitor-wins `claimDoctorIfNone`; replace with a
-  `DOCTOR_EMAILS` setting (a list the owner edits in Vercel — matching emails become doctors
-  on sign-in via a small `ensureRole` server function) plus the existing-but-unused
-  `promoteToDoctor` as an "add a doctor" card for later.
-- Known risk: rules can silently break existing screens (doctor pages query broadly).
-  Mitigation: enumerate every client query against the rules and test against real Firebase
-  in dev before publishing.
-
-### Phase 2 — The analysis engine, rebuilt on the ethos *(≈2 sessions; the heart of the project)*
-
-One coherent rewrite of `analyzeMeal` (src/lib/meals.functions.ts) so we touch it once:
-
-**2a. New analysis schema — calorie-free, grade-free** (new `src/lib/analysis.schema.ts`,
-a typed zod schema shared by server, UI, and mock data). Proposed shape (final field names
-tuned with you):
-- `meal_name`, `identified_items` (what the AI recognized — honesty about what it saw),
-  `estimated_portion`
-- `building_blocks`: protein (g, because Dr. K prescribes protein targets), fiber (g),
-  healthy fats (qualitative: sources spotted), complex vs refined carbs (qualitative)
-  — **no calories field exists**
-- `micronutrients`: per nutrient from Dr. K's list (iron, B12, D, calcium, ALA/omega-3,
-  iodine, zinc, choline, magnesium…): level `rich | present | low | not_detected` + which
-  food delivered it — honest tiers instead of fake-precision milligrams (still editable)
-- `nourishment_highlights`: what this meal did well (always present — every meal gives
-  something)
-- `gentle_additions`: food-first suggestions ("a squeeze of lemon would unlock that
-  lentil iron")
-- `absorption_notes`: the pairing intelligence (Principle 4)
-- `rubric_alignment`: qualitative notes on how the meal fits the doctor's uploaded plan —
-  prose, not a number
-- `uncertainty`: what the AI couldn't tell from the photo
-- **Removed concepts: `calories_kcal`, `sugar_g`-as-shame-metric, `overall_score`,
-  "concerns" framing.**
-
-**2b. The Dr. K clinical spine in the prompt.** System prompt rewritten in her voice and
-positions (vitamin C + iron rule, coffee/tea timing, never flag selenium, carminatives,
-cooked brassicas only for Hashimoto's, cravings-as-data reframes, celebrate colours/variety),
-with her uploaded rubrics layered on top per analysis. The spine lives in one editable file
-(`src/lib/clinical-spine.ts`) so refining the voice never requires touching engine code.
-
-**2c. Bulletproofing.** Server owns the status lifecycle (`pending → analyzing → analyzed |
-failed` with a readable error — the browser never writes status, so no more stuck meals);
-Claude's reply is schema-enforced via structured outputs (the AI must fill the typed form —
-no junk saves), validated before saving, one corrective retry, sensible timeout; model name
-becomes a setting (`ANTHROPIC_MODEL`, default claude-sonnet-4-6); "Retry analysis" button for
-failed/stalled meals; doctor-facing **"Re-analyze with current rubric"** button (TODO #1)
-riding the same path; record which rubric versions were used per analysis.
-
-**2d. Typed end-to-end.** The shared schema kills the `unknown`/`as any` debt and the known
-TypeScript error; add a `typecheck` script + minimal CI (lint, typecheck, build).
-
-### Phase 3 — Ethos-aligned UI *(≈1–2 sessions; structural, survives your later reskin)*
-
-- **AnalysisView v2** (src/components/app/analysis-view.tsx): nourishment highlights first,
-  then micronutrient levels (tiers, with the delivering food named), building blocks,
-  gentle additions, absorption notes, rubric alignment. No score badge, no calories tile.
-  Inline editing keeps working against the new schema.
-- **Copy pass everywhere** in Dr. K's voice: buttons, empty states, toasts, the landing page
-  ("Nourish" stays; tagline and copy re-checked against the no-judgment rule).
-- Mock/preview data rewritten to the new schema so the UI is reviewable without a backend.
+### Phase 3 — Dr. K's Kitchen: rebrand + reading UI *(≈2 sessions)*
+- **3a. Design tokens**: rewrite `src/styles.css` palette to the Garden Warmth values
+  (as oklch, semantic token names preserved), self-host Fraunces + Nunito, radii/shape
+  pass. Because the app already uses semantic tokens, most components reskin themselves.
+- **3b. Reading UI v2** (`analysis-view.tsx`): opening note → reading rows (label →
+  qualitative value, Botanical Clinic style) → What this meal offered → Worth trying →
+  absorption notes → Protocol fit chip → Notes from Dr. K. Attribute pills on meal cards.
+  Inline editing rewired to the new schema. No score badge, no calories tile anywhere.
+- **3c. Landing page** rebuilt from the two drafts' shared skeleton with the microcopy
+  bank; app shell/logo/nav renamed; PWA manifest (name "Dr. K's Kitchen", cream/terracotta
+  theme colours, regenerate icons to match brand).
+- **3d. Copy pass** on every button, empty state, toast in the Blend voice; mock data
+  rewritten to the new schema so preview mode shows the real experience.
 
 ### Phase 4 — Stand-out features *(≈2–3 sessions)*
-
-**4a. Nourishment trends — the demo centerpiece** *(large)*
-Counts and coverage, never grades. Pure aggregation helpers (`src/lib/trends.ts`) + one
-reusable panel used on the patient dashboard and the doctor's per-patient page:
-- **Micronutrient coverage map**: for each Dr. K nutrient, how often it showed up
-  rich/present across the week — the "where are the gaps" picture at a glance, with
-  food-first suggestions attached to gaps (never warnings)
-- **Plant variety counter**: distinct plants this week (the "30 plants a week" story) —
-  a delightful, judgment-free number that gamifies exactly the right behaviour
-- **Eat-the-rainbow**: colour diversity per week
-- **Protein & fiber rhythm**: grams per day vs the doctor's target as a gentle band, not a
-  pass/fail line
-- Logging streaks and meal counts; friendly empty state under 3 analyzed meals
-- Doctor view adds: most-frequent absorption opportunities and rubric-alignment themes
-Built on the already-vendored chart tooling (recharts + chart.tsx), theme tokens only
-(reskin-proof), dataviz skill applied.
-
-**4b. Demo seed data + script** *(medium)* — a doctor-only "Seed demo data" button (gated by
-a `DEMO_MODE` setting): 3 realistic demo patients × ~15 meals across 3 weeks with
-pre-written analyses telling visible stories in the trends (an iron gap closing after the
-vitamin-C tip; plant variety climbing). Zero AI cost, one-click removal, plus `docs/DEMO.md`
-— the exact walkthrough script for demo day.
-
-**4c. Rubric PDF auto-extraction** *(small–medium)* — on upload, the server sends the PDF
-itself to Claude and pre-fills the extracted dietary rules for the doctor to review/edit.
-No more mandatory hand-pasting.
-
-**4d. Polish** *(small)* — PWA install colours match the light theme; loading skeletons;
-friendly empty states; icons verified.
+- **4a. Patterns page** (patient + doctor embed): micronutrient coverage map (how often
+  each Dr. K nutrient showed up strong/present this week, gaps get food-first suggestions
+  attached — never warnings); plant-variety counter ("12 different plants this week");
+  colour diversity; protein & fiber rhythm vs the doctor's target as a gentle band;
+  streaks/counts. Friendly empty state under 3 readings. Built on vendored recharts +
+  theme tokens; dataviz skill applied.
+- **4b. Nutrient-gap suggestions** (port from pantry branch): `computeNutrientGaps` +
+  two-tier suggestions rewired to the new tier schema; CNF catalog → bundled JSON
+  (whole foods, 8 nutrients — reuse branch's Fuse.js matching + ranking; drop Supabase).
+  Lives on the Patterns page ("Try something new") — pantry tier activates post-demo.
+- **4c. Rubric PDF auto-extraction**: server fn sends the uploaded PDF to Claude as a
+  document block; prefills the review-and-edit box. Non-PDFs keep manual paste.
+- **4d. Demo seed data + `docs/DEMO.md`**: doctor-only Seed/Clear buttons gated by
+  `DEMO_MODE=true`; 3 demo patients × ~15 meals across 3 weeks with pre-written readings
+  whose arcs tell stories (an iron gap closing after the lemon tip; plant variety
+  climbing). Zero AI cost; `demo: true` tag for one-click removal; walkthrough script.
 
 ### Phase 5 — Deploy + prove it *(1 session + ~30 min owner)*
+- Vercel import → env vars (+ `DOCTOR_EMAILS`, `DEMO_MODE` while demoing) → deploy →
+  **add the Vercel domain to Firebase authorized domains** (Google login breaks
+  otherwise). Claude: 60s serverless timeout for photo readings; production build + PWA
+  verified locally first. `README.md` (what it is, the ethos, architecture, doc pointers).
+- **Verification checklist** (live URL, phone + desktop): fresh signup → photo reading
+  end-to-end; text meal; kill-tab → Retry recovers; bad API key → readable failure;
+  edits persist; **nothing anywhere shows a calorie or a score**; patient can't reach
+  doctor pages / others' meals / self-promote (rules test denied); allowlisted doctor
+  auto-role; rubric PDF extract → re-analyze reflects it; Patterns + gap suggestions
+  populated (and graceful when empty); seed/clear demo data; Google login on prod domain;
+  PWA installs as "Dr. K's Kitchen" with cream/terracotta colours, camera works;
+  build/typecheck/lint/CI green; preview mode still works with no env.
 
-- **Vercel deploy** (owner, guided): import the GitHub repo → paste the settings (the env
-  values plus `DOCTOR_EMAILS`, `DEMO_MODE` while demoing) → deploy → **add the Vercel domain
-  to Firebase's authorized sign-in domains** (Google login breaks without this — bolded in
-  the doc). Claude raises the serverless timeout to 60s for photo analyses and pre-verifies
-  the production build.
-- **README.md**: what the app is, the ethos, architecture sketch, pointers to SETUP/DEMO docs.
-- **Verification checklist** (live URL, phone + desktop):
-  1. Fresh patient signup → dashboard; photo meal from the phone camera → analyzing →
-     a warm, calorie-free, grade-free analysis with absorption tips.
-  2. Text meal → same. Kill the tab mid-analysis → reopen → Retry recovers it.
-  3. Break the AI key on purpose → readable "failed" + Retry works after fixing.
-  4. Inline-edit values → persists. **Nothing anywhere shows a calorie or a score.**
-  5. Patient can't open doctor pages, can't read another patient's meal, can't self-promote
-     (rules test → denied).
-  6. `DOCTOR_EMAILS` email signs in → is a doctor; reviews a patient, adds a note, uploads a
-     rubric PDF (auto-extracted), re-analyzes a meal → alignment notes reflect the rubric.
-  7. Trends populated for an active patient; graceful empty state for a new one.
-  8. Seed demo data → charts tell their stories; clear → gone; buttons absent when the demo
-     setting is off.
-  9. Google sign-in works on the live domain; PWA installs with correct colours; camera
-     works from the installed app.
-  10. Build/typecheck/lint/CI clean; preview mode still works with no settings (safety net).
+### Post-demo milestone #1 — Pantry suite port *(≈2 sessions)*
+Pantry inventory (form / photo scan / voice via Web Speech + Claude parsing, with
+textarea fallback for iOS), grocery list with reasons, "In your pantry" suggestion tier,
+"mark used up → grocery" flow. Port onto current main (new routes/collections — low
+conflict); never git-merge the branch (it would revert newer main work).
 
 ---
 
-## Part 6 — Order of work
+## Part 6 — Carrying the ethos through every future session: CLAUDE.md setup
+
+Create these files in the repo (first implementation session) so *any* Claude session —
+Sonnet, Fable, web, CLI — automatically absorbs the ethos before touching code:
+
+1. **`CLAUDE.md` (repo root — auto-loaded by every Claude Code session).** Short and
+   commanding, pointing to the deeper docs:
+   - What the app is (2 lines) + link to `docs/ETHOS.md`, `docs/PLAN.md`, `docs/VOICE.md`.
+   - **Hard rules (non-negotiable):** never add calories, calorie math, or calorie
+     fields; never add numeric/letter/colour-coded scores or grades; never use shaming,
+     warning-red, or diet-culture language; never flag selenium; all patient-facing
+     wording follows `docs/VOICE.md`; the AI prompt spine lives in
+     `src/lib/clinical-spine.ts` — edit wording there, never inline in engine code.
+   - **Architecture rules:** Firebase only (no second backend); analysis/status writes
+     server-side only; security rules in repo are source of truth; run
+     `npm run typecheck && npm run lint && npm run build` before pushing.
+   - **Design rules:** use semantic tokens in `src/styles.css` only (never raw hex in
+     components); fonts Fraunces/Nunito; no Sunny Kitchen elements (confetti, badges,
+     gamified arcs).
+2. **`docs/ETHOS.md`** — Part 1 of this plan verbatim + the "why" (her positions with
+   sources), so future sessions understand intent, not just rules.
+3. **`docs/VOICE.md`** — the vocabulary table + microcopy bank + do/don't examples
+   (e.g. do: "This bowl is doing exactly what we hoped for your energy this week";
+   don't: "You exceeded your sugar target"). Both the UI copy AND the AI prompt import
+   their language from this single source.
+4. **`docs/PLAN.md`** — this plan (kept current as phases complete; each session checks
+   off what it shipped).
+5. Optional but recommended: a tiny **ethos lint** — CI greps `src/` for forbidden
+   patterns (`calorie`, `kcal`, `score`, `grade`) outside an allowlist, so a regression
+   can't even build. Cheap, catches model drift forever.
+
+Session workflow for you (non-coder): start each session with *"Read CLAUDE.md and
+docs/PLAN.md, then continue with Phase N."* That's the whole ritual — the files do the
+ethos-carrying.
+
+---
+
+## Part 7 — Order of work
 
 | # | Item | Who | Size |
 |---|------|-----|------|
 | 1 | SETUP.md; owner creates Firebase + Anthropic accounts | Claude + owner | 1h + 45m |
-| 2 | Cleanup, copy fixes, build green | Claude | S |
-| 3 | Security rules + role management (`DOCTOR_EMAILS`) | Claude | M |
-| 4 | Owner publishes rules (paste or 2 commands) | owner | 10m |
-| 5 | Analysis engine rebuild: ethos schema + Dr. K spine + reliability + typed | Claude | L |
-| 6 | AnalysisView v2 + app-wide copy pass + mock data v2 | Claude | M |
-| 7 | Nourishment trends (patient + doctor) | Claude | L |
-| 8 | Demo seed data + DEMO.md | Claude | M |
-| 9 | Rubric PDF auto-extraction | Claude | S–M |
-| 10 | Re-analyze button + PWA colours + empty states | Claude | S |
-| 11 | Vercel deploy, README, full verification | Claude + owner | M |
+| 2 | CLAUDE.md + docs/ETHOS.md + docs/VOICE.md (ethos rails first) | Claude | S |
+| 3 | Cleanup, copy fixes, bring design-drafts over, build green | Claude | S |
+| 4 | Security rules + DOCTOR_EMAILS role management | Claude | M |
+| 5 | Owner publishes rules | owner | 10m |
+| 6 | Reading engine rebuild (schema, spine, reliability, typed, CI) | Claude | L |
+| 7 | Rebrand: tokens, fonts, Reading UI v2, landing, PWA, copy pass | Claude | L |
+| 8 | Patterns page + gap suggestions (CNF→JSON port) | Claude | L |
+| 9 | Rubric PDF extraction + re-analyze button | Claude | S–M |
+| 10 | Demo seed data + DEMO.md | Claude | M |
+| 11 | Vercel deploy, README, verification pass | Claude + owner | M |
+| 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L |
 
-**Critical files:** `src/lib/meals.functions.ts` (engine rebuild), `src/lib/analysis.schema.ts`
-+ `src/lib/clinical-spine.ts` (new — the ethos in code), `firestore.rules`/`storage.rules`/
-`firebase.json` (new — security), `src/components/app/analysis-view.tsx` (UI v2),
-`src/lib/trends.ts` + trends panel (new), `src/hooks/use-auth.ts` +
-`src/lib/rubrics.functions.ts` (roles, PDF extraction), `src/lib/mock-data.ts` (schema v2).
+**Critical files:** `src/lib/meals.functions.ts` (engine), `src/lib/analysis.schema.ts` +
+`src/lib/clinical-spine.ts` (new), `firestore.rules`/`storage.rules`/`firebase.json`
+(new), `src/styles.css` (design tokens), `src/components/app/analysis-view.tsx` (reading
+UI), `src/routes/index.tsx` (landing), `CLAUDE.md` + `docs/` (ethos rails),
+`src/lib/trends.ts` + patterns panel (new), ported `suggestions.functions.ts` +
+`nutrient-reference.ts` + CNF JSON (from pantry branch), `src/hooks/use-auth.ts` +
+`src/lib/rubrics.functions.ts` (roles, PDF extraction), `src/lib/mock-data.ts` (v2).
 
-**Two notes for you:**
-- I reconstructed the ethos from your Notion (the Eating More Plants ebook material — clinical
-  positions, voice, evidence spine) plus the repo's TODO.md. The app's own philosophy/feature
-  doc appears to live in a claude.ai Project or chat, which this coding session cannot open
-  (searched: repo + git history, GitHub PRs/issues, Notion, Gmail; Drive was blocked).
-  Decision made: proceed with this plan as-is and fold that doc in whenever it surfaces —
-  paste its text into the chat or drop it in the repo (e.g. docs/PHILOSOPHY.md) at any time.
-- Exact wording of the new analysis sections (e.g. "nourishment highlights" vs "what this
-  meal gave you") and the final micronutrient list are easy to tune as we build — the
-  structure above is what gets locked in now.
+**Model guidance for execution:** Sonnet executes most phases; use Fable (or a Fable
+review pass) for the security rules, the reading-schema + clinical-spine writing, and a
+final voice/design review. The in-app analysis model stays claude-sonnet-4-6 regardless.
