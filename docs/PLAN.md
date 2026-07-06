@@ -5,6 +5,11 @@
 Kitchen elements**; analysis wording is the **Blend** system below; nutrient-gap
 suggestions ship in the demo, the rest of the pantry suite right after.)*
 
+**Not a coder? Skip straight to [`docs/OWNER-TODO.md`](OWNER-TODO.md)** — every owner
+action item scattered through this plan's phases (account setup, publishing rules,
+deploying, verifying) is consolidated there as a single ordered checklist. Everything
+below is the code-side plan and progress log.
+
 ## Part 1 — The ethos (what this app believes)
 
 This is not a calorie counter. It is the opposite of one.

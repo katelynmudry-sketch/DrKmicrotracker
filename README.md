@@ -74,4 +74,5 @@ Run all four before pushing (see `CLAUDE.md`).
 | [`docs/PLAN.md`](docs/PLAN.md) | The build plan, phase by phase, kept current as work ships |
 | [`docs/SETUP.md`](docs/SETUP.md) | One-time Firebase + Anthropic + env var setup (~45 min) |
 | [`docs/DEMO.md`](docs/DEMO.md) | Seeding demo patient data and a walkthrough script |
+| [`docs/OWNER-TODO.md`](docs/OWNER-TODO.md) | **Start here if you're not coding** — the one consolidated checklist of everything that needs a human with real accounts (setup, publishing rules, deploying, verifying) |
 | [`CLAUDE.md`](CLAUDE.md) | The hard rules, for any AI session touching this repo |

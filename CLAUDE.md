@@ -8,6 +8,9 @@ Before touching product code, read:
 - `docs/ETHOS.md` — the clinical principles every screen and prompt must follow
 - `docs/VOICE.md` — the vocabulary and copy every patient-facing string must use
 - `docs/PLAN.md` — the build plan and current phase
+- `docs/OWNER-TODO.md` — the consolidated checklist of everything blocked on the owner
+  (accounts, deploy, verification) — keep it current whenever a phase adds a new
+  owner-only step; don't duplicate its content back into PLAN.md's phase notes
 
 ## Hard rules (non-negotiable)
 
