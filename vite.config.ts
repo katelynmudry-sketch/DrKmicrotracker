@@ -37,11 +37,11 @@ export default defineConfig({
       outDir: ".vercel/output/static",
       includeAssets: ["favicon.ico"],
       manifest: {
-        name: "Nourish",
-        short_name: "Nourish",
-        description: "Naturopathic meal analysis for patients",
-        theme_color: "#0f172a",
-        background_color: "#0f172a",
+        name: "Dr. K's Kitchen",
+        short_name: "Dr. K's Kitchen",
+        description: "Naturopathic meal readings for Dr. Katelyn Mudry's patients",
+        theme_color: "#d97a52",
+        background_color: "#fbf6ec",
         display: "standalone",
         start_url: "/",
         icons: [

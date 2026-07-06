@@ -28,7 +28,7 @@ import { ArrowLeft, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/doctor/rubrics")({
-  head: () => ({ meta: [{ title: "Rubrics — Nourish" }] }),
+  head: () => ({ meta: [{ title: "Rubrics — Dr. K's Kitchen" }] }),
   component: Rubrics,
 });
 
@@ -127,8 +127,8 @@ function Rubrics() {
         <Card className="h-fit p-5">
           <h2 className="text-base font-semibold">Upload rubric</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Upload your dietary protocol document. The pasted summary is what the AI reads when
-            analyzing meals — paste the key rules so the model can apply them.
+            Upload your dietary protocol document. The pasted summary is what shapes every reading —
+            paste the key rules so they carry through.
           </p>
           <div className="mt-4 space-y-3">
             <div>
@@ -176,7 +176,7 @@ function Rubrics() {
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : !rubrics.data || rubrics.data.length === 0 ? (
             <Card className="p-6 text-sm text-muted-foreground">
-              No rubrics yet. Upload one to power the AI analysis.
+              No rubrics yet. Upload one to shape every reading.
             </Card>
           ) : (
             <div className="space-y-3">

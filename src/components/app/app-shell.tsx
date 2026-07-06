@@ -40,10 +40,10 @@ export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNo
       <header className="border-b border-border bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-accent-foreground">
+            <span className="grid h-8 w-8 -rotate-6 place-items-center rounded-lg bg-accent text-accent-foreground">
               <Leaf className="h-4 w-4" />
             </span>
-            <span className="text-sm font-semibold tracking-tight">Nourish</span>
+            <span className="font-serif text-sm font-semibold tracking-tight">Dr. K's Kitchen</span>
           </Link>
           <div className="flex items-center gap-3">
             {nav}

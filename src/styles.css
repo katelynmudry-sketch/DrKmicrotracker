@@ -2,10 +2,22 @@
 @source "../src";
 @import "tw-animate-css";
 
+/* Self-hosted Fraunces (display) + Nunito (body) — no Google Fonts CDN at
+   runtime, so the PWA works offline. See docs/PLAN.md Phase 3a. */
+@import "@fontsource/fraunces/500.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/500-italic.css";
+@import "@fontsource/nunito/400.css";
+@import "@fontsource/nunito/600.css";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
+
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
+ * Design system definition — Garden Warmth (see design-drafts/1-garden-warmth.html
+ * and docs/PLAN.md Part 2). No "Sunny Kitchen" elements: no confetti, no
+ * achievement badges, no gamified arcs, minimal emoji.
  *
  * The @theme inline block maps CSS custom properties to Tailwind utility
  * classes (e.g. --color-primary -> bg-primary, text-primary).
@@ -19,6 +31,8 @@
  */
 
 @theme inline {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -62,40 +76,41 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  /* Modern minimal clinic palette */
-  --background: oklch(0.995 0.002 240);
-  --foreground: oklch(0.18 0.04 250);
+  --radius: 0.875rem;
+  /* Garden Warmth palette — see design-drafts/1-garden-warmth.html and
+     docs/PLAN.md Part 2 for the source hex values these are converted from. */
+  --background: oklch(0.974 0.014 84.6); /* cream #fbf6ec */
+  --foreground: oklch(0.331 0.018 84.5); /* ink #3a352b */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.04 250);
+  --card-foreground: oklch(0.331 0.018 84.5);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.04 250);
-  --primary: oklch(0.18 0.04 250);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.965 0.005 240);
-  --secondary-foreground: oklch(0.18 0.04 250);
-  --muted: oklch(0.965 0.005 240);
-  --muted-foreground: oklch(0.48 0.02 250);
-  --accent: oklch(0.72 0.17 160);
-  --accent-foreground: oklch(0.16 0.04 170);
-  --destructive: oklch(0.6 0.22 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.92 0.008 240);
-  --input: oklch(0.92 0.008 240);
-  --ring: oklch(0.72 0.17 160);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --popover-foreground: oklch(0.331 0.018 84.5);
+  --primary: oklch(0.677 0.13 43); /* terracotta #d97a52 */
+  --primary-foreground: oklch(0.974 0.014 84.6); /* cream */
+  --secondary: oklch(0.936 0.03 85.6); /* cream-deep #f3e9d4 */
+  --secondary-foreground: oklch(0.331 0.018 84.5);
+  --muted: oklch(0.936 0.03 85.6); /* cream-deep */
+  --muted-foreground: oklch(0.508 0.023 87.6); /* ink-soft #6b6557 */
+  --accent: oklch(0.639 0.055 137.2); /* sage #7c9473 */
+  --accent-foreground: oklch(0.494 0.048 134.6); /* sage-deep #56684c */
+  --destructive: oklch(0.559 0.162 28); /* muted rust-red — stays in the warm family but reads as an error, not a nutrition verdict */
+  --destructive-foreground: oklch(0.974 0.014 84.6);
+  --border: oklch(0.885 0.032 84.6); /* hairline #e3d8c2 */
+  --input: oklch(0.885 0.032 84.6);
+  --ring: oklch(0.639 0.055 137.2); /* sage */
+  --chart-1: oklch(0.677 0.13 43); /* terracotta */
+  --chart-2: oklch(0.639 0.055 137.2); /* sage */
+  --chart-3: oklch(0.686 0.091 79.9); /* gold */
+  --chart-4: oklch(0.494 0.048 134.6); /* sage-deep */
+  --chart-5: oklch(0.584 0.126 42.4); /* terracotta-deep */
+  --sidebar: oklch(0.974 0.014 84.6);
+  --sidebar-foreground: oklch(0.331 0.018 84.5);
+  --sidebar-primary: oklch(0.677 0.13 43);
+  --sidebar-primary-foreground: oklch(0.974 0.014 84.6);
+  --sidebar-accent: oklch(0.936 0.03 85.6);
+  --sidebar-accent-foreground: oklch(0.331 0.018 84.5);
+  --sidebar-border: oklch(0.885 0.032 84.6);
+  --sidebar-ring: oklch(0.639 0.055 137.2);
 }
 
 .dark {
@@ -141,5 +156,14 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 }

@@ -27,7 +27,7 @@ import { analyzeMeal } from "@/lib/meals.functions";
 import type { Meal } from "@/lib/analysis.schema";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
-  head: () => ({ meta: [{ title: "Patient — Nourish" }] }),
+  head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
   component: PatientView,
 });
 

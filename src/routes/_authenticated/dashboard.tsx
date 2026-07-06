@@ -30,10 +30,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Camera, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
-import type { Meal, MealStatus } from "@/lib/analysis.schema";
+import { NUTRIENT_LABELS, TIER_LABELS, type Meal, type MealStatus } from "@/lib/analysis.schema";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Your meals — Nourish" }] }),
+  head: () => ({ meta: [{ title: "Your meals — Dr. K's Kitchen" }] }),
   component: PatientDashboard,
 });
 
@@ -87,7 +87,7 @@ function PatientDashboard() {
         // (status is server-owned — the client never writes it) — just
         // refetch so the badge reflects that, and let the patient retry
         // from the meal detail page.
-        toast.error(e?.message ?? "Analysis failed");
+        toast.error(e?.message ?? "Reading failed");
         qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
       });
   };
@@ -114,7 +114,7 @@ function PatientDashboard() {
         eatenAt: new Date().toISOString(),
         createdAt: serverTimestamp(),
       });
-      toast.success("Photo uploaded — analyzing…");
+      toast.success("Photo uploaded — reading it now…");
       setLabel("");
       setNotes("");
       if (fileRef.current) fileRef.current.value = "";
@@ -144,7 +144,7 @@ function PatientDashboard() {
         eatenAt: new Date().toISOString(),
         createdAt: serverTimestamp(),
       });
-      toast.success("Meal logged — analyzing…");
+      toast.success("Meal logged — reading it now…");
       textForm.reset();
       afterLog(mealRef.id);
     } catch (e: any) {
@@ -171,7 +171,7 @@ function PatientDashboard() {
         <Card className="h-fit p-5">
           <h2 className="mb-1 text-base font-semibold">Log a meal</h2>
           <p className="mb-4 text-xs text-muted-foreground">
-            Snap a photo or describe what you ate. Analysis runs in the background.
+            Snap a photo or describe what you ate. We'll have a reading ready shortly.
           </p>
           <Tabs defaultValue="photo">
             <TabsList className="mb-3 grid w-full grid-cols-2">
@@ -263,7 +263,7 @@ function PatientDashboard() {
               <Sparkles className="mb-3 h-6 w-6 text-muted-foreground" />
               <p className="text-sm font-medium">No meals yet</p>
               <p className="text-xs text-muted-foreground">
-                Upload your first meal photo to see your analysis here.
+                Upload your first meal photo to see its reading here.
               </p>
             </Card>
           ) : (
@@ -291,6 +291,18 @@ function PatientDashboard() {
                       </div>
                       <StatusBadge status={m.status} />
                     </div>
+                    {m.analysis && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {attributePills(m).map((pill) => (
+                          <span
+                            key={pill}
+                            className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground"
+                          >
+                            {pill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -301,6 +313,25 @@ function PatientDashboard() {
     </AppShell>
   );
 }
+
+// Attribute pills on meal cards — a quick, qualitative read at a glance.
+// Leads with protocol fit, then the strongest micronutrient sources.
+function attributePills(m: Meal): string[] {
+  if (!m.analysis) return [];
+  const pills = [TIER_LABELS[m.analysis.protocol_fit.tier]];
+  m.analysis.micronutrients
+    .filter((n) => n.level === "strong")
+    .slice(0, 2)
+    .forEach((n) => pills.push(`${NUTRIENT_LABELS[n.nutrient]}-rich`));
+  return pills;
+}
+
+const STATUS_LABELS: Record<MealStatus, string> = {
+  pending: "Logged",
+  analyzing: "Reading…",
+  analyzed: "Ready",
+  failed: "Needs a retry",
+};
 
 function StatusBadge({ status }: { status: MealStatus }) {
   const map: Record<MealStatus, string> = {
@@ -313,7 +344,7 @@ function StatusBadge({ status }: { status: MealStatus }) {
     <span
       className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${map[status] ?? "bg-secondary"}`}
     >
-      {status}
+      {STATUS_LABELS[status] ?? status}
     </span>
   );
 }

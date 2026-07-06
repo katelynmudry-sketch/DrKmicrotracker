@@ -244,19 +244,36 @@ One coherent rewrite of `analyzeMeal`:
   reading view, doctor patient review + re-analyze, rubrics page, failed/pending Retry
   states — all render correctly in preview mode with no console errors.
 
-### Phase 3 — Dr. K's Kitchen: rebrand + reading UI *(≈2 sessions)*
-- **3a. Design tokens**: rewrite `src/styles.css` palette to the Garden Warmth values
-  (as oklch, semantic token names preserved), self-host Fraunces + Nunito, radii/shape
-  pass. Because the app already uses semantic tokens, most components reskin themselves.
-- **3b. Reading UI v2** (`analysis-view.tsx`): opening note → reading rows (label →
-  qualitative value, Botanical Clinic style) → What this meal offered → Worth trying →
-  absorption notes → Protocol fit chip → Notes from Dr. K. Attribute pills on meal cards.
-  Inline editing rewired to the new schema. No score badge, no calories tile anywhere.
-- **3c. Landing page** rebuilt from the two drafts' shared skeleton with the microcopy
-  bank; app shell/logo/nav renamed; PWA manifest (name "Dr. K's Kitchen", cream/terracotta
-  theme colours, regenerate icons to match brand).
-- **3d. Copy pass** on every button, empty state, toast in the Blend voice; mock data
-  rewritten to the new schema so preview mode shows the real experience.
+### Phase 3 — Dr. K's Kitchen: rebrand + reading UI *(≈2 sessions)* — **shipped**
+- [x] **3a. Design tokens**: rewrote `src/styles.css` palette to the Garden Warmth values
+  (converted to oklch, semantic token names preserved — primary=terracotta,
+  accent=sage, secondary/muted=cream-deep, border=hairline); self-hosted Fraunces +
+  Nunito via `@fontsource/*` (bundled by Vite, no Google Fonts CDN — works offline for
+  the PWA); radii bumped (`--radius: 0.875rem` → cards ~22px) and buttons are pill-shaped
+  (`rounded-full`). Confirmed in a real browser: existing components reskinned
+  themselves with almost no changes needed, as predicted.
+- [x] **3b. Reading UI v2** (`analysis-view.tsx`): opening note → identified-item chips →
+  building blocks (protein/fiber/carb quality) → micronutrients → What this meal offered
+  → Worth trying → Absorption notes → Protocol fit chip. Attribute pills added to
+  dashboard meal cards (protocol-fit tier + up to 2 "strong" nutrients, e.g. "Aligned",
+  "Omega-3-rich"). Inline editing still wired to the Phase 2 schema. No score badge, no
+  calories tile — verified visually. (The exact Botanical Clinic full-width report-line
+  treatment for the micronutrient rows is a further polish opportunity, not done —
+  current rows are card-style, same qualitative content.)
+- [x] **3c. Landing page** rebuilt from the two drafts' shared skeleton (hero with
+  report-line card, three-step section, Dr. K quote band, feature grid, final CTA) with
+  the microcopy bank; renamed "Nourish" → "Dr. K's Kitchen" everywhere (app shell, auth
+  page, all route titles, PWA manifest, og/meta tags); PWA manifest now cream/terracotta
+  with the real name; icons regenerated (terracotta rounded square + cream leaf mark, at
+  192/512/512-maskable, plus a matching favicon.ico) via a small Playwright-rendered SVG
+  — no external asset pipeline needed.
+- [x] **3d. Copy pass**: toasts/empty-states/status badges rewritten in the Blend voice
+  ("Reading ready", "Reading failed", status badge labels "Logged/Reading…/Ready/Needs a
+  retry", rubric page copy talks about "shaping the reading" instead of "AI analysis").
+  Mock data was already rewritten to the new schema in Phase 2, so preview mode shows
+  the real experience end to end. Added `NUTRIENT_LABELS`/`LEVEL_LABELS`/
+  `CARB_QUALITY_LABELS`/`TIER_LABELS` to `analysis.schema.ts` as the single source for
+  display labels (shared by analysis-view.tsx and the new attribute pills).
 
 ### Phase 4 — Stand-out features *(≈2–3 sessions)*
 - **4a. Patterns page** (patient + doctor embed): micronutrient coverage map (how often
@@ -345,7 +362,7 @@ ethos-carrying.
 | 4 | Security rules + DOCTOR_EMAILS role management | Claude | M | done |
 | 5 | Owner publishes rules | owner | 10m | pending — no live Firebase project yet |
 | 6 | Reading engine rebuild (schema, spine, reliability, typed, CI) | Claude | L | done |
-| 7 | Rebrand: tokens, fonts, Reading UI v2, landing, PWA, copy pass | Claude | L |
+| 7 | Rebrand: tokens, fonts, Reading UI v2, landing, PWA, copy pass | Claude | L | done |
 | 8 | Patterns page + gap suggestions (CNF→JSON port) | Claude | L |
 | 9 | Rubric PDF extraction + re-analyze button | Claude | S–M | re-analyze button done in #6 (same op as analyzeMeal); PDF extraction still open |
 | 10 | Demo seed data + DEMO.md | Claude | M |

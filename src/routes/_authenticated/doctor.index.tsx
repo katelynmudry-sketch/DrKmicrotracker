@@ -17,7 +17,7 @@ import { promoteToDoctor } from "@/lib/rubrics.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/doctor/")({
-  head: () => ({ meta: [{ title: "Doctor portal — Nourish" }] }),
+  head: () => ({ meta: [{ title: "Doctor portal — Dr. K's Kitchen" }] }),
   component: DoctorHome,
 });
 

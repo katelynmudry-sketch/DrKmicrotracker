@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import type { Meal } from "@/lib/analysis.schema";
 
 export const Route = createFileRoute("/_authenticated/meals/$mealId")({
-  head: () => ({ meta: [{ title: "Meal — Nourish" }] }),
+  head: () => ({ meta: [{ title: "Meal — Dr. K's Kitchen" }] }),
   component: MealDetail,
 });
 
@@ -47,7 +47,7 @@ function MealDetail() {
       await analyzeFn({ data: { mealId } });
       toast.success("Reading ready");
     } catch (e: any) {
-      toast.error(e?.message ?? "Analysis failed");
+      toast.error(e?.message ?? "Reading failed");
     } finally {
       setRetrying(false);
       qc.invalidateQueries({ queryKey: ["meal", mealId] });

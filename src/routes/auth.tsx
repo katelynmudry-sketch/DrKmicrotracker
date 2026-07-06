@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Leaf } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Nourish" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Dr. K's Kitchen" }] }),
   component: isMockMode ? MockAuthPage : AuthPage,
 });
 
@@ -31,10 +31,10 @@ function MockAuthPage() {
     <div className="grid min-h-screen place-items-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-accent-foreground">
+          <span className="grid h-8 w-8 -rotate-6 place-items-center rounded-lg bg-accent text-accent-foreground">
             <Leaf className="h-4 w-4" />
           </span>
-          <span className="text-base font-semibold tracking-tight">Nourish</span>
+          <span className="font-serif text-base font-semibold tracking-tight">Dr. K's Kitchen</span>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <p className="mb-1 text-sm font-semibold">Preview mode</p>
@@ -105,10 +105,10 @@ function AuthPage() {
     <div className="grid min-h-screen place-items-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-accent-foreground">
+          <span className="grid h-8 w-8 -rotate-6 place-items-center rounded-lg bg-accent text-accent-foreground">
             <Leaf className="h-4 w-4" />
           </span>
-          <span className="text-base font-semibold tracking-tight">Nourish</span>
+          <span className="font-serif text-base font-semibold tracking-tight">Dr. K's Kitchen</span>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <Tabs defaultValue="signin">

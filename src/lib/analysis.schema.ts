@@ -22,14 +22,45 @@ export const TRACKED_NUTRIENTS = [
 ] as const;
 export type TrackedNutrient = (typeof TRACKED_NUTRIENTS)[number];
 
+export const NUTRIENT_LABELS: Record<TrackedNutrient, string> = {
+  iron: "Iron",
+  b12: "B12",
+  vitamin_d: "Vitamin D",
+  calcium: "Calcium",
+  omega_3: "Omega-3",
+  iodine: "Iodine",
+  zinc: "Zinc",
+  choline: "Choline",
+  magnesium: "Magnesium",
+};
+
 export const NUTRIENT_LEVELS = ["strong", "present", "light", "not_seen"] as const;
 export type NutrientLevel = (typeof NUTRIENT_LEVELS)[number];
+
+export const LEVEL_LABELS: Record<NutrientLevel, string> = {
+  strong: "Strong source",
+  present: "Present",
+  light: "A little light",
+  not_seen: "Not seen",
+};
 
 export const CARB_QUALITIES = ["mostly_complex", "mixed", "mostly_refined"] as const;
 export type CarbQuality = (typeof CARB_QUALITIES)[number];
 
+export const CARB_QUALITY_LABELS: Record<CarbQuality, string> = {
+  mostly_complex: "Mostly complex",
+  mixed: "Mixed",
+  mostly_refined: "Mostly refined",
+};
+
 export const PROTOCOL_FIT_TIERS = ["aligned", "getting_there", "worth_a_look"] as const;
 export type ProtocolFitTier = (typeof PROTOCOL_FIT_TIERS)[number];
+
+export const TIER_LABELS: Record<ProtocolFitTier, string> = {
+  aligned: "Aligned",
+  getting_there: "Getting there",
+  worth_a_look: "Worth a look",
+};
 
 export const MEAL_STATUSES = ["pending", "analyzing", "analyzed", "failed"] as const;
 export type MealStatus = (typeof MEAL_STATUSES)[number];

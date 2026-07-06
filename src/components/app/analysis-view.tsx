@@ -10,47 +10,20 @@ import { updateMealAnalysis } from "@/lib/meals.functions";
 import { isMockMode } from "@/lib/mock-mode";
 import {
   TRACKED_NUTRIENTS,
+  NUTRIENT_LABELS,
   NUTRIENT_LEVELS,
+  LEVEL_LABELS,
   CARB_QUALITIES,
+  CARB_QUALITY_LABELS,
+  TIER_LABELS,
   type MealAnalysis,
   type Micronutrient,
 } from "@/lib/analysis.schema";
 
 // Functional rendering of the new reading shape — the Botanical Clinic-style
-// visual pass (attribute pills, reading rows, dashed dividers) is Phase 3's
-// job (docs/PLAN.md). This pass just needs to show every field correctly and
-// keep inline editing working, in the vocabulary from docs/VOICE.md.
-
-const NUTRIENT_LABELS: Record<string, string> = {
-  iron: "Iron",
-  b12: "B12",
-  vitamin_d: "Vitamin D",
-  calcium: "Calcium",
-  omega_3: "Omega-3",
-  iodine: "Iodine",
-  zinc: "Zinc",
-  choline: "Choline",
-  magnesium: "Magnesium",
-};
-
-const LEVEL_LABELS: Record<string, string> = {
-  strong: "Strong source",
-  present: "Present",
-  light: "A little light",
-  not_seen: "Not seen",
-};
-
-const TIER_LABELS: Record<string, string> = {
-  aligned: "Aligned",
-  getting_there: "Getting there",
-  worth_a_look: "Worth a look",
-};
-
-const CARB_QUALITY_LABELS: Record<string, string> = {
-  mostly_complex: "Mostly complex",
-  mixed: "Mixed",
-  mostly_refined: "Mostly refined",
-};
+// visual pass (reading rows, dashed dividers) is Phase 3's job (docs/PLAN.md).
+// This pass just needs to show every field correctly and keep inline editing
+// working, in the vocabulary from docs/VOICE.md.
 
 type EditValues = {
   meal_name: string;
