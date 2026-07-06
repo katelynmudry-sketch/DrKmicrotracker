@@ -366,9 +366,20 @@ Phase 4 before the live demo.
   `analyzeMeal`), returning identified item names. No Storage upload — the photo is never
   persisted, same "send base64 directly, discard after" shape as `extractRubricPdf`.
 - [x] **Voice capture**: `src/components/app/voice-capture.tsx` uses the browser's Web
-  Speech API where available (Chrome/Edge desktop, Android), with a plain textarea
-  fallback everywhere else (notably older iOS Safari); either path ends at a transcript
-  that `parsePantryVoiceText` turns into item names the same way the photo flow does.
+  Speech API where available (Chrome/Edge desktop, Android). **iOS/iPadOS (Safari,
+  DuckDuckGo, Chrome-for-iOS — all WebKit under the hood) has never implemented that API
+  at all**, and there's no way to add real in-page speech recognition there without a
+  third-party speech-to-text vendor (a bigger architectural call than this component
+  should make alone — Claude/Anthropic has no audio input, and adding one would mean a
+  paid service outside Firebase+Anthropic; see CLAUDE.md). Instead, the fallback there
+  leans into the platform's own answer: iOS's keyboard has a built-in dictation
+  microphone that works in any text field, in any browser, with no web API needed — the
+  fallback UI points at it explicitly ("tap the microphone on your keyboard") rather than
+  saying voice isn't available. Detection also treats a first-attempt recognition error
+  (`not-allowed`/`service-not-allowed`/`audio-capture`) as "not really supported here" and
+  switches to the same fallback, since some WebKit builds define the API's symbol without
+  actually implementing it. Either path ends at a transcript that `parsePantryVoiceText`
+  turns into item names the same way the photo flow does.
 - [x] **Shared confirm step**: `src/components/app/confirm-pantry-items.tsx` — Claude's
   guess from either flow is never written to `pantry_items` directly; the patient
   edits/removes/adds names first, the same "AI proposes, human confirms" shape as the

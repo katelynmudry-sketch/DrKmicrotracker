@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { Loader2, Mic, Square } from "lucide-react";
 
 // Web Speech API isn't part of TypeScript's DOM lib (it's still a draft, not
@@ -15,12 +16,15 @@ interface SpeechRecognitionEventLike {
   resultIndex: number;
   results: ArrayLike<SpeechRecognitionResultLike>;
 }
+interface SpeechRecognitionErrorEventLike {
+  error: string;
+}
 interface SpeechRecognitionLike extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
@@ -35,11 +39,32 @@ function getSpeechRecognitionCtor(): SpeechRecognitionConstructor | null {
     null) as SpeechRecognitionConstructor | null;
 }
 
-// Voice pantry capture (post-demo milestone #1, docs/PLAN.md): browser
-// speech-to-text where supported (Chrome/Edge desktop and Android), a plain
-// textarea fallback everywhere else (notably iOS Safari, whose Web Speech
-// support is inconsistent across versions). Either path ends at the same
-// transcript-in-hand state, handed to onTranscript to parse into items.
+// iOS/iPadOS WebKit has never implemented SpeechRecognition — not in Safari,
+// and not in any other iOS browser (DuckDuckGo, Chrome-for-iOS, etc.), since
+// Apple requires all of them to render on WebKit under the hood. There's no
+// way to add real in-page speech recognition there without a third-party
+// speech-to-text vendor, which is a bigger architectural call (a new paid
+// service, outside Firebase+Anthropic — see CLAUDE.md) than this component
+// should make on its own. The good news: iOS's own keyboard has a built-in
+// dictation microphone that works in any text field, in any browser,
+// without any web API at all — that's the real "voice" path there, and the
+// fallback below leans into it explicitly instead of just saying "no."
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // iPadOS 13+ reports as "Mac" but has touch support; a real Mac doesn't.
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+// Some WebKit builds define webkitSpeechRecognition as a symbol without
+// actually implementing it — calling .start() fails immediately via onerror
+// rather than the constructor being absent. A plain existence check can't
+// catch that, so a first-attempt error also permanently switches to the
+// dictation-hint fallback for this session.
+const UNRECOVERABLE_ERRORS = new Set(["not-allowed", "service-not-allowed", "audio-capture"]);
+
 export function VoiceCapture({
   onTranscript,
   parsing,
@@ -51,10 +76,15 @@ export function VoiceCapture({
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setSupported(getSpeechRecognitionCtor() !== null);
+    setSupported(getSpeechRecognitionCtor() !== null && !isIOS());
   }, []);
+
+  useEffect(() => {
+    if (!supported) fallbackTextareaRef.current?.focus();
+  }, [supported]);
 
   const startListening = () => {
     const Ctor = getSpeechRecognitionCtor();
@@ -70,11 +100,25 @@ export function VoiceCapture({
       }
       setTranscript(combined);
     };
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (event) => {
+      setListening(false);
+      if (UNRECOVERABLE_ERRORS.has(event.error)) {
+        setSupported(false);
+        toast.info("Voice input isn't available here — dictate with your keyboard instead.");
+        return;
+      }
+      if (event.error !== "no-speech" && event.error !== "aborted") {
+        toast.error("Didn't catch that — try again.");
+      }
+    };
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      setSupported(false);
+    }
   };
 
   const stopListening = () => {
@@ -85,11 +129,14 @@ export function VoiceCapture({
   if (!supported) {
     return (
       <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          Voice capture isn't available in this browser — type what's in your pantry instead, plain
-          and separated by commas or new lines.
+        <p className="text-sm">
+          Tap the <Mic className="inline h-3.5 w-3.5 align-[-2px]" />{" "}
+          <strong>microphone on your keyboard</strong> below and talk — it'll dictate right into the
+          box. (iPhone/iPad browsers don't support in-page voice capture, but the keyboard's own
+          dictation works everywhere.)
         </p>
         <Textarea
+          ref={fallbackTextareaRef}
           rows={4}
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
