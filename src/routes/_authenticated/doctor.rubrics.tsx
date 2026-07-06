@@ -28,17 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, FileText, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { extractRubricPdf } from "@/lib/rubrics.functions";
-
-async function fileToBase64(file: File): Promise<string> {
-  const buf = await file.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  let binary = "";
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-}
+import { fileToBase64 } from "@/lib/file-base64";
 
 export const Route = createFileRoute("/_authenticated/doctor/rubrics")({
   head: () => ({ meta: [{ title: "Rubrics — Dr. K's Kitchen" }] }),

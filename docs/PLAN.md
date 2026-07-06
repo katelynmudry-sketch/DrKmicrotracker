@@ -361,15 +361,22 @@ Phase 4 before the live demo.
   new" on the Patterns page, and the grocery list's "Worth adding" section only offers
   what isn't already sitting active in the pantry. Verified against fixture data with
   `tsx` (pumpkin/chia seeds correctly matched to iron/zinc/magnesium/omega-3).
-- [ ] **Photo scan / voice capture** — not done this session. Both are real camera/
-  speech-recognition UI surfaces that this session had no way to visually verify (see
-  Phase 4/5's notes on the sandbox's browser limitation above); shipping them unverified
-  felt like the wrong tradeoff versus the form-entry path, which covers the same
-  Firestore/suggestion-tier plumbing and is low-risk to review as code. Next session:
-  reuse the meal-photo Claude vision pattern (`meals.functions.ts`) for a
-  `scanPantryPhoto` server fn, and the old `claude/pantry-inventory-nutrients-xdqaru`
-  branch's `voice-capture.tsx` for the Web Speech UI shape (re-implement, don't merge —
-  it still predates the current schema).
+- [x] **Photo scan**: `scanPantryPhoto` (`src/lib/pantry-scan.functions.ts`) sends the
+  photo to Claude as a base64 image with a tool-use call (same reliability pattern as
+  `analyzeMeal`), returning identified item names. No Storage upload — the photo is never
+  persisted, same "send base64 directly, discard after" shape as `extractRubricPdf`.
+- [x] **Voice capture**: `src/components/app/voice-capture.tsx` uses the browser's Web
+  Speech API where available (Chrome/Edge desktop, Android), with a plain textarea
+  fallback everywhere else (notably older iOS Safari); either path ends at a transcript
+  that `parsePantryVoiceText` turns into item names the same way the photo flow does.
+- [x] **Shared confirm step**: `src/components/app/confirm-pantry-items.tsx` — Claude's
+  guess from either flow is never written to `pantry_items` directly; the patient
+  edits/removes/adds names first, the same "AI proposes, human confirms" shape as the
+  meal reading's inline edit.
+- **Not visually verified this session** — this sandbox still has no IPv6 at all (a raw
+  Node `.listen('::')` fails), so the dev server can't start here; typecheck/lint/
+  ethos-lint/build are all clean, but the camera/mic UI itself needs a real-browser pass
+  (the user has said they'll test it directly).
 
 ---
 
@@ -425,7 +432,7 @@ ethos-carrying.
 | 9 | Rubric PDF extraction + re-analyze button | Claude | S–M | done (re-analyze button was done in #6; PDF extraction done this session) |
 | 10 | Demo seed data + DEMO.md | Claude | M | done |
 | 11 | Vercel deploy, README, verification pass | Claude + owner | M | not started — still blocked on step 5 (no live Firebase project); Phase 4 also needs a real-browser pass first, see Phase 4's note above |
-| 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L | partially done — inventory (form entry), grocery list, and the pantry-first suggestion tier shipped; photo scan + voice capture still open |
+| 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L | done — inventory (form/photo/voice), grocery list, and the pantry-first suggestion tier all shipped; needs a real-browser pass (see note above) |
 
 **Critical files:** `src/lib/meals.functions.ts` (engine), `src/lib/analysis.schema.ts` +
 `src/lib/clinical-spine.ts` (new), `firestore.rules`/`storage.rules`/`firebase.json`

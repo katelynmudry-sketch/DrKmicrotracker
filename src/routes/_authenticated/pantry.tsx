@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   addDoc,
   collection,
@@ -20,9 +21,15 @@ import { AppShell } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConfirmPantryItems } from "@/components/app/confirm-pantry-items";
+import { VoiceCapture } from "@/components/app/voice-capture";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, RotateCcw, ShoppingCart, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Plus, RotateCcw, ShoppingCart, Trash2 } from "lucide-react";
 import type { PantryItem } from "@/lib/pantry.schema";
+import { fileToBase64 } from "@/lib/file-base64";
+import { scanPantryPhoto, parsePantryVoiceText } from "@/lib/pantry-scan.functions";
 
 export const Route = createFileRoute("/_authenticated/pantry")({
   head: () => ({ meta: [{ title: "Your pantry — Dr. K's Kitchen" }] }),
@@ -34,6 +41,14 @@ function PantryPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
+
+  const scanFn = useServerFn(scanPantryPhoto);
+  const parseVoiceFn = useServerFn(parsePantryVoiceText);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [parsingVoice, setParsingVoice] = useState(false);
+  const [pendingItems, setPendingItems] = useState<string[] | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const items = useQuery({
     queryKey: ["pantry-items", user?.uid],
@@ -114,6 +129,81 @@ function PantryPage() {
     invalidate();
   };
 
+  const scanPhoto = async () => {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return toast.error("Select a pantry photo first");
+    if (isMockMode) return toast.info("Preview mode — scanning isn't available.");
+    setScanning(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const mediaType = (file.type || "image/jpeg") as
+        | "image/jpeg"
+        | "image/png"
+        | "image/webp"
+        | "image/gif";
+      const result = await scanFn({ data: { base64, mediaType } });
+      if (result.items.length === 0) {
+        toast.info("Couldn't make out any items — try a clearer photo, or add them below.");
+      }
+      setPendingItems(result.items);
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't scan that photo");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const parseVoice = async (transcript: string) => {
+    if (isMockMode) return toast.info("Preview mode — voice capture isn't available.");
+    setParsingVoice(true);
+    try {
+      const result = await parseVoiceFn({ data: { transcript } });
+      if (result.items.length === 0) {
+        toast.info("Couldn't make out any items — try again, or add them below.");
+        return;
+      }
+      setPendingItems(result.items);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't parse that");
+    } finally {
+      setParsingVoice(false);
+    }
+  };
+
+  const confirmPendingItems = async (confirmedItems: string[]) => {
+    if (!user) return;
+    if (confirmedItems.length === 0) {
+      setPendingItems(null);
+      return;
+    }
+    if (isMockMode) {
+      toast.info("Preview mode — items aren't saved.");
+      setPendingItems(null);
+      return;
+    }
+    setConfirming(true);
+    try {
+      await Promise.all(
+        confirmedItems.map((itemName) =>
+          addDoc(collection(db, "pantry_items"), {
+            patientId: user.uid,
+            name: itemName,
+            status: "active",
+            createdAt: serverTimestamp(),
+          }),
+        ),
+      );
+      toast.success(`Added ${confirmedItems.length} item(s) to your pantry`);
+      setPendingItems(null);
+      invalidate();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't save those items");
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   const active = (items.data ?? []).filter((i) => i.status === "active");
   const usedUp = (items.data ?? []).filter((i) => i.status === "used_up");
 
@@ -156,6 +246,48 @@ function PantryPage() {
               Add
             </Button>
           </div>
+        </Card>
+
+        <Card className="mb-6 p-4">
+          <h2 className="mb-1 text-sm font-semibold">Add several at once</h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Snap a photo of a shelf or fridge, or just talk it through — we'll pull out the items
+            for you to confirm.
+          </p>
+          {pendingItems !== null ? (
+            <ConfirmPantryItems
+              initialItems={pendingItems}
+              busy={confirming}
+              onConfirm={confirmPendingItems}
+              onCancel={() => setPendingItems(null)}
+            />
+          ) : (
+            <Tabs defaultValue="photo">
+              <TabsList className="mb-3 grid w-full grid-cols-2">
+                <TabsTrigger value="photo">Photo</TabsTrigger>
+                <TabsTrigger value="voice">Voice</TabsTrigger>
+              </TabsList>
+              <TabsContent value="photo">
+                <div className="space-y-3">
+                  <div>
+                    <Label className="mb-1.5">Photo</Label>
+                    <Input ref={fileRef} type="file" accept="image/*" capture="environment" />
+                  </div>
+                  <Button onClick={scanPhoto} disabled={scanning}>
+                    {scanning ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="mr-1 h-4 w-4" />
+                    )}
+                    Scan photo
+                  </Button>
+                </div>
+              </TabsContent>
+              <TabsContent value="voice">
+                <VoiceCapture onTranscript={parseVoice} parsing={parsingVoice} />
+              </TabsContent>
+            </Tabs>
+          )}
         </Card>
 
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
