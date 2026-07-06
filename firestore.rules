@@ -1,0 +1,66 @@
+rules_version = '2';
+
+// Source of truth for Firestore access control. Update this file in the same
+// change as any new client-side query — see CLAUDE.md's architecture rules.
+//
+// Server functions (src/lib/*.functions.ts) use the Admin SDK, which bypasses
+// these rules entirely. These rules only govern direct browser access via the
+// client Firebase SDK.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isDoctor() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    }
+
+    // Role is never client-writable — profiles are created and promoted only
+    // by the ensureRole / promoteToDoctor server functions (Admin SDK).
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isDoctor());
+      allow list: if isDoctor();
+      allow create, update, delete: if false;
+    }
+
+    // Meals: owner may create and read their own; doctor may read all and
+    // edit only doctorNotes. analysis/status are set by the analyzeMeal /
+    // updateMealAnalysis server functions (Admin SDK) — not writable here,
+    // except the narrow client-side "mark my stuck upload failed" case.
+    match /meals/{mealId} {
+      allow get: if isSignedIn() &&
+        (resource.data.patientId == request.auth.uid || isDoctor());
+      allow list: if isDoctor() ||
+        (isSignedIn() && resource.data.patientId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.patientId == request.auth.uid &&
+        request.resource.data.status == 'analyzing' &&
+        request.resource.data.analysis == null;
+
+      allow update: if isSignedIn() && (
+        (resource.data.patientId == request.auth.uid &&
+         resource.data.status == 'analyzing' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+         request.resource.data.status == 'failed') ||
+        (isDoctor() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doctorNotes']))
+      );
+
+      allow delete: if false;
+    }
+
+    // Rubrics: doctor-only, end to end.
+    match /rubrics/{rubricId} {
+      allow get, list: if isDoctor();
+      allow create: if isDoctor() && request.resource.data.uploadedBy == request.auth.uid;
+      allow update: if isDoctor() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isActive']);
+      allow delete: if isDoctor();
+    }
+  }
+}

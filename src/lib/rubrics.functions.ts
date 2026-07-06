@@ -34,15 +34,30 @@ export const promoteToDoctor = createServerFn({ method: "POST" })
   });
 
 /**
- * Bootstrap: claim doctor role if no doctor exists yet.
- * Open by design for first-run setup of the practice.
+ * Bootstrap a user's Firestore profile on first sign-in. Role is decided
+ * server-side from the DOCTOR_EMAILS allowlist — never client-writable.
+ * Additional doctors beyond the allowlist are added via promoteToDoctor.
  */
-export const claimDoctorIfNone = createServerFn({ method: "POST" })
+export const ensureRole = createServerFn({ method: "POST" })
   .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     const { adminDb } = await import("@/integrations/firebase/admin.server");
-    const existing = await adminDb.collection("users").where("role", "==", "doctor").limit(1).get();
-    if (!existing.empty) return { claimed: false };
-    await adminDb.collection("users").doc(context.userId).set({ role: "doctor" }, { merge: true });
-    return { claimed: true };
+    const ref = adminDb.collection("users").doc(context.userId);
+    const snap = await ref.get();
+    if (snap.exists) return { role: snap.data()?.role as "doctor" | "patient" };
+
+    const email = (context.claims.email as string | undefined) ?? null;
+    const doctorEmails = (process.env.DOCTOR_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const role = email && doctorEmails.includes(email.toLowerCase()) ? "doctor" : "patient";
+
+    await ref.set({
+      email,
+      fullName: (context.claims.name as string | undefined) ?? null,
+      role,
+      createdAt: new Date().toISOString(),
+    });
+    return { role };
   });

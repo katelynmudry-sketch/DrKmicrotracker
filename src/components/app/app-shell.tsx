@@ -5,13 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { isMockMode, setMockRole } from "@/lib/mock-mode";
 
-export function AppShell({
-  children,
-  nav,
-}: {
-  children: ReactNode;
-  nav?: ReactNode;
-}) {
+export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNode }) {
   const { user, isDoctor, signOut } = useAuth();
   const navigate = useNavigate();
   const handleSignOut = async () => {

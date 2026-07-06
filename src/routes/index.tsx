@@ -51,9 +51,9 @@ function Landing() {
               Snap a meal. Get a rubric-aligned nutrition report.
             </h1>
             <p className="mt-5 max-w-lg text-base text-muted-foreground">
-              Patients upload meal photos from their phone. Your custom dietary
-              protocols turn each photo into a macro, micro, and naturopathic
-              breakdown you can review together in-office.
+              Patients upload meal photos from their phone. Your custom dietary protocols turn each
+              photo into a macro, micro, and naturopathic breakdown you can review together
+              in-office.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" asChild>
@@ -65,9 +65,21 @@ function Landing() {
           <div className="rounded-3xl border border-border bg-card p-2 shadow-sm">
             <div className="rounded-2xl bg-secondary p-8">
               <div className="grid gap-4">
-                <Tile icon={<Camera className="h-4 w-4" />} title="Photograph meal" body="From any phone, in seconds." />
-                <Tile icon={<Sparkles className="h-4 w-4" />} title="AI analysis" body="Macros, key micros, rubric notes." />
-                <Tile icon={<ClipboardList className="h-4 w-4" />} title="Reviewed together" body="In-office history at a glance." />
+                <Tile
+                  icon={<Camera className="h-4 w-4" />}
+                  title="Photograph meal"
+                  body="From any phone, in seconds."
+                />
+                <Tile
+                  icon={<Sparkles className="h-4 w-4" />}
+                  title="AI analysis"
+                  body="Macros, key micros, rubric notes."
+                />
+                <Tile
+                  icon={<ClipboardList className="h-4 w-4" />}
+                  title="Reviewed together"
+                  body="In-office history at a glance."
+                />
               </div>
             </div>
           </div>

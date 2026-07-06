@@ -32,11 +32,7 @@ export function MealPhoto({
 
   if (!url)
     return (
-      <div
-        className={
-          "animate-pulse rounded-lg bg-secondary " + (className ?? "h-40 w-full")
-        }
-      />
+      <div className={"animate-pulse rounded-lg bg-secondary " + (className ?? "h-40 w-full")} />
     );
   return <img src={url} alt={alt} className={className} loading="lazy" />;
 }

@@ -7,8 +7,7 @@ import {
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db } from "@/integrations/firebase/client";
+import { auth } from "@/integrations/firebase/client";
 import { isMockMode, setMockRole } from "@/lib/mock-mode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,8 +39,8 @@ function MockAuthPage() {
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <p className="mb-1 text-sm font-semibold">Preview mode</p>
           <p className="mb-6 text-sm text-muted-foreground">
-            Firebase isn't configured yet, so sign-in is skipped — pick a view to
-            browse the UI with sample data.
+            Firebase isn't configured yet, so sign-in is skipped — pick a view to browse the UI with
+            sample data.
           </p>
           <div className="space-y-2">
             <Button className="w-full" onClick={() => enter("patient")}>
@@ -55,18 +54,6 @@ function MockAuthPage() {
       </div>
     </div>
   );
-}
-
-async function ensureUserProfile(uid: string, email: string | null, fullName?: string | null) {
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return;
-  await setDoc(ref, {
-    email: email ?? null,
-    fullName: fullName ?? null,
-    role: "patient",
-    createdAt: serverTimestamp(),
-  });
 }
 
 function AuthPage() {
@@ -97,7 +84,6 @@ function AuthPage() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (fullName) await updateProfile(cred.user, { displayName: fullName });
-      await ensureUserProfile(cred.user.uid, cred.user.email, fullName);
       navigate({ to: "/dashboard" });
     } catch (e: any) {
       toast.error(e?.message ?? "Sign up failed");
@@ -108,8 +94,7 @@ function AuthPage() {
 
   const google = async () => {
     try {
-      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-      await ensureUserProfile(cred.user.uid, cred.user.email, cred.user.displayName);
+      await signInWithPopup(auth, new GoogleAuthProvider());
       navigate({ to: "/dashboard" });
     } catch (e: any) {
       toast.error(e?.message ?? "Sign in failed");
@@ -155,7 +140,8 @@ function AuthPage() {
           </Button>
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          New patient accounts start as patient. The doctor account is set up on first sign-in via the Doctor Setup page.
+          New accounts start as patient. Doctor access is granted to allowlisted emails
+          automatically, or by an existing doctor from the Patients page.
         </p>
       </div>
     </div>

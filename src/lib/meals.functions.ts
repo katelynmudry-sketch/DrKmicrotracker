@@ -176,6 +176,8 @@ export const getMealPhotoUrl = createServerFn({ method: "POST" })
     const { userId } = context;
     const { adminDb, adminStorage } = await import("@/integrations/firebase/admin.server");
 
+    if (!data.path.startsWith("meal-photos/")) throw new Error("Forbidden");
+
     const owns = data.path.startsWith(`meal-photos/${userId}/`);
     if (!owns) {
       const userSnap = await adminDb.collection("users").doc(userId).get();

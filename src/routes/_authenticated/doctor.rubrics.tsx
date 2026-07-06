@@ -127,14 +127,17 @@ function Rubrics() {
         <Card className="h-fit p-5">
           <h2 className="text-base font-semibold">Upload rubric</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Upload your dietary protocol document. The pasted summary is what
-            the AI reads when analyzing meals — paste the key rules so the
-            model can apply them.
+            Upload your dietary protocol document. The pasted summary is what the AI reads when
+            analyzing meals — paste the key rules so the model can apply them.
           </p>
           <div className="mt-4 space-y-3">
             <div>
               <Label className="mb-1.5">Title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Anti-inflammatory protocol v3" />
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Anti-inflammatory protocol v3"
+              />
             </div>
             <div>
               <Label className="mb-1.5">Document (PDF or Word)</Label>
@@ -185,20 +188,13 @@ function Rubrics() {
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         {r.title}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {r.fileName}
-                      </p>
-                      {r.description && (
-                        <p className="mt-1 text-sm">{r.description}</p>
-                      )}
+                      <p className="truncate text-xs text-muted-foreground">{r.fileName}</p>
+                      {r.description && <p className="mt-1 text-sm">{r.description}</p>}
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2 text-xs">
                         Active
-                        <Switch
-                          checked={r.isActive}
-                          onCheckedChange={(c) => toggle(r.id, c)}
-                        />
+                        <Switch checked={r.isActive} onCheckedChange={(c) => toggle(r.id, c)} />
                       </div>
                       <Button
                         size="icon"

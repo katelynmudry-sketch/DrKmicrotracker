@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// Source of truth for Storage access control (see firestore.rules for the
+// Firestore side and CLAUDE.md's architecture rules).
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isDoctor() {
+      return request.auth != null &&
+        firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    }
+
+    // Meal photos: owner uploads to their own folder; owner or doctor may
+    // read (the app normally reads via a server-signed URL, which bypasses
+    // these rules, but direct reads are scoped the same way as a backstop).
+    match /meal-photos/{uid}/{fileName} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isDoctor());
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Rubric documents: doctor-only, uploaded under the uploading doctor's uid.
+    match /rubrics/{uid}/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == uid && isDoctor();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
