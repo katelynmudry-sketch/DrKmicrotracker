@@ -6,6 +6,33 @@ real browser. This list pulls every one of those items into one place, in the or
 to do them — the phase-by-phase detail and "why" for each lives in `docs/PLAN.md` and
 `docs/SETUP.md` if you want it; this is just the checklist.
 
+## 0. Just want to click through the UI? No accounts needed.
+
+The app has a built-in **preview/mock mode** (`src/lib/mock-mode.ts`) that activates
+automatically whenever Firebase isn't configured — it's not a stripped-down demo, it's
+the same UI and components running on fixture data instead of a live backend.
+
+- [ ] Import this repo into a new Vercel project.
+- [ ] **Don't set any environment variables at all.**
+- [ ] Deploy.
+- [ ] Open the URL → click through to sign-in → instead of a real login you'll see a
+  "Preview mode" picker to enter as a patient or a doctor. From there the whole app is
+  clickable: meal history, a reading's full detail, the Patterns page, pantry + grocery
+  list, the doctor's patient list and rubric page — all on realistic fixture data
+  (`src/lib/mock-data.ts`, `src/lib/demo-data.ts`).
+- [ ] Anything that would normally hit Firebase or Anthropic (uploading a photo,
+  scanning a pantry photo, saving an edit) shows a "Preview mode — nothing is saved"
+  toast instead of actually calling out — safe to click everything.
+
+This is the fastest way to sanity-check that the deploy itself works and to look at
+the UI/copy/design before spending any time on real accounts. It's genuinely
+zero-setup: no Firebase project, no Anthropic key, no `.env` at all.
+
+**What you can't test this way:** anything that needs a live backend — real sign-up,
+a real photo actually getting read by Claude, rubric PDF extraction, pantry photo
+scan/voice capture actually identifying items, data persisting across a refresh. For
+that, sections 1–4 below are the real setup.
+
 ## 1. Accounts + environment (docs/SETUP.md, ~45 min)
 
 - [ ] Create a Firebase project — Auth (email/password + Google), Firestore
