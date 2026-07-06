@@ -10,6 +10,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { useServerFn } from "@tanstack/react-start";
 import { db } from "@/integrations/firebase/client";
 import { isMockMode } from "@/lib/mock-mode";
 import { mockMeals, mockPatients } from "@/lib/mock-data";
@@ -19,9 +20,11 @@ import { AnalysisView } from "@/components/app/analysis-view";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { analyzeMeal } from "@/lib/meals.functions";
+import type { Meal } from "@/lib/analysis.schema";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Nourish" }] }),
@@ -62,7 +65,7 @@ function PatientView() {
         orderBy("eatenAt", "desc"),
       );
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as any);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Meal);
     },
   });
 
@@ -115,10 +118,28 @@ function PatientView() {
   );
 }
 
-function MealReview({ meal, patientId }: { meal: any; patientId: string }) {
+function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
   const qc = useQueryClient();
+  const analyzeFn = useServerFn(analyzeMeal);
   const [notes, setNotes] = useState<string>(meal.doctorNotes ?? "");
   const [saving, setSaving] = useState(false);
+  const [reanalyzing, setReanalyzing] = useState(false);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["doctor", "meals", patientId] });
+
+  const reanalyze = async () => {
+    if (isMockMode) return toast.info("Preview mode — nothing to re-analyze.");
+    setReanalyzing(true);
+    try {
+      await analyzeFn({ data: { mealId: meal.id } });
+      toast.success("Re-analyzed against the current rubric");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Re-analysis failed");
+    } finally {
+      setReanalyzing(false);
+      invalidate();
+    }
+  };
 
   const save = async () => {
     if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
@@ -170,12 +191,24 @@ function MealReview({ meal, patientId }: { meal: any; patientId: string }) {
         </Card>
       </div>
       <Card className="p-6">
-        <AnalysisView
-          analysis={meal.analysis}
-          mealId={meal.id}
-          editable
-          onSaved={() => qc.invalidateQueries({ queryKey: ["doctor", "meals", patientId] })}
-        />
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {meal.status === "pending" || meal.status === "analyzing"
+              ? "Reading in progress…"
+              : meal.status === "failed"
+                ? (meal.statusError ?? "Reading failed")
+                : "Reading"}
+          </p>
+          <Button size="sm" variant="outline" onClick={reanalyze} disabled={reanalyzing}>
+            {reanalyzing ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : (
+              <RotateCw className="mr-1 h-4 w-4" />
+            )}
+            Re-analyze with current rubric
+          </Button>
+        </div>
+        <AnalysisView analysis={meal.analysis} mealId={meal.id} editable onSaved={invalidate} />
       </Card>
     </div>
   );

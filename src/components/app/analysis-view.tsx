@@ -8,44 +8,61 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { updateMealAnalysis } from "@/lib/meals.functions";
 import { isMockMode } from "@/lib/mock-mode";
+import {
+  TRACKED_NUTRIENTS,
+  NUTRIENT_LEVELS,
+  CARB_QUALITIES,
+  type MealAnalysis,
+  type Micronutrient,
+} from "@/lib/analysis.schema";
 
-type Macros = {
-  calories_kcal: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  fiber_g: number;
-  sugar_g: number;
+// Functional rendering of the new reading shape — the Botanical Clinic-style
+// visual pass (attribute pills, reading rows, dashed dividers) is Phase 3's
+// job (docs/PLAN.md). This pass just needs to show every field correctly and
+// keep inline editing working, in the vocabulary from docs/VOICE.md.
+
+const NUTRIENT_LABELS: Record<string, string> = {
+  iron: "Iron",
+  b12: "B12",
+  vitamin_d: "Vitamin D",
+  calcium: "Calcium",
+  omega_3: "Omega-3",
+  iodine: "Iodine",
+  zinc: "Zinc",
+  choline: "Choline",
+  magnesium: "Magnesium",
 };
 
-type KeyMicro = { name: string; amount: string; daily_value_pct: number | null };
-
-type Analysis = {
-  meal_name?: string;
-  identified_items?: string[];
-  estimated_portion?: string;
-  macros?: Partial<Macros>;
-  key_micros?: KeyMicro[];
-  rubric_notes?: string[];
-  naturopathic_recommendations?: string[];
-  concerns?: string[];
-  overall_score?: number;
+const LEVEL_LABELS: Record<string, string> = {
+  strong: "Strong source",
+  present: "Present",
+  light: "A little light",
+  not_seen: "Not seen",
 };
 
-const macroLabels: Record<string, string> = {
-  calories_kcal: "Calories (kcal)",
-  protein_g: "Protein (g)",
-  carbs_g: "Carbs (g)",
-  fat_g: "Fat (g)",
-  fiber_g: "Fiber (g)",
-  sugar_g: "Sugar (g)",
+const TIER_LABELS: Record<string, string> = {
+  aligned: "Aligned",
+  getting_there: "Getting there",
+  worth_a_look: "Worth a look",
+};
+
+const CARB_QUALITY_LABELS: Record<string, string> = {
+  mostly_complex: "Mostly complex",
+  mixed: "Mixed",
+  mostly_refined: "Mostly refined",
 };
 
 type EditValues = {
   meal_name: string;
   estimated_portion: string;
-  macros: Macros;
-  key_micros: KeyMicro[];
+  identified_items: string;
+  building_blocks: {
+    protein_g: number;
+    fiber_g: number;
+    healthy_fat_sources: string;
+    carb_quality: (typeof CARB_QUALITIES)[number];
+  };
+  micronutrients: Micronutrient[];
 };
 
 export function AnalysisView({
@@ -54,42 +71,64 @@ export function AnalysisView({
   editable,
   onSaved,
 }: {
-  analysis: unknown;
+  analysis: MealAnalysis | null;
   mealId?: string;
   editable?: boolean;
-  onSaved?: (analysis: unknown) => void;
+  onSaved?: (analysis: MealAnalysis) => void;
 }) {
   const updateFn = useServerFn(updateMealAnalysis);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const a = (analysis ?? {}) as Analysis;
-
-  const snapshot = (): EditValues => ({
-    meal_name: a.meal_name ?? "",
-    estimated_portion: a.estimated_portion ?? "",
-    macros: {
-      calories_kcal: a.macros?.calories_kcal ?? 0,
-      protein_g: a.macros?.protein_g ?? 0,
-      carbs_g: a.macros?.carbs_g ?? 0,
-      fat_g: a.macros?.fat_g ?? 0,
-      fiber_g: a.macros?.fiber_g ?? 0,
-      sugar_g: a.macros?.sugar_g ?? 0,
-    },
-    key_micros: a.key_micros ?? [],
-  });
-
-  const form = useForm<EditValues>({ defaultValues: snapshot() });
-  const microFields = useFieldArray({ control: form.control, name: "key_micros" });
 
   const canEdit = !!editable && !!mealId;
 
+  // Hooks must run unconditionally on every render (a meal can transition
+  // from no-reading to has-reading while this component stays mounted), so
+  // useForm/useFieldArray are declared before the early return below rather
+  // than after it.
+  const snapshot = (): EditValues =>
+    analysis
+      ? {
+          meal_name: analysis.meal_name,
+          estimated_portion: analysis.estimated_portion,
+          identified_items: analysis.identified_items.join(", "),
+          building_blocks: {
+            protein_g: analysis.building_blocks.protein_g,
+            fiber_g: analysis.building_blocks.fiber_g,
+            healthy_fat_sources: analysis.building_blocks.healthy_fat_sources.join(", "),
+            carb_quality: analysis.building_blocks.carb_quality,
+          },
+          micronutrients: analysis.micronutrients,
+        }
+      : {
+          meal_name: "",
+          estimated_portion: "",
+          identified_items: "",
+          building_blocks: {
+            protein_g: 0,
+            fiber_g: 0,
+            healthy_fat_sources: "",
+            carb_quality: "mixed",
+          },
+          micronutrients: [],
+        };
+
+  const form = useForm<EditValues>({ defaultValues: snapshot() });
+  const microFields = useFieldArray({ control: form.control, name: "micronutrients" });
+
   if (!analysis) {
-    return <p className="text-sm text-muted-foreground">No analysis yet.</p>;
+    return <p className="text-sm text-muted-foreground">No reading yet.</p>;
   }
+  const a = analysis;
 
   const startEditing = () => {
     form.reset(snapshot());
     setEditing(true);
+  };
+
+  const cancel = () => {
+    form.reset();
+    setEditing(false);
   };
 
   const save = async (values: EditValues) => {
@@ -107,14 +146,26 @@ export function AnalysisView({
           analysis: {
             meal_name: values.meal_name,
             estimated_portion: values.estimated_portion,
-            macros: values.macros,
-            key_micros: values.key_micros,
+            identified_items: values.identified_items
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+            building_blocks: {
+              protein_g: values.building_blocks.protein_g,
+              fiber_g: values.building_blocks.fiber_g,
+              healthy_fat_sources: values.building_blocks.healthy_fat_sources
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+              carb_quality: values.building_blocks.carb_quality,
+            },
+            micronutrients: values.micronutrients,
           },
         },
       });
-      toast.success("Analysis updated");
+      toast.success("Reading updated");
       setEditing(false);
-      onSaved?.(result.analysis);
+      onSaved?.(result.analysis as MealAnalysis);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to save changes");
     } finally {
@@ -122,14 +173,9 @@ export function AnalysisView({
     }
   };
 
-  const cancel = () => {
-    form.reset();
-    setEditing(false);
-  };
-
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {editing ? (
             <Input
@@ -138,9 +184,7 @@ export function AnalysisView({
               placeholder="Meal name"
             />
           ) : (
-            <h3 className="text-lg font-semibold tracking-tight">
-              {a.meal_name ?? "Meal analysis"}
-            </h3>
+            <h3 className="text-lg font-semibold tracking-tight">{a.meal_name}</h3>
           )}
           {editing ? (
             <Input
@@ -154,134 +198,179 @@ export function AnalysisView({
             )
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {typeof a.overall_score === "number" && (
-            <div className="rounded-full border border-border bg-accent/10 px-3 py-1 text-sm font-semibold text-accent-foreground">
-              Rubric score {a.overall_score}/10
-            </div>
-          )}
-          {canEdit && !editing && (
-            <Button size="icon" variant="ghost" onClick={startEditing}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        {canEdit && !editing && (
+          <Button size="icon" variant="ghost" onClick={startEditing}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      {a.identified_items && a.identified_items.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {a.identified_items.map((i, idx) => (
-            <span
-              key={idx}
-              className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
-            >
-              {i}
-            </span>
-          ))}
-        </div>
+      <p className="text-base italic text-foreground">{a.opening_note}</p>
+
+      {editing ? (
+        <Input
+          {...form.register("identified_items")}
+          placeholder="Identified items, comma separated"
+        />
+      ) : (
+        a.identified_items.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {a.identified_items.map((item, idx) => (
+              <span
+                key={idx}
+                className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )
       )}
 
       <Card className="p-4">
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Macronutrients
+          Building blocks
         </p>
         {editing ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {Object.keys(macroLabels).map((k) => (
-              <div key={k}>
-                <label className="text-xs text-muted-foreground">{macroLabels[k]}</label>
-                <Input
-                  type="number"
-                  step="any"
-                  {...form.register(`macros.${k as keyof Macros}`, { valueAsNumber: true })}
-                />
-              </div>
-            ))}
+            <div>
+              <label className="text-xs text-muted-foreground">Protein (g)</label>
+              <Input
+                type="number"
+                step="any"
+                {...form.register("building_blocks.protein_g", { valueAsNumber: true })}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Fiber (g)</label>
+              <Input
+                type="number"
+                step="any"
+                {...form.register("building_blocks.fiber_g", { valueAsNumber: true })}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Carb quality</label>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                {...form.register("building_blocks.carb_quality")}
+              >
+                {CARB_QUALITIES.map((q) => (
+                  <option key={q} value={q}>
+                    {CARB_QUALITY_LABELS[q]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2 md:col-span-3">
+              <label className="text-xs text-muted-foreground">
+                Healthy fat sources, comma separated
+              </label>
+              <Input {...form.register("building_blocks.healthy_fat_sources")} />
+            </div>
           </div>
         ) : (
-          a.macros && (
+          <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              {Object.entries(a.macros).map(([k, v]) => (
-                <div key={k} className="rounded-lg bg-secondary p-3">
-                  <p className="text-xs text-muted-foreground">{macroLabels[k] ?? k}</p>
-                  <p className="text-lg font-semibold">{Math.round(Number(v))}</p>
-                </div>
-              ))}
+              <div className="rounded-lg bg-secondary p-3">
+                <p className="text-xs text-muted-foreground">Protein</p>
+                <p className="text-lg font-semibold">{Math.round(a.building_blocks.protein_g)}g</p>
+              </div>
+              <div className="rounded-lg bg-secondary p-3">
+                <p className="text-xs text-muted-foreground">Fiber</p>
+                <p className="text-lg font-semibold">{Math.round(a.building_blocks.fiber_g)}g</p>
+              </div>
+              <div className="rounded-lg bg-secondary p-3">
+                <p className="text-xs text-muted-foreground">Carbs</p>
+                <p className="text-lg font-semibold">
+                  {CARB_QUALITY_LABELS[a.building_blocks.carb_quality]}
+                </p>
+              </div>
             </div>
-          )
+            {a.building_blocks.healthy_fat_sources.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Healthy fats: {a.building_blocks.healthy_fat_sources.join(", ")}
+              </p>
+            )}
+          </div>
         )}
       </Card>
 
-      {(editing || (a.key_micros && a.key_micros.length > 0)) && (
-        <Card className="p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Key micronutrients
-            </p>
-            {editing && (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => microFields.append({ name: "", amount: "", daily_value_pct: null })}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                Add
-              </Button>
-            )}
-          </div>
-          {editing ? (
-            <div className="space-y-2">
-              {microFields.fields.map((field, i) => (
-                <div key={field.id} className="flex items-center gap-2">
-                  <Input
-                    placeholder="Name"
-                    className="flex-1"
-                    {...form.register(`key_micros.${i}.name`)}
-                  />
-                  <Input
-                    placeholder="Amount"
-                    className="flex-1"
-                    {...form.register(`key_micros.${i}.amount`)}
-                  />
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="% DV"
-                    className="w-20"
-                    {...form.register(`key_micros.${i}.daily_value_pct`, {
-                      setValueAs: (v) => (v === "" ? null : Number(v)),
-                    })}
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => microFields.remove(i)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              {a.key_micros!.map((m, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
-                >
-                  <span>{m.name}</span>
-                  <span className="text-muted-foreground">
-                    {m.amount}
-                    {m.daily_value_pct != null ? ` · ${m.daily_value_pct}% DV` : ""}
-                  </span>
-                </li>
-              ))}
-            </ul>
+      <Card className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Micronutrients
+          </p>
+          {editing && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => microFields.append({ nutrient: "iron", level: "present", from: "" })}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Add
+            </Button>
           )}
-        </Card>
-      )}
+        </div>
+        {editing ? (
+          <div className="space-y-2">
+            {microFields.fields.map((field, i) => (
+              <div key={field.id} className="flex items-center gap-2">
+                <select
+                  className="h-9 flex-1 rounded-md border border-input bg-transparent px-2 text-sm"
+                  {...form.register(`micronutrients.${i}.nutrient`)}
+                >
+                  {TRACKED_NUTRIENTS.map((n) => (
+                    <option key={n} value={n}>
+                      {NUTRIENT_LABELS[n]}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="h-9 flex-1 rounded-md border border-input bg-transparent px-2 text-sm"
+                  {...form.register(`micronutrients.${i}.level`)}
+                >
+                  {NUTRIENT_LEVELS.map((l) => (
+                    <option key={l} value={l}>
+                      {LEVEL_LABELS[l]}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  placeholder="From which food"
+                  className="flex-1"
+                  {...form.register(`micronutrients.${i}.from`)}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => microFields.remove(i)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : a.micronutrients.length > 0 ? (
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {a.micronutrients.map((m, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
+              >
+                <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
+                <span className="text-muted-foreground">
+                  {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">Nothing tracked for this reading.</p>
+        )}
+      </Card>
 
       {editing && (
         <div className="flex gap-2">
@@ -295,34 +384,35 @@ export function AnalysisView({
         </div>
       )}
 
-      {a.rubric_notes && a.rubric_notes.length > 0 && (
-        <Section title="Rubric notes" items={a.rubric_notes} tone="accent" />
+      {a.offered.length > 0 && (
+        <Section title="What this meal offered" items={a.offered} tone="accent" />
       )}
-      {a.naturopathic_recommendations && a.naturopathic_recommendations.length > 0 && (
-        <Section title="Naturopathic recommendations" items={a.naturopathic_recommendations} />
+      {a.worth_trying.length > 0 && <Section title="Worth trying" items={a.worth_trying} />}
+      {a.absorption_notes.length > 0 && (
+        <Section title="Absorption notes" items={a.absorption_notes} />
       )}
-      {a.concerns && a.concerns.length > 0 && (
-        <Section title="Concerns / uncertainty" items={a.concerns} tone="warn" />
+
+      <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Protocol fit
+          </p>
+          <p className="mt-1 text-sm">{a.protocol_fit.note}</p>
+        </div>
+        <span className="whitespace-nowrap rounded-full bg-accent/10 px-3 py-1 text-sm font-medium text-accent-foreground">
+          {TIER_LABELS[a.protocol_fit.tier] ?? a.protocol_fit.tier}
+        </span>
+      </Card>
+
+      {a.uncertainty && (
+        <p className="text-sm text-muted-foreground">We couldn't quite see: {a.uncertainty}</p>
       )}
     </div>
   );
 }
 
-function Section({
-  title,
-  items,
-  tone,
-}: {
-  title: string;
-  items: string[];
-  tone?: "accent" | "warn";
-}) {
-  const toneCls =
-    tone === "accent"
-      ? "border-accent/40 bg-accent/5"
-      : tone === "warn"
-        ? "border-destructive/30 bg-destructive/5"
-        : "border-border bg-card";
+function Section({ title, items, tone }: { title: string; items: string[]; tone?: "accent" }) {
+  const toneCls = tone === "accent" ? "border-accent/40 bg-accent/5" : "border-border bg-card";
   return (
     <div className={`rounded-xl border p-4 ${toneCls}`}>
       <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">

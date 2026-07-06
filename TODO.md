@@ -4,6 +4,12 @@ Running backlog against the Micronutrient Tracker PRD. Status reflects the
 current state of `main`. Update this file in the same PR as the work it
 tracks.
 
+**Superseded by `docs/PLAN.md`** as of the Dr. K's Kitchen ethos rebuild — the
+"Done" list below still describes the pre-rebuild calorie/score-based schema
+in places; `docs/PLAN.md` Part 5 is the current source of truth for what's
+shipped. This file is kept for the PRD-backlog framing but isn't the primary
+plan doc anymore.
+
 ## Architecture decision
 
 The PRD assumed a Canadian Nutrient File (CNF) database for nutrient lookups.
@@ -31,10 +37,10 @@ portion modeling) with no loss of functionality for the personas in the PRD.
 
 ## Backlog (not started, prioritized)
 
-1. **Re-analyze action (doctor-triggered)** — explicit button to re-run
-   Claude against the current rubric after a manual correction or rubric
-   change, instead of relying on the original analysis. Separate from the
-   "no auto re-score on edit" decision above — this is opt-in.
+1. ~~Re-analyze action (doctor-triggered)~~ — **done** (docs/PLAN.md Phase 2c):
+   `analyzeMeal` serves the initial run, the patient/doctor Retry action, and
+   the doctor's "Re-analyze with current rubric" button — all the same
+   operation, re-scored against whatever rubrics are active now.
 2. **Edit history / versioning** — currently only the most recent edit's
    timestamp+author is kept; no diff or history of prior values.
 3. **Structured ingredient entry** — optional alternative to the single
@@ -50,9 +56,10 @@ portion modeling) with no loss of functionality for the personas in the PRD.
 
 ## Known issues / tech debt
 
-- `analyzeMeal`'s return type triggers a pre-existing TanStack Start
-  serialization type-check error (`analysis: unknown` vs
-  `ValidateSerializableMapped`) — doesn't block builds, only `tsc --noEmit`.
-  Needs a typed analysis shape end-to-end to resolve properly.
+- ~~`analyzeMeal`'s return type triggers a pre-existing TanStack Start
+  serialization type-check error~~ — **fixed** (docs/PLAN.md Phase 2d): the
+  reading is now a typed `MealAnalysis`/`Meal` end to end instead of
+  `unknown`; `tsc --noEmit` passes clean.
 - General `@typescript-eslint/no-explicit-any` debt across several route
-  files (pre-existing, not introduced by recent work).
+  files (pre-existing, not introduced by recent work) — limited to
+  `catch (e: any)` blocks; not the same issue as the serialization error above.

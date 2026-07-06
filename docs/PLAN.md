@@ -200,26 +200,49 @@ photo URLs, rubrics. PWA + Vercel build configured.
   `promoteToDoctor` as an "add a doctor" card on the Patients page. Rules haven't been
   published to a live Firebase project yet (no project exists) — that's owner step 5.
 
-### Phase 2 — The reading engine, rebuilt on the ethos *(≈2 sessions; the heart)*
+### Phase 2 — The reading engine, rebuilt on the ethos *(≈2 sessions; the heart)* — **shipped**
 One coherent rewrite of `analyzeMeal`:
-- **2a. New schema** (`src/lib/analysis.schema.ts`, zod, shared server/UI/mocks):
+- [x] **2a. New schema** (`src/lib/analysis.schema.ts`, zod, shared server/UI/mocks):
   `meal_name`, `identified_items`, `estimated_portion`; `opening_note` (the one-line
   love-note in Dr. K's voice); `building_blocks` (protein g, fiber g, healthy-fat
   sources, complex-vs-refined carbs — **no calories field exists**); `micronutrients[]`
-  ({nutrient, level: strong|present|light|not_seen, from: which food}); `offered`
-  (nourishment highlights); `worth_trying` (food-first additions); `absorption_notes`;
-  `protocol_fit` ({tier: aligned|getting_there|worth_a_look, note}); `uncertainty`.
-  Removed concepts: calories, sugar-as-shame, numeric score, "concerns".
-- **2b. The Dr. K clinical spine** (`src/lib/clinical-spine.ts`, editable without touching
-  engine code): her positions (vitamin C+iron, coffee/tea timing, never flag selenium,
-  carminatives, cooked brassicas only for Hashimoto's, cravings-as-data, celebrate
-  colours/variety) + the voice rule + vocabulary; uploaded rubrics layered on top.
-- **2c. Bulletproofing**: server owns status (`pending → analyzing → analyzed | failed` +
-  readable error; client never writes status); structured outputs so the reply always
-  matches the schema; validation before save + one corrective retry + timeout; model via
-  `ANTHROPIC_MODEL` env (default claude-sonnet-4-6); "Retry" for failed/stalled meals;
-  doctor "Re-analyze with current rubric" button; record rubric IDs used per reading.
-- **2d. Typed end-to-end**: kill `unknown`/`as any`; `typecheck` script passes; minimal CI.
+  ({nutrient, level: strong|present|light|not_seen, from: which food} — `nutrient` is a
+  closed enum that doesn't include selenium, so a reading can't flag it even if the
+  model tries); `offered` (nourishment highlights); `worth_trying` (food-first
+  additions); `absorption_notes`; `protocol_fit` ({tier: aligned|getting_there|
+  worth_a_look, note}); `uncertainty`. Removed concepts: calories, sugar-as-shame,
+  numeric score, "concerns".
+- [x] **2b. The Dr. K clinical spine** (`src/lib/clinical-spine.ts`, editable without
+  touching engine code): her positions (vitamin C+iron, coffee/tea timing, never flag
+  selenium, carminatives, cooked brassicas only for Hashimoto's, cravings-as-data,
+  celebrate colours/variety) + the voice rule + vocabulary; uploaded rubrics layered on
+  top. Uses Anthropic tool-use (`strict: true`) so the reply is schema-validated by the
+  API itself, not just parsed hopefully.
+- [x] **2c. Bulletproofing**: server owns status (`pending → analyzing → analyzed | failed`
+  + readable error; client never writes status — `firestore.rules` no longer grants the
+  client any meal-update path except doctor `doctorNotes`); structured outputs so the
+  reply always matches the schema (zod-validated); one corrective retry + a 45s timeout
+  per attempt; model via `ANTHROPIC_MODEL` env (default claude-sonnet-4-6); "Retry"
+  button on pending/analyzing/failed meals (patient-facing, shows the failure reason);
+  doctor "Re-analyze with current rubric" button; rubric IDs used are recorded on the
+  meal (`rubricIds`). `analyzeMeal` serves all three triggers — same operation.
+- [x] **2d. Typed end-to-end**: `MealAnalysis`/`Meal` types flow through
+  `analyzeMeal`/`updateMealAnalysis`/every route that reads a meal — no more `unknown`
+  analysis (this also fixed the pre-existing TanStack Start serialization `tsc` error
+  noted in TODO.md, since the return type is no longer `unknown`); `typecheck` passes
+  clean. Added `.github/workflows/ci.yml` (typecheck/lint/build) and
+  `scripts/ethos-lint.sh` (`npm run ethos-lint`) — greps `src/` for calorie/kcal/score/
+  grade outside an allowlist of the 3 files that legitimately discuss them to define the
+  exclusion, wired into CI.
+- **Bug found + fixed during verification (not originally scoped, but blocking):**
+  `doctor.tsx` was a layout route with children (`doctor.rubrics.tsx`,
+  `doctor.patient.$patientId.tsx`) but never rendered `<Outlet />` — so the Rubrics page
+  and the per-patient review page (including the new Re-analyze button) silently never
+  appeared; navigating there just kept showing the Patients list. Fixed by moving the
+  Patients-list content to `doctor.index.tsx` and making `doctor.tsx` a pure
+  `<Outlet />` layout. Verified in a real browser (Playwright) end to end: patient
+  reading view, doctor patient review + re-analyze, rubrics page, failed/pending Retry
+  states — all render correctly in preview mode with no console errors.
 
 ### Phase 3 — Dr. K's Kitchen: rebrand + reading UI *(≈2 sessions)*
 - **3a. Design tokens**: rewrite `src/styles.css` palette to the Garden Warmth values
@@ -321,10 +344,10 @@ ethos-carrying.
 | 3 | Cleanup, copy fixes, bring design-drafts over, build green | Claude | S | done |
 | 4 | Security rules + DOCTOR_EMAILS role management | Claude | M | done |
 | 5 | Owner publishes rules | owner | 10m | pending — no live Firebase project yet |
-| 6 | Reading engine rebuild (schema, spine, reliability, typed, CI) | Claude | L |
+| 6 | Reading engine rebuild (schema, spine, reliability, typed, CI) | Claude | L | done |
 | 7 | Rebrand: tokens, fonts, Reading UI v2, landing, PWA, copy pass | Claude | L |
 | 8 | Patterns page + gap suggestions (CNF→JSON port) | Claude | L |
-| 9 | Rubric PDF extraction + re-analyze button | Claude | S–M |
+| 9 | Rubric PDF extraction + re-analyze button | Claude | S–M | re-analyze button done in #6 (same op as analyzeMeal); PDF extraction still open |
 | 10 | Demo seed data + DEMO.md | Claude | M |
 | 11 | Vercel deploy, README, verification pass | Claude + owner | M |
 | 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L |

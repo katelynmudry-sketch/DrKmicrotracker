@@ -28,9 +28,12 @@ service cloud.firestore {
     }
 
     // Meals: owner may create and read their own; doctor may read all and
-    // edit only doctorNotes. analysis/status are set by the analyzeMeal /
-    // updateMealAnalysis server functions (Admin SDK) — not writable here,
-    // except the narrow client-side "mark my stuck upload failed" case.
+    // edit only doctorNotes. status/analysis/rubricIds are entirely
+    // server-owned — set only by the analyzeMeal / updateMealAnalysis server
+    // functions (Admin SDK, bypasses these rules). The client creates a meal
+    // as 'pending' and never writes status again; a stuck or failed meal is
+    // recovered by re-invoking analyzeMeal (Retry / Re-analyze), not by a
+    // client-side Firestore write.
     match /meals/{mealId} {
       allow get: if isSignedIn() &&
         (resource.data.patientId == request.auth.uid || isDoctor());
@@ -39,17 +42,11 @@ service cloud.firestore {
 
       allow create: if isSignedIn() &&
         request.resource.data.patientId == request.auth.uid &&
-        request.resource.data.status == 'analyzing' &&
+        request.resource.data.status == 'pending' &&
         request.resource.data.analysis == null;
 
-      allow update: if isSignedIn() && (
-        (resource.data.patientId == request.auth.uid &&
-         resource.data.status == 'analyzing' &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
-         request.resource.data.status == 'failed') ||
-        (isDoctor() &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doctorNotes']))
-      );
+      allow update: if isDoctor() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doctorNotes']);
 
       allow delete: if false;
     }

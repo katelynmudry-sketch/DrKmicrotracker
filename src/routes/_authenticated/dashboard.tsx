@@ -8,12 +8,10 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   addDoc,
   collection,
-  doc,
   getDocs,
   orderBy,
   query,
   serverTimestamp,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
@@ -32,21 +30,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Camera, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
+import type { Meal, MealStatus } from "@/lib/analysis.schema";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Your meals — Nourish" }] }),
   component: PatientDashboard,
 });
-
-type Meal = {
-  id: string;
-  mealLabel: string | null;
-  eatenAt: string;
-  status: string;
-  storagePath: string | null;
-  inputMethod?: "photo" | "text";
-  analysis: unknown;
-};
 
 const TextMealSchema = z.object({
   mealLabel: z.string().optional(),
@@ -75,7 +64,7 @@ function PatientDashboard() {
     queryKey: ["meals", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      if (isMockMode) return mockMeals as unknown as Meal[];
+      if (isMockMode) return mockMeals;
       const q = query(
         collection(db, "meals"),
         where("patientId", "==", user!.uid),
@@ -90,14 +79,16 @@ function PatientDashboard() {
     qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
     analyzeFn({ data: { mealId } })
       .then(() => {
-        toast.success("Analysis ready");
+        toast.success("Reading ready");
         qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
       })
       .catch((e) => {
+        // The server has already marked the meal "failed" with a reason
+        // (status is server-owned — the client never writes it) — just
+        // refetch so the badge reflects that, and let the patient retry
+        // from the meal detail page.
         toast.error(e?.message ?? "Analysis failed");
-        updateDoc(doc(db, "meals", mealId), { status: "failed" }).then(() => {
-          qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
-        });
+        qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
       });
   };
 
@@ -118,7 +109,7 @@ function PatientDashboard() {
         mealLabel: label || null,
         patientNotes: notes || null,
         doctorNotes: null,
-        status: "analyzing",
+        status: "pending",
         analysis: null,
         eatenAt: new Date().toISOString(),
         createdAt: serverTimestamp(),
@@ -148,7 +139,7 @@ function PatientDashboard() {
         mealLabel: values.mealLabel || null,
         patientNotes: values.patientNotes || null,
         doctorNotes: null,
-        status: "analyzing",
+        status: "pending",
         analysis: null,
         eatenAt: new Date().toISOString(),
         createdAt: serverTimestamp(),
@@ -311,8 +302,8 @@ function PatientDashboard() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
+function StatusBadge({ status }: { status: MealStatus }) {
+  const map: Record<MealStatus, string> = {
     analyzed: "bg-accent/15 text-accent-foreground",
     analyzing: "bg-secondary text-secondary-foreground",
     pending: "bg-secondary text-muted-foreground",
