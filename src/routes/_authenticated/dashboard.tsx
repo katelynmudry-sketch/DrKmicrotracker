@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Camera, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
+import { Camera, LineChart, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { NUTRIENT_LABELS, TIER_LABELS, type Meal, type MealStatus } from "@/lib/analysis.schema";
 
@@ -157,14 +157,22 @@ function PatientDashboard() {
   return (
     <AppShell
       nav={
-        isDoctor ? (
+        <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" asChild>
-            <Link to="/doctor">
-              <Stethoscope className="mr-1 h-4 w-4" />
-              Doctor view
+            <Link to="/patterns">
+              <LineChart className="mr-1 h-4 w-4" />
+              Patterns
             </Link>
           </Button>
-        ) : null
+          {isDoctor && (
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/doctor">
+                <Stethoscope className="mr-1 h-4 w-4" />
+                Doctor view
+              </Link>
+            </Button>
+          )}
+        </div>
       }
     >
       <div className="grid gap-8 md:grid-cols-[1fr_2fr]">

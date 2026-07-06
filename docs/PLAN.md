@@ -275,23 +275,49 @@ One coherent rewrite of `analyzeMeal`:
   `CARB_QUALITY_LABELS`/`TIER_LABELS` to `analysis.schema.ts` as the single source for
   display labels (shared by analysis-view.tsx and the new attribute pills).
 
-### Phase 4 — Stand-out features *(≈2–3 sessions)*
-- **4a. Patterns page** (patient + doctor embed): micronutrient coverage map (how often
-  each Dr. K nutrient showed up strong/present this week, gaps get food-first suggestions
-  attached — never warnings); plant-variety counter ("12 different plants this week");
-  colour diversity; protein & fiber rhythm vs the doctor's target as a gentle band;
-  streaks/counts. Friendly empty state under 3 readings. Built on vendored recharts +
-  theme tokens; dataviz skill applied.
-- **4b. Nutrient-gap suggestions** (port from pantry branch): `computeNutrientGaps` +
-  two-tier suggestions rewired to the new tier schema; CNF catalog → bundled JSON
-  (whole foods, 8 nutrients — reuse branch's Fuse.js matching + ranking; drop Supabase).
-  Lives on the Patterns page ("Try something new") — pantry tier activates post-demo.
-- **4c. Rubric PDF auto-extraction**: server fn sends the uploaded PDF to Claude as a
-  document block; prefills the review-and-edit box. Non-PDFs keep manual paste.
-- **4d. Demo seed data + `docs/DEMO.md`**: doctor-only Seed/Clear buttons gated by
-  `DEMO_MODE=true`; 3 demo patients × ~15 meals across 3 weeks with pre-written readings
-  whose arcs tell stories (an iron gap closing after the lemon tip; plant variety
-  climbing). Zero AI cost; `demo: true` tag for one-click removal; walkthrough script.
+### Phase 4 — Stand-out features *(≈2–3 sessions)* — **shipped**
+- [x] **4a. Patterns page** (`src/lib/trends.ts` + `src/components/app/patterns-panel.tsx`,
+  patient route at `/patterns` + a "Patterns" tab embedded in the doctor's per-patient
+  view): micronutrient coverage (how many of the last 14 days' readings called each
+  nutrient out as a strong source — plain "X of Y readings" counts, never a percentage),
+  gaps feed straight into 4b's suggestions; plant-variety and colour-diversity stat tiles
+  (keyword-heuristic, not a botanical database — see the code comment); protein/fiber
+  rhythm as two small-multiple line charts against a generic food-first band (there's no
+  per-patient doctor-set target in the schema yet, so the band is general guidance, not a
+  number); logging streak. Friendly empty state under 3 readings. dataviz skill applied —
+  chart mark colours (`--chart-4`/`--chart-5`, i.e. sage-deep/terracotta-deep) were picked
+  because they're the two existing theme tokens that clear the skill's contrast validator
+  against the cream surface; the brand's softer default chart tokens (`--chart-2`/`-3`)
+  don't. Coverage rows are plain HTML bars with real numbers in the DOM, not recharts —
+  simpler and satisfies the accessibility bar for what's fundamentally a small list.
+- [x] **4b. Nutrient-gap suggestions**: `computeNutrientCoverage`'s gaps (below a 40%
+  strong-source rate) surface as "Try something new" on the Patterns page. No CNF import —
+  there's no live dataset to pull in this environment, and the ethos already rules out
+  grading meals against a food database — instead `src/lib/nutrient-reference.ts` is a
+  small hand-curated whole-foods list (top foods per tracked nutrient, food-first,
+  Dr. K-voiced reasons), never surfaced with a number. The pantry-first tier is still
+  post-demo per the table below (no pantry inventory exists yet to check against).
+- [x] **4c. Rubric PDF auto-extraction**: `extractRubricPdf` (`src/lib/rubrics.functions.ts`)
+  sends the uploaded PDF to Claude as a document content block and returns a plain-text
+  summary; an "Extract from PDF" button in `doctor.rubrics.tsx` prefills the
+  review-and-edit box (doctor still reviews/edits before saving). Non-PDF uploads
+  (doc/docx) keep the manual paste flow — Claude only takes PDF as a document block today.
+- [x] **4d. Demo seed data + `docs/DEMO.md`**: doctor-only Seed/Clear buttons
+  (`src/lib/demo.functions.ts`, gated server-side by `DEMO_MODE=true`) on the Patients
+  page; 3 demo patients × ~10 hand-written readings each across 3 weeks
+  (`src/lib/demo-data.ts`) whose arcs tell stories (Jordan's iron gap closing after the
+  lemon/vitamin-C tip; Morgan's plant variety and colour climbing from a handful of
+  staples; Sam steady on an omega-3-forward protocol). Zero AI cost — readings are
+  authored text, not model output. Every seeded doc (`users`, `meals`, one demo `rubrics`
+  doc) is tagged `demo: true` for one-click removal. Walkthrough script in `docs/DEMO.md`.
+
+**Not yet visually verified in a browser** — this session's sandbox couldn't bind a dev
+server (no IPv6 support in the container; the nitro/vercel-dev-emulation listener needs
+it regardless of `vite.config.ts`'s `server.host`, which the app doesn't otherwise need to
+change). Verified instead via `tsc --noEmit`, `eslint`, a full `vite build`, `ethos-lint`,
+and running `trends.ts`/`demo-data.ts` directly against real fixture data with `tsx` to
+confirm the numbers are sane. Phase 5's owner should do a real browser pass on all of
+Phase 4 before the live demo.
 
 ### Phase 5 — Deploy + prove it *(1 session + ~30 min owner)*
 - Vercel import → env vars (+ `DOCTOR_EMAILS`, `DEMO_MODE` while demoing) → deploy →
@@ -363,19 +389,21 @@ ethos-carrying.
 | 5 | Owner publishes rules | owner | 10m | pending — no live Firebase project yet |
 | 6 | Reading engine rebuild (schema, spine, reliability, typed, CI) | Claude | L | done |
 | 7 | Rebrand: tokens, fonts, Reading UI v2, landing, PWA, copy pass | Claude | L | done |
-| 8 | Patterns page + gap suggestions (CNF→JSON port) | Claude | L |
-| 9 | Rubric PDF extraction + re-analyze button | Claude | S–M | re-analyze button done in #6 (same op as analyzeMeal); PDF extraction still open |
-| 10 | Demo seed data + DEMO.md | Claude | M |
-| 11 | Vercel deploy, README, verification pass | Claude + owner | M |
+| 8 | Patterns page + gap suggestions (bundled whole-foods JSON, not a CNF import) | Claude | L | done |
+| 9 | Rubric PDF extraction + re-analyze button | Claude | S–M | done (re-analyze button was done in #6; PDF extraction done this session) |
+| 10 | Demo seed data + DEMO.md | Claude | M | done |
+| 11 | Vercel deploy, README, verification pass | Claude + owner | M | not started — still blocked on step 5 (no live Firebase project); Phase 4 also needs a real-browser pass first, see Phase 4's note above |
 | 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L |
 
 **Critical files:** `src/lib/meals.functions.ts` (engine), `src/lib/analysis.schema.ts` +
 `src/lib/clinical-spine.ts` (new), `firestore.rules`/`storage.rules`/`firebase.json`
 (new), `src/styles.css` (design tokens), `src/components/app/analysis-view.tsx` (reading
 UI), `src/routes/index.tsx` (landing), `CLAUDE.md` + `docs/` (ethos rails),
-`src/lib/trends.ts` + patterns panel (new), ported `suggestions.functions.ts` +
-`nutrient-reference.ts` + CNF JSON (from pantry branch), `src/hooks/use-auth.ts` +
-`src/lib/rubrics.functions.ts` (roles, PDF extraction), `src/lib/mock-data.ts` (v2).
+`src/lib/trends.ts` + `src/components/app/patterns-panel.tsx` (Phase 4a, new),
+`src/lib/nutrient-reference.ts` (Phase 4b, new — hand-curated, not a CNF port),
+`src/lib/rubrics.functions.ts` (roles + Phase 4c's `extractRubricPdf`),
+`src/lib/demo-data.ts` + `src/lib/demo.functions.ts` + `docs/DEMO.md` (Phase 4d, new),
+`src/hooks/use-auth.ts`, `src/lib/mock-data.ts` (v2).
 
 **Model guidance for execution:** Sonnet executes most phases; use Fable (or a Fable
 review pass) for the security rules, the reading-schema + clinical-spine writing, and a

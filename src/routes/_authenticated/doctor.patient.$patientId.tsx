@@ -17,9 +17,11 @@ import { mockMeals, mockPatients } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { AnalysisView } from "@/components/app/analysis-view";
+import { PatternsPanel } from "@/components/app/patterns-panel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -88,32 +90,45 @@ function PatientView() {
         </h1>
         <p className="text-sm text-muted-foreground">{profile.data?.email}</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Meals</p>
-          {meals.data?.length ? (
-            meals.data.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setSelected(m.id)}
-                className={`block w-full rounded-lg border p-3 text-left transition ${
-                  active?.id === m.id
-                    ? "border-accent bg-accent/5"
-                    : "border-border bg-card hover:border-accent/40"
-                }`}
-              >
-                <p className="text-sm font-medium">{m.mealLabel ?? "Untitled meal"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(m.eatenAt).toLocaleString()}
-                </p>
-              </button>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground">No meals yet.</p>
-          )}
-        </div>
-        {active ? <MealReview key={active.id} meal={active} patientId={patientId} /> : null}
-      </div>
+      <Tabs defaultValue="meals">
+        <TabsList className="mb-4">
+          <TabsTrigger value="meals">Meals</TabsTrigger>
+          <TabsTrigger value="patterns">Patterns</TabsTrigger>
+        </TabsList>
+        <TabsContent value="meals">
+          <div className="grid gap-6 md:grid-cols-[260px_1fr]">
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Meals
+              </p>
+              {meals.data?.length ? (
+                meals.data.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelected(m.id)}
+                    className={`block w-full rounded-lg border p-3 text-left transition ${
+                      active?.id === m.id
+                        ? "border-accent bg-accent/5"
+                        : "border-border bg-card hover:border-accent/40"
+                    }`}
+                  >
+                    <p className="text-sm font-medium">{m.mealLabel ?? "Untitled meal"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(m.eatenAt).toLocaleString()}
+                    </p>
+                  </button>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No meals yet.</p>
+              )}
+            </div>
+            {active ? <MealReview key={active.id} meal={active} patientId={patientId} /> : null}
+          </div>
+        </TabsContent>
+        <TabsContent value="patterns">
+          <PatternsPanel meals={meals.data ?? []} />
+        </TabsContent>
+      </Tabs>
     </AppShell>
   );
 }

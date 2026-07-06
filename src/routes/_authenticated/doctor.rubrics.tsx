@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   addDoc,
   collection,
@@ -24,8 +25,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { extractRubricPdf } from "@/lib/rubrics.functions";
+
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
 
 export const Route = createFileRoute("/_authenticated/doctor/rubrics")({
   head: () => ({ meta: [{ title: "Rubrics — Dr. K's Kitchen" }] }),
@@ -50,6 +63,8 @@ function Rubrics() {
   const [extracted, setExtracted] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const extractFn = useServerFn(extractRubricPdf);
 
   const rubrics = useQuery({
     queryKey: ["rubrics"],
@@ -88,6 +103,22 @@ function Rubrics() {
       toast.error(e?.message ?? "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const extractFromPdf = async () => {
+    if (!file) return;
+    if (isMockMode) return toast.info("Preview mode — extraction isn't available.");
+    setExtracting(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const result = await extractFn({ data: { base64 } });
+      setExtracted(result.text);
+      toast.success("Pulled a summary from the PDF — review it before saving.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't extract text from that PDF");
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -156,12 +187,31 @@ function Rubrics() {
               />
             </div>
             <div>
-              <Label className="mb-1.5">Rubric summary for AI</Label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <Label>Rubric summary for AI</Label>
+                {file?.type === "application/pdf" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-auto py-1 text-xs"
+                    onClick={extractFromPdf}
+                    disabled={extracting}
+                  >
+                    {extracting ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-1 h-3 w-3" />
+                    )}
+                    Extract from PDF
+                  </Button>
+                )}
+              </div>
               <Textarea
                 rows={6}
                 value={extracted}
                 onChange={(e) => setExtracted(e.target.value)}
-                placeholder="Paste the protocol guidance the AI should apply (food groups to avoid, target macros, scoring rules…)"
+                placeholder="Paste the protocol guidance the AI should apply (food groups to avoid, target macros, scoring rules…), or upload a PDF above and use Extract from PDF."
               />
             </div>
             <Button className="w-full" onClick={upload} disabled={uploading}>

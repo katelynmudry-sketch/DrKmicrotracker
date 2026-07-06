@@ -221,6 +221,9 @@ export interface MealDoc {
   analyzedAt?: string | null;
   analysisEditedAt?: string | null;
   analysisEditedBy?: string | null;
+  // Set only by demo.functions.ts's seedDemoData — marks a doc as removable
+  // by clearDemoData in one shot (see docs/DEMO.md). Never set by real usage.
+  demo?: boolean;
 }
 
 export type Meal = MealDoc & { id: string };

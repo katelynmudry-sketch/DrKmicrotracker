@@ -12,8 +12,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Users } from "lucide-react";
+import { BookOpen, FlaskConical, Loader2, Users } from "lucide-react";
 import { promoteToDoctor } from "@/lib/rubrics.functions";
+import { seedDemoData, clearDemoData } from "@/lib/demo.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/doctor/")({
@@ -88,6 +89,7 @@ function DoctorHome() {
         <h1 className="text-xl font-semibold tracking-tight">Patients</h1>
       </div>
       <AddDoctorCard onAdded={() => qc.invalidateQueries({ queryKey: ["doctor", "patients"] })} />
+      <DemoDataCard onChanged={() => qc.invalidateQueries({ queryKey: ["doctor", "patients"] })} />
       {patients.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : !patients.data || patients.data.length === 0 ? (
@@ -113,6 +115,67 @@ function DoctorHome() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+// Doctor-only Seed/Clear demo data (docs/DEMO.md). The buttons are always
+// rendered here — the server fn is the actual DEMO_MODE gate (see
+// demo.functions.ts) so this stays safe to ship even when demo mode is off;
+// clicking then just surfaces a clear "not enabled" toast.
+function DemoDataCard({ onChanged }: { onChanged: () => void }) {
+  const seed = useServerFn(seedDemoData);
+  const clear = useServerFn(clearDemoData);
+  const [busy, setBusy] = useState<"seed" | "clear" | null>(null);
+
+  const runSeed = async () => {
+    if (isMockMode) return toast.info("Preview mode — nothing to seed.");
+    setBusy("seed");
+    try {
+      const result = await seed({});
+      toast.success(`Seeded ${result.patients} demo patients and ${result.meals} meals.`);
+      onChanged();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't seed demo data");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runClear = async () => {
+    if (isMockMode) return toast.info("Preview mode — nothing to clear.");
+    setBusy("clear");
+    try {
+      const result = await clear({});
+      toast.success(`Removed ${result.deleted} demo records.`);
+      onChanged();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't clear demo data");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card className="mb-6 p-4">
+      <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+        <FlaskConical className="h-4 w-4" />
+        Demo data
+      </p>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Seed three demo patients with three weeks of pre-written readings for a walkthrough (see
+        docs/DEMO.md), or remove everything demo-tagged. Only works when DEMO_MODE=true.
+      </p>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={runSeed} disabled={busy !== null}>
+          {busy === "seed" && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+          Seed demo data
+        </Button>
+        <Button size="sm" variant="ghost" onClick={runClear} disabled={busy !== null}>
+          {busy === "clear" && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+          Clear demo data
+        </Button>
+      </div>
+    </Card>
   );
 }
 

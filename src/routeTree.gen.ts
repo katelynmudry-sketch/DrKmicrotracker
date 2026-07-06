@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDoctorIndexRouteImport } from './routes/_authenticated/doctor.index'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
+  id: '/patterns',
+  path: '/patterns',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDoctorRoute = AuthenticatedDoctorRouteImport.update({
   id: '/doctor',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/patterns': typeof AuthenticatedPatternsRoute
   '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/doctor/': typeof AuthenticatedDoctorIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/patterns': typeof AuthenticatedPatternsRoute
   '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/doctor': typeof AuthenticatedDoctorIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/_authenticated/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/_authenticated/doctor/': typeof AuthenticatedDoctorIndexRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/doctor'
+    | '/patterns'
     | '/doctor/rubrics'
     | '/meals/$mealId'
     | '/doctor/'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/patterns'
     | '/doctor/rubrics'
     | '/meals/$mealId'
     | '/doctor'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctor'
+    | '/_authenticated/patterns'
     | '/_authenticated/doctor/rubrics'
     | '/_authenticated/meals/$mealId'
     | '/_authenticated/doctor/'
@@ -160,6 +172,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/patterns': {
+      id: '/_authenticated/patterns'
+      path: '/patterns'
+      fullPath: '/patterns'
+      preLoaderRoute: typeof AuthenticatedPatternsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/doctor': {
       id: '/_authenticated/doctor'
@@ -225,12 +244,14 @@ const AuthenticatedDoctorRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRouteWithChildren
+  AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedMealsMealIdRoute: typeof AuthenticatedMealsMealIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRouteWithChildren,
+  AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedMealsMealIdRoute: AuthenticatedMealsMealIdRoute,
 }
 
