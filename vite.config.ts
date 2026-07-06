@@ -30,7 +30,11 @@ export default defineConfig({
         },
       },
     }),
-    nitro({ preset: "vercel" }),
+    // Photo readings call Claude and can legitimately take a while; the
+    // default Vercel function timeout is too short. See docs/PLAN.md Phase 5
+    // and meals.functions.ts's ANALYSIS_TIMEOUT_MS, which is sized to fit a
+    // failed-first-attempt-then-retry inside this budget.
+    nitro({ preset: "vercel", vercel: { functions: { maxDuration: 60 } } }),
     viteReact(),
     VitePWA({
       registerType: "autoUpdate",

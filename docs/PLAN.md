@@ -320,24 +320,56 @@ confirm the numbers are sane. Phase 5's owner should do a real browser pass on a
 Phase 4 before the live demo.
 
 ### Phase 5 — Deploy + prove it *(1 session + ~30 min owner)*
-- Vercel import → env vars (+ `DOCTOR_EMAILS`, `DEMO_MODE` while demoing) → deploy →
+- [x] **60s serverless timeout for photo readings**: `vite.config.ts`'s nitro plugin now
+  sets `vercel.functions.maxDuration: 60`. This also surfaced a latent bug — the analysis
+  retry (one corrective retry on a schema mismatch) could previously total ~90s worst case
+  (two sequential 45s attempts), which no realistic Vercel timeout covers. Tightened
+  `ANALYSIS_TIMEOUT_MS` in `meals.functions.ts` to 25s so first-attempt+retry fits in ~50s,
+  leaving headroom under the 60s function budget for the photo download/upload around it.
+- [x] **`README.md`**: what it is, the ethos, architecture, doc pointers, local setup.
+- [ ] Vercel import → env vars (+ `DOCTOR_EMAILS`, `DEMO_MODE` while demoing) → deploy →
   **add the Vercel domain to Firebase authorized domains** (Google login breaks
-  otherwise). Claude: 60s serverless timeout for photo readings; production build + PWA
-  verified locally first. `README.md` (what it is, the ethos, architecture, doc pointers).
-- **Verification checklist** (live URL, phone + desktop): fresh signup → photo reading
-  end-to-end; text meal; kill-tab → Retry recovers; bad API key → readable failure;
-  edits persist; **nothing anywhere shows a calorie or a score**; patient can't reach
-  doctor pages / others' meals / self-promote (rules test denied); allowlisted doctor
-  auto-role; rubric PDF extract → re-analyze reflects it; Patterns + gap suggestions
-  populated (and graceful when empty); seed/clear demo data; Google login on prod domain;
-  PWA installs as "Dr. K's Kitchen" with cream/terracotta colours, camera works;
-  build/typecheck/lint/CI green; preview mode still works with no env.
+  otherwise). *Owner action — needs real Vercel/Firebase accounts, not done this session.*
+- [ ] **Verification checklist** (live URL, phone + desktop) — *owner action, blocked on
+  the deploy above and on step 5 (no live Firebase project yet):* fresh signup → photo
+  reading end-to-end; text meal; kill-tab → Retry recovers; bad API key → readable
+  failure; edits persist; **nothing anywhere shows a calorie or a score**; patient can't
+  reach doctor pages / others' meals / self-promote (rules test denied); allowlisted
+  doctor auto-role; rubric PDF extract → re-analyze reflects it; Patterns + gap
+  suggestions populated (and graceful when empty); seed/clear demo data; Google login on
+  prod domain; PWA installs as "Dr. K's Kitchen" with cream/terracotta colours, camera
+  works; build/typecheck/lint/CI green (already true locally); preview mode still works
+  with no env (already true locally, but worth reconfirming on the deployed build — this
+  session still couldn't open a real browser; see Phase 4's note above).
 
-### Post-demo milestone #1 — Pantry suite port *(≈2 sessions)*
-Pantry inventory (form / photo scan / voice via Web Speech + Claude parsing, with
-textarea fallback for iOS), grocery list with reasons, "In your pantry" suggestion tier,
-"mark used up → grocery" flow. Port onto current main (new routes/collections — low
-conflict); never git-merge the branch (it would revert newer main work).
+### Post-demo milestone #1 — Pantry suite port *(≈2 sessions)* — **partially shipped**
+- [x] **Pantry inventory (form entry)**: `src/routes/_authenticated/pantry.tsx` —
+  patient-owned `pantry_items` collection (`src/lib/pantry.schema.ts`), add/remove, mark
+  used up / restock. Direct client Firestore reads/writes under new owner-scoped
+  `firestore.rules` (no server fn needed — there's no server-owned lifecycle field here,
+  unlike meals), matching the equality-only-filter/no-orderBy pattern used elsewhere to
+  avoid new composite indexes.
+- [x] **Grocery list with reasons**: `src/routes/_authenticated/grocery-list.tsx` — a
+  `grocery_list_items` collection with a `reason` (`used_up` | `gap_suggestion` |
+  `manual`), checkbox to check off, manual add.
+- [x] **"Mark used up → grocery" flow**: `pantry.tsx`'s `markUsedUp` sets the pantry item
+  to `used_up` and adds a `grocery_list_items` entry in the same action (de-duplicated
+  against an already-unchecked entry for the same item).
+- [x] **"In your pantry" suggestion tier**: `nutrient-reference.ts`'s
+  `splitFoodsForNutrient` checks a gap nutrient's candidate foods against the patient's
+  active pantry item names first — "In your pantry" surfaces ahead of "Try something
+  new" on the Patterns page, and the grocery list's "Worth adding" section only offers
+  what isn't already sitting active in the pantry. Verified against fixture data with
+  `tsx` (pumpkin/chia seeds correctly matched to iron/zinc/magnesium/omega-3).
+- [ ] **Photo scan / voice capture** — not done this session. Both are real camera/
+  speech-recognition UI surfaces that this session had no way to visually verify (see
+  Phase 4/5's notes on the sandbox's browser limitation above); shipping them unverified
+  felt like the wrong tradeoff versus the form-entry path, which covers the same
+  Firestore/suggestion-tier plumbing and is low-risk to review as code. Next session:
+  reuse the meal-photo Claude vision pattern (`meals.functions.ts`) for a
+  `scanPantryPhoto` server fn, and the old `claude/pantry-inventory-nutrients-xdqaru`
+  branch's `voice-capture.tsx` for the Web Speech UI shape (re-implement, don't merge —
+  it still predates the current schema).
 
 ---
 
@@ -393,7 +425,7 @@ ethos-carrying.
 | 9 | Rubric PDF extraction + re-analyze button | Claude | S–M | done (re-analyze button was done in #6; PDF extraction done this session) |
 | 10 | Demo seed data + DEMO.md | Claude | M | done |
 | 11 | Vercel deploy, README, verification pass | Claude + owner | M | not started — still blocked on step 5 (no live Firebase project); Phase 4 also needs a real-browser pass first, see Phase 4's note above |
-| 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L |
+| 12 | *Post-demo:* pantry + grocery + voice port | Claude | M–L | partially done — inventory (form entry), grocery list, and the pantry-first suggestion tier shipped; photo scan + voice capture still open |
 
 **Critical files:** `src/lib/meals.functions.ts` (engine), `src/lib/analysis.schema.ts` +
 `src/lib/clinical-spine.ts` (new), `firestore.rules`/`storage.rules`/`firebase.json`
@@ -403,6 +435,8 @@ UI), `src/routes/index.tsx` (landing), `CLAUDE.md` + `docs/` (ethos rails),
 `src/lib/nutrient-reference.ts` (Phase 4b, new — hand-curated, not a CNF port),
 `src/lib/rubrics.functions.ts` (roles + Phase 4c's `extractRubricPdf`),
 `src/lib/demo-data.ts` + `src/lib/demo.functions.ts` + `docs/DEMO.md` (Phase 4d, new),
+`src/lib/pantry.schema.ts` + `src/routes/_authenticated/pantry.tsx` +
+`src/routes/_authenticated/grocery-list.tsx` (Post-demo #1, new),
 `src/hooks/use-auth.ts`, `src/lib/mock-data.ts` (v2).
 
 **Model guidance for execution:** Sonnet executes most phases; use Fable (or a Fable

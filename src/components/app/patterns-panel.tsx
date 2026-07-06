@@ -20,14 +20,23 @@ import {
   FIBER_BAND_G,
   PROTEIN_BAND_G,
 } from "@/lib/trends";
-import { foodsForNutrient } from "@/lib/nutrient-reference";
+import { splitFoodsForNutrient } from "@/lib/nutrient-reference";
 import { Leaf, Palette, Sparkles, Flame } from "lucide-react";
 
 // Patterns — the aggregate view over a patient's readings (docs/PLAN.md Phase
 // 4a). Counts and qualitative coverage only, never a percentage or verdict
 // (see CLAUDE.md's hard rules). Shared by the patient's own /patterns route
 // and the doctor's per-patient review page.
-export function PatternsPanel({ meals }: { meals: Meal[] }) {
+export function PatternsPanel({
+  meals,
+  pantryItemNames = [],
+}: {
+  meals: Meal[];
+  // Active pantry item names, patient's own — omitted entirely in the
+  // doctor's embed, where "already have this" isn't meaningful. See
+  // src/lib/nutrient-reference.ts's splitFoodsForNutrient.
+  pantryItemNames?: string[];
+}) {
   const analyzedCount = useMemo(
     () => meals.filter((m) => m.status === "analyzed" && m.analysis).length,
     [meals],
@@ -114,21 +123,48 @@ export function PatternsPanel({ meals }: { meals: Meal[] }) {
             correction, just an easy add.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            {gaps.map((g) => (
-              <div key={g.nutrient} className="rounded-xl border border-border bg-card p-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {NUTRIENT_LABELS[g.nutrient]}
-                </p>
-                <ul className="mt-2 space-y-1.5 text-sm">
-                  {foodsForNutrient(g.nutrient).map((f) => (
-                    <li key={f.name}>
-                      <span className="font-medium">{f.name}</span>
-                      <span className="text-muted-foreground"> — {f.reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {gaps.map((g) => {
+              const { inPantry, tryNew } = splitFoodsForNutrient(g.nutrient, pantryItemNames);
+              return (
+                <div key={g.nutrient} className="rounded-xl border border-border bg-card p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {NUTRIENT_LABELS[g.nutrient]}
+                  </p>
+                  {inPantry.length > 0 && (
+                    <>
+                      <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-accent-foreground">
+                        In your pantry
+                      </p>
+                      <ul className="mt-1 space-y-1.5 text-sm">
+                        {inPantry.map((f) => (
+                          <li key={f.name}>
+                            <span className="font-medium">{f.name}</span>
+                            <span className="text-muted-foreground"> — {f.reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {tryNew.length > 0 && (
+                    <>
+                      {inPantry.length > 0 && (
+                        <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          Try something new
+                        </p>
+                      )}
+                      <ul className="mt-1 space-y-1.5 text-sm">
+                        {tryNew.map((f) => (
+                          <li key={f.name}>
+                            <span className="font-medium">{f.name}</span>
+                            <span className="text-muted-foreground"> — {f.reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}

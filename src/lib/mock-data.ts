@@ -1,5 +1,6 @@
 // Fixture data used only in preview/mock mode (see mock-mode.ts).
 import type { Meal } from "@/lib/analysis.schema";
+import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 
 const photo = (seed: string) => `https://picsum.photos/seed/${seed}/640/480`;
 
@@ -196,5 +197,45 @@ export const mockRubrics: MockRubric[] = [
     fileName: "anti-inflammatory-v3.pdf",
     storagePath: "rubrics/mock/anti-inflammatory-v3.pdf",
     isActive: true,
+  },
+];
+
+export const mockPantryItems: PantryItem[] = [
+  {
+    id: "pantry-1",
+    patientId: MOCK_PATIENT_ID,
+    name: "Pumpkin seeds",
+    status: "active",
+    createdAt: null,
+  },
+  {
+    id: "pantry-2",
+    patientId: MOCK_PATIENT_ID,
+    name: "Chia seeds",
+    status: "active",
+    createdAt: null,
+  },
+  { id: "pantry-3", patientId: MOCK_PATIENT_ID, name: "Oats", status: "active", createdAt: null },
+  { id: "pantry-4", patientId: MOCK_PATIENT_ID, name: "Eggs", status: "used_up", createdAt: null },
+];
+
+export const mockGroceryListItems: GroceryListItem[] = [
+  {
+    id: "grocery-1",
+    patientId: MOCK_PATIENT_ID,
+    name: "Eggs",
+    reason: "used_up",
+    note: null,
+    checkedAt: null,
+    createdAt: null,
+  },
+  {
+    id: "grocery-2",
+    patientId: MOCK_PATIENT_ID,
+    name: "Sardines",
+    reason: "gap_suggestion",
+    note: "small, mighty, and easy on the budget",
+    checkedAt: null,
+    createdAt: null,
   },
 ];

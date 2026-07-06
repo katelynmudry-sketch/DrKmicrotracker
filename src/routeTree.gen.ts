@@ -13,6 +13,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
+import { Route as AuthenticatedPantryRouteImport } from './routes/_authenticated/pantry'
+import { Route as AuthenticatedGroceryListRouteImport } from './routes/_authenticated/grocery-list'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDoctorIndexRouteImport } from './routes/_authenticated/doctor.index'
@@ -39,6 +41,17 @@ const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
   path: '/patterns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPantryRoute = AuthenticatedPantryRouteImport.update({
+  id: '/pantry',
+  path: '/pantry',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGroceryListRoute =
+  AuthenticatedGroceryListRouteImport.update({
+    id: '/grocery-list',
+    path: '/grocery-list',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDoctorRoute = AuthenticatedDoctorRouteImport.update({
   id: '/doctor',
   path: '/doctor',
@@ -79,6 +92,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/grocery-list': typeof AuthenticatedGroceryListRoute
+  '/pantry': typeof AuthenticatedPantryRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
@@ -89,6 +104,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/grocery-list': typeof AuthenticatedGroceryListRoute
+  '/pantry': typeof AuthenticatedPantryRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
@@ -102,6 +119,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/_authenticated/grocery-list': typeof AuthenticatedGroceryListRoute
+  '/_authenticated/pantry': typeof AuthenticatedPantryRoute
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/_authenticated/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
@@ -115,6 +134,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/doctor'
+    | '/grocery-list'
+    | '/pantry'
     | '/patterns'
     | '/doctor/rubrics'
     | '/meals/$mealId'
@@ -125,6 +146,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/grocery-list'
+    | '/pantry'
     | '/patterns'
     | '/doctor/rubrics'
     | '/meals/$mealId'
@@ -137,6 +160,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctor'
+    | '/_authenticated/grocery-list'
+    | '/_authenticated/pantry'
     | '/_authenticated/patterns'
     | '/_authenticated/doctor/rubrics'
     | '/_authenticated/meals/$mealId'
@@ -178,6 +203,20 @@ declare module '@tanstack/react-router' {
       path: '/patterns'
       fullPath: '/patterns'
       preLoaderRoute: typeof AuthenticatedPatternsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pantry': {
+      id: '/_authenticated/pantry'
+      path: '/pantry'
+      fullPath: '/pantry'
+      preLoaderRoute: typeof AuthenticatedPantryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/grocery-list': {
+      id: '/_authenticated/grocery-list'
+      path: '/grocery-list'
+      fullPath: '/grocery-list'
+      preLoaderRoute: typeof AuthenticatedGroceryListRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/doctor': {
@@ -244,6 +283,8 @@ const AuthenticatedDoctorRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRouteWithChildren
+  AuthenticatedGroceryListRoute: typeof AuthenticatedGroceryListRoute
+  AuthenticatedPantryRoute: typeof AuthenticatedPantryRoute
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedMealsMealIdRoute: typeof AuthenticatedMealsMealIdRoute
 }
@@ -251,6 +292,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRouteWithChildren,
+  AuthenticatedGroceryListRoute: AuthenticatedGroceryListRoute,
+  AuthenticatedPantryRoute: AuthenticatedPantryRoute,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedMealsMealIdRoute: AuthenticatedMealsMealIdRoute,
 }

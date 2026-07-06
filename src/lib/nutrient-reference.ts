@@ -88,3 +88,25 @@ export const NUTRIENT_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
 export function foodsForNutrient(nutrient: TrackedNutrient, limit = 3): NutrientFood[] {
   return NUTRIENT_FOODS[nutrient].slice(0, limit);
 }
+
+// Pantry-first tier (post-demo milestone #1, docs/PLAN.md): a gap suggestion
+// the patient already has on hand is worth surfacing separately from one
+// that means a grocery trip. Loose substring match in both directions is
+// enough here — "pumpkin seeds" in the pantry should match the "Pumpkin
+// seeds" suggestion without needing exact casing or pluralization.
+function namesOverlap(a: string, b: string): boolean {
+  const x = a.trim().toLowerCase();
+  const y = b.trim().toLowerCase();
+  return x.length > 0 && y.length > 0 && (x.includes(y) || y.includes(x));
+}
+
+export function splitFoodsForNutrient(
+  nutrient: TrackedNutrient,
+  pantryItemNames: string[],
+  limit = 3,
+): { inPantry: NutrientFood[]; tryNew: NutrientFood[] } {
+  const foods = NUTRIENT_FOODS[nutrient];
+  const inPantry = foods.filter((f) => pantryItemNames.some((p) => namesOverlap(f.name, p)));
+  const tryNew = foods.filter((f) => !inPantry.includes(f)).slice(0, limit);
+  return { inPantry, tryNew };
+}

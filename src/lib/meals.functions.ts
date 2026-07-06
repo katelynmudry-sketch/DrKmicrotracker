@@ -14,7 +14,11 @@ import {
   buildSystemPrompt,
 } from "@/lib/clinical-spine";
 
-const ANALYSIS_TIMEOUT_MS = 45_000;
+// Sized against the Vercel function's 60s maxDuration (see vite.config.ts):
+// a failed first attempt plus the one corrective retry is at most 2x this,
+// leaving headroom for the photo download/upload and Firestore writes around
+// it. Do not raise this without also raising maxDuration.
+const ANALYSIS_TIMEOUT_MS = 25_000;
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {

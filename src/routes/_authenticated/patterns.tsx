@@ -4,12 +4,13 @@ import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isMockMode } from "@/lib/mock-mode";
-import { mockMeals } from "@/lib/mock-data";
+import { mockMeals, mockPantryItems } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { PatternsPanel } from "@/components/app/patterns-panel";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Meal } from "@/lib/analysis.schema";
+import type { PantryItem } from "@/lib/pantry.schema";
 
 export const Route = createFileRoute("/_authenticated/patterns")({
   head: () => ({ meta: [{ title: "Patterns — Dr. K's Kitchen" }] }),
@@ -34,6 +35,21 @@ function PatternsPage() {
     },
   });
 
+  const pantryItems = useQuery({
+    queryKey: ["pantry-items", user?.uid],
+    enabled: !!user,
+    queryFn: async () => {
+      if (isMockMode) return mockPantryItems;
+      const q = query(collection(db, "pantry_items"), where("patientId", "==", user!.uid));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PantryItem);
+    },
+  });
+
+  const pantryItemNames = (pantryItems.data ?? [])
+    .filter((p) => p.status === "active")
+    .map((p) => p.name);
+
   return (
     <AppShell
       nav={
@@ -54,7 +70,7 @@ function PatternsPage() {
       {meals.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
-        <PatternsPanel meals={meals.data ?? []} />
+        <PatternsPanel meals={meals.data ?? []} pantryItemNames={pantryItemNames} />
       )}
     </AppShell>
   );

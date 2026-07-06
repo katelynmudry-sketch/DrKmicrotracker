@@ -28,7 +28,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Camera, LineChart, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
+import {
+  Camera,
+  LineChart,
+  Loader2,
+  NotebookPen,
+  ShoppingCart,
+  Sparkles,
+  Stethoscope,
+} from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { NUTRIENT_LABELS, TIER_LABELS, type Meal, type MealStatus } from "@/lib/analysis.schema";
 
@@ -162,6 +170,12 @@ function PatientDashboard() {
             <Link to="/patterns">
               <LineChart className="mr-1 h-4 w-4" />
               Patterns
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/pantry">
+              <ShoppingCart className="mr-1 h-4 w-4" />
+              Pantry
             </Link>
           </Button>
           {isDoctor && (
