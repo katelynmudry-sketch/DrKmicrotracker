@@ -28,6 +28,12 @@ function MealDetail() {
   const { detailLevel, effectiveFocusNutrients } = useAuth();
   const analyzeFn = useServerFn(analyzeMeal);
   const [retrying, setRetrying] = useState(false);
+  // Set while AnalysisView's "Update my reading" confirm-addition action is
+  // in flight, so a background refetch (e.g. window refocus) can't briefly
+  // swap the visible reading for the "We're reading this meal…" branch below
+  // — status genuinely is "analyzing" server-side for those ~10-25s, but the
+  // patient should keep seeing their existing reading throughout.
+  const [addingBusy, setAddingBusy] = useState(false);
   const meal = useQuery({
     queryKey: ["meal", mealId],
     queryFn: async () => {
@@ -92,7 +98,9 @@ function MealDetail() {
                 <p className="mt-2 text-sm">Logged via description: {meal.data.mealDescription}</p>
               )}
               {meal.data.patientNotes && (
-                <p className="mt-2 text-sm text-muted-foreground">{meal.data.patientNotes}</p>
+                <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
+                  {meal.data.patientNotes}
+                </p>
               )}
               {meal.data.doctorNotes && (
                 <div className="mt-3 rounded-md border border-accent/40 bg-accent/5 p-3 text-sm">
@@ -105,7 +113,7 @@ function MealDetail() {
             </Card>
           </div>
           <Card className="p-6">
-            {meal.data.status === "pending" || meal.data.status === "analyzing" ? (
+            {(meal.data.status === "pending" || meal.data.status === "analyzing") && !addingBusy ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">We're reading this meal…</p>
                 <Button size="sm" variant="outline" onClick={retry} disabled={retrying}>
@@ -139,6 +147,8 @@ function MealDetail() {
                 onSaved={() => qc.invalidateQueries({ queryKey: ["meal", mealId] })}
                 initialDetailLevel={detailLevel}
                 focusNutrients={effectiveFocusNutrients}
+                allowAddConfirmation
+                onAddingChange={setAddingBusy}
               />
             )}
           </Card>

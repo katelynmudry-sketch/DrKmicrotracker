@@ -5,8 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
-import { updateMealAnalysis } from "@/lib/meals.functions";
+import { Loader2, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { analyzeMeal, updateMealAnalysis } from "@/lib/meals.functions";
 import { isMockMode } from "@/lib/mock-mode";
 import {
   TRACKED_NUTRIENTS,
@@ -49,6 +49,8 @@ export function AnalysisView({
   onSaved,
   initialDetailLevel,
   focusNutrients,
+  allowAddConfirmation,
+  onAddingChange,
 }: {
   analysis: MealAnalysis | null;
   mealId?: string;
@@ -56,10 +58,21 @@ export function AnalysisView({
   onSaved?: (analysis: MealAnalysis) => void;
   initialDetailLevel: DetailLevel;
   focusNutrients: TrackedNutrient[];
+  // Patient-only "I added: ___" confirm control (see the promoted card below)
+  // — omitted entirely in the doctor's view, which has no reason to add to a
+  // patient's plate. Distinct from `editable`, which is true in both views.
+  allowAddConfirmation?: boolean;
+  // Lets the caller keep the reading visible during the ~10-25s re-analysis
+  // this triggers, even if a background refetch would otherwise briefly show
+  // status "analyzing" (see meals.$mealId.tsx).
+  onAddingChange?: (busy: boolean) => void;
 }) {
   const updateFn = useServerFn(updateMealAnalysis);
+  const analyzeFn = useServerFn(analyzeMeal);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [addingText, setAddingText] = useState("");
+  const [addingBusy, setAddingBusy] = useState(false);
   // Per-meal override of the user's default — never persisted, resets to the
   // default on next render (see docs/ETHOS.md principle 2).
   const [mode, setMode] = useState<DetailLevel>(initialDetailLevel);
@@ -174,6 +187,27 @@ export function AnalysisView({
     }
   };
 
+  const confirmAddition = async () => {
+    if (!mealId || !addingText.trim()) return;
+    if (isMockMode) {
+      toast.info("Preview mode — nothing to update.");
+      return;
+    }
+    setAddingBusy(true);
+    onAddingChange?.(true);
+    try {
+      const result = await analyzeFn({ data: { mealId, patientAddition: addingText.trim() } });
+      toast.success("We've updated your reading with what you added.");
+      setAddingText("");
+      onSaved?.(result.analysis as MealAnalysis);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't update your reading — try again.");
+    } finally {
+      setAddingBusy(false);
+      onAddingChange?.(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -207,6 +241,72 @@ export function AnalysisView({
       </div>
 
       <p className="text-base italic text-foreground">{a.opening_note}</p>
+
+      {(a.worth_trying.length > 0 || a.absorption_notes.length > 0) && (
+        <Card className="border-primary/30 bg-primary/5 p-5">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Worth trying
+            </p>
+          </div>
+          {a.worth_trying.length > 0 && (
+            <ul className="list-disc space-y-1 pl-5 text-sm">
+              {a.worth_trying.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          )}
+          {a.absorption_notes.length > 0 && (
+            <div className={a.worth_trying.length > 0 ? "mt-3" : undefined}>
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Pairing &amp; timing
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-sm">
+                {a.absorption_notes.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {allowAddConfirmation && mealId && (
+            <div className="mt-3 border-t border-border/60 pt-3">
+              <div className="flex gap-2">
+                <Input
+                  value={addingText}
+                  onChange={(e) => setAddingText(e.target.value)}
+                  placeholder="I added…"
+                  maxLength={300}
+                  disabled={addingBusy || editing}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") confirmAddition();
+                  }}
+                />
+                <Button
+                  size="sm"
+                  onClick={confirmAddition}
+                  disabled={addingBusy || editing || !addingText.trim()}
+                >
+                  {addingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update my reading"}
+                </Button>
+              </div>
+              {addingBusy && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Updating your reading with what you added…
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {a.offered.length > 0 && (
+        <Section title="What this meal offered" items={a.offered} tone="accent" />
+      )}
+
+      <p className="pt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        The full picture
+      </p>
 
       {editing ? (
         <Input
@@ -446,14 +546,6 @@ export function AnalysisView({
             Cancel
           </Button>
         </div>
-      )}
-
-      {a.offered.length > 0 && (
-        <Section title="What this meal offered" items={a.offered} tone="accent" />
-      )}
-      {a.worth_trying.length > 0 && <Section title="Worth trying" items={a.worth_trying} />}
-      {a.absorption_notes.length > 0 && (
-        <Section title="Absorption notes" items={a.absorption_notes} />
       )}
 
       <Card className="flex flex-wrap items-center justify-between gap-3 p-4">

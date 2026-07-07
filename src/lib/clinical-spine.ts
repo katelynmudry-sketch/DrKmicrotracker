@@ -12,6 +12,12 @@ import {
 
 export const RECORD_READING_TOOL_NAME = "record_meal_reading";
 
+// The exact label prepended to patientNotes when a patient confirms they
+// added something to their plate after the original photo/description (see
+// meals.functions.ts's runAnalysis). Exported so the Firestore write and the
+// prompt guidance below can never drift out of sync with each other.
+export const PATIENT_ADDITION_PREFIX = "Patient added after this reading:";
+
 export const RECORD_READING_TOOL: Anthropic.Tool = {
   name: RECORD_READING_TOOL_NAME,
   description:
@@ -50,6 +56,25 @@ but as the lens the reading is written through:
   \`offered\`; never frame what's absent as wrongdoing.
 - The doctor's rubric (appended below) is the lens for protocol_fit — score
   against HER written protocol, not a generic nutrition database.
+`.trim();
+
+const PATIENT_ADDITION_GUIDANCE = `
+Patient notes sometimes contain one or more lines starting with
+"${PATIENT_ADDITION_PREFIX}" — that is not commentary, it is a real, physical
+addition the patient made to their plate after the original photo or
+description was captured. Treat each one exactly as if it had been part of
+the meal from the start:
+- Add it to \`identified_items\` if not already listed.
+- Adjust \`building_blocks\`/\`micronutrients\`/\`absorption_notes\` to reflect
+  its real contribution.
+- Update \`worth_trying\` to match reality now — do not keep suggesting
+  something the patient just told you they added; suggest the next-best
+  opportunity instead, or leave \`worth_trying\` shorter if the plate is now
+  well-rounded.
+If a note contains such a line alongside other, earlier general commentary,
+treat only the labeled line(s) as plate additions — the rest is ordinary
+context. There may be more than one such line if the patient added things at
+different times; fold in all of them.
 `.trim();
 
 const HARD_EXCLUSIONS = `
@@ -122,6 +147,8 @@ naturopathic doctor's patients. This is explicitly not a calorie counter — you
 producing a warm, qualitative "reading" of a meal, in the doctor's own clinical voice.
 
 ${CLINICAL_POSITIONS}
+
+${PATIENT_ADDITION_GUIDANCE}
 
 ${HARD_EXCLUSIONS}
 

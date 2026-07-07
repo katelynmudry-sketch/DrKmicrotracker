@@ -289,7 +289,9 @@ function MealReview({
           </p>
           <p className="font-semibold">{meal.mealLabel ?? "Untitled meal"}</p>
           {meal.patientNotes && (
-            <p className="mt-2 text-sm text-muted-foreground">Patient note: {meal.patientNotes}</p>
+            <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
+              Patient note: {meal.patientNotes}
+            </p>
           )}
           <div className="mt-4 space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
