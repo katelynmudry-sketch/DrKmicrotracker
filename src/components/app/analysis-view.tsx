@@ -20,6 +20,7 @@ import {
   TIER_LABELS,
   type MealAnalysis,
   type Micronutrient,
+  type TrackedNutrient,
 } from "@/lib/analysis.schema";
 import type { DetailLevel } from "@/lib/users.schema";
 
@@ -47,12 +48,14 @@ export function AnalysisView({
   editable,
   onSaved,
   initialDetailLevel,
+  focusNutrients,
 }: {
   analysis: MealAnalysis | null;
   mealId?: string;
   editable?: boolean;
   onSaved?: (analysis: MealAnalysis) => void;
   initialDetailLevel: DetailLevel;
+  focusNutrients: TrackedNutrient[];
 }) {
   const updateFn = useServerFn(updateMealAnalysis);
   const [editing, setEditing] = useState(false);
@@ -106,6 +109,18 @@ export function AnalysisView({
     return <p className="text-sm text-muted-foreground">No reading yet.</p>;
   }
   const a = analysis;
+
+  // Simple mode = focus nutrients only (tier-only, including not_seen — "your
+  // iron didn't show up" is useful, non-overwhelming signal). Detailed mode =
+  // every nutrient that isn't not_seen, plus any not_seen focus nutrient,
+  // with focus nutrients pinned to the top. See docs/ETHOS.md principle 3.
+  const isFocus = (n: TrackedNutrient) => focusNutrients.includes(n);
+  const displayedMicronutrients =
+    mode === "simple"
+      ? a.micronutrients.filter((m) => isFocus(m.nutrient))
+      : [...a.micronutrients]
+          .filter((m) => isFocus(m.nutrient) || m.level !== "not_seen")
+          .sort((x, y) => Number(isFocus(y.nutrient)) - Number(isFocus(x.nutrient)));
 
   const startEditing = () => {
     form.reset(snapshot());
@@ -391,9 +406,9 @@ export function AnalysisView({
               </div>
             ))}
           </div>
-        ) : a.micronutrients.length > 0 ? (
+        ) : displayedMicronutrients.length > 0 ? (
           <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {a.micronutrients.map((m, i) => (
+            {displayedMicronutrients.map((m, i) => (
               <li
                 key={i}
                 className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
@@ -412,8 +427,12 @@ export function AnalysisView({
               </li>
             ))}
           </ul>
-        ) : (
+        ) : a.micronutrients.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing tracked for this reading.</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No focus nutrients chosen yet — pick a few in Settings to see them here.
+          </p>
         )}
       </Card>
 

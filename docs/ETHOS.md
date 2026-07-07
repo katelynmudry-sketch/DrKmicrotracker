@@ -31,12 +31,38 @@ meal, a nutrient, or a patient.
    portion is still fake precision if it claims false certainty. Simple mode —
    today's tier-only behavior — remains available and never shows a number.
 
-3. **Micronutrients are the plot.** The nutrients that matter, in her clinical
-   experience: iron (+ the vitamin C pairing rule), B12, vitamin D, calcium
-   (food-first — she rarely recommends supplements), omega-3/ALA, iodine, zinc,
-   choline, magnesium, protein (grams matter — "protein at every meal is a
-   hormonal intervention"), fiber. **Never flag selenium** — this is her explicit,
-   standing clinical position; treat it as a hard exclusion, not an oversight.
+   A second, similarly narrow exception: the **Nutrient Profile** (today's
+   rollup across a patient's logged meals, `src/lib/nutrient-profile.ts`) may
+   show a percentage per nutrient in Detailed mode, against a general adult
+   reference value — always captioned as a rough population-average estimate,
+   never personalized (the app collects no age, sex, or weight). This still
+   answers "how much," not "how good" — it never ranks the patient, never
+   compares patients to each other, and is capped in display at "100%+" so an
+   overage never reads as "you exceeded" (this app never uses limit language).
+   Simple mode shows the same data as three qualitative bands instead. Sodium
+   is deliberately not part of this or any nutrient list here — see principle
+   3.
+
+3. **Micronutrients are the plot.** As of this writing, the tracked list is a
+   full nutrition-label-style set: minerals (iron — + the vitamin C pairing
+   rule, zinc, magnesium, calcium — food-first, she rarely recommends
+   supplements, iodine, selenium, phosphorus, potassium, copper, manganese,
+   chromium, molybdenum), fat-soluble vitamins (D, A, E, K, omega-3/ALA),
+   B-vitamins (B12, choline, thiamin, riboflavin, niacin, B6, folate, biotin,
+   pantothenic acid), and vitamin C — plus protein (grams matter — "protein at
+   every meal is a hormonal intervention") and fiber. Selenium was previously a
+   hard, standing exclusion; that exclusion has been deliberately reversed on
+   Dr. K's direction — it's now tracked like any other nutrient, no
+   special-casing. Sodium is deliberately *not* tracked: it's a "limit"
+   nutrient, and this app only ever answers "how much are you getting," never
+   "how much is too much" — a different kind of feature, not a small addition.
+
+   Not every nutrient matters equally to every patient. **Focus nutrients**
+   are the doctor's current clinical emphasis for a given patient — set by Dr.
+   K per patient, further tunable by the patient themselves — and are what's
+   pinned and emphasized on a reading; see principle 7. The AI still evaluates
+   every tracked nutrient on every reading regardless of focus — focus changes
+   emphasis, never completeness.
 
 4. **Absorption intelligence is the superpower.** No other nutrition app does
    this — it's the differentiator: vitamin C alongside iron; coffee/tea kept an

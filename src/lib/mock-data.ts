@@ -1,5 +1,5 @@
 // Fixture data used only in preview/mock mode (see mock-mode.ts).
-import type { Meal } from "@/lib/analysis.schema";
+import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 
 const photo = (seed: string) => `https://picsum.photos/seed/${seed}/640/480`;
@@ -54,6 +54,18 @@ export const mockMeals: Meal[] = [
           level: "light",
           from: "Spinach",
           amount_estimate: { low: 1, high: 2 },
+        },
+        {
+          nutrient: "selenium",
+          level: "strong",
+          from: "Salmon",
+          amount_estimate: { low: 35, high: 45 },
+        },
+        {
+          nutrient: "vitamin_c",
+          level: "light",
+          from: "Spinach",
+          amount_estimate: { low: 5, high: 10 },
         },
       ],
       offered: ["Beautiful colours on that plate", "A strong omega-3 source"],
@@ -202,12 +214,31 @@ export const mockMeals: Meal[] = [
   },
 ];
 
-export type MockPatient = { id: string; fullName: string | null; email: string | null };
+export type MockPatient = {
+  id: string;
+  fullName: string | null;
+  email: string | null;
+  // Exercises resolveEffectiveFocusNutrients's fallback chain in Preview
+  // mode's doctor view — see src/lib/users.schema.ts.
+  doctorFocusNutrients?: TrackedNutrient[];
+  patientFocusNutrients?: TrackedNutrient[] | null;
+};
 
 export const mockPatients: MockPatient[] = [
   { id: MOCK_PATIENT_ID, fullName: "Preview Patient", email: "preview@example.com" },
-  { id: "patient-2", fullName: "Casey Rivera", email: "casey@example.com" },
-  { id: "patient-3", fullName: null, email: "sam@example.com" },
+  {
+    id: "patient-2",
+    fullName: "Casey Rivera",
+    email: "casey@example.com",
+    doctorFocusNutrients: ["iron", "vitamin_d", "b12", "magnesium"],
+  },
+  {
+    id: "patient-3",
+    fullName: null,
+    email: "sam@example.com",
+    doctorFocusNutrients: ["iron", "vitamin_d", "b12", "magnesium"],
+    patientFocusNutrients: ["iron", "vitamin_c", "selenium"],
+  },
 ];
 
 export type MockRubric = {

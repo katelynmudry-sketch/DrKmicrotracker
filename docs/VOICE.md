@@ -23,6 +23,12 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" |
+| Nutrient emphasis | **Focus nutrients** |
+| Daily rollup | **Nutrient Profile** |
+| Profile bands (Simple mode) | **A good focus for today / Building up / Well covered** (first draft — needs the same "tuned with Katelyn" pass the tier labels got) |
+| Profile amount (Detailed mode) | **~9mg · 50%** (amount + percentage, capped display at "100%+", never "exceeded") |
+| Profile caption | "A rough estimate against general adult reference values — not personalized to you; we don't collect age, sex, or weight." |
+| Reset patient override | "Reset to your doctor's picks" |
 
 ## Microcopy bank (preserve verbatim)
 
@@ -38,6 +44,12 @@ See `docs/ETHOS.md` for the principles behind these choices.
 - "Pop a spoon, coin, credit card, or your hand next to the plate — it helps us
   judge portion size more precisely." (reference-object photo tip, Detailed mode
   only, always optional — never a blocking step)
+- "Emphasized on every reading and in Simple mode. Every nutrient is still
+  evaluated regardless of what's checked here." (focus-nutrient picker caption,
+  doctor and patient screens — makes clear focus never limits what's assessed)
+- "This patient has customized their own focus list — your default won't
+  currently show for them." (doctor's focus-nutrient screen, shown only when a
+  patient override is active)
 
 ## Do / don't
 
@@ -47,9 +59,9 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | "Rubric score: 6/10" | "Protocol fit: Getting there" |
 | "320 kcal, a numeric protocol score" | "A strong source of protein, present fiber, or (Detailed mode) an approximate range like ~3–5mg" |
 | "Low iron — warning" | "Iron's a little light this week — pumpkin seeds or blackstrap molasses would help" |
-| "Selenium: low" | (never mention selenium) |
 | "You forgot your vegetables" | "Worth trying: adding a plant at this meal" |
 | Red/yellow/green badges | Plain qualitative tiers, no colour-as-verdict |
+| "140% of your potassium — you exceeded it" | "~6100mg · 100%+" (capped display, no "exceeded" language, ever) |
 
 ## Style notes
 

@@ -23,10 +23,14 @@ drafts + TODO.md) as product principles governing every screen, prompt, and char
    *"without scores designed to shame"*, *"no spreadsheets, no guilt, no clinical
    coldness — just gentle clarity between visits."* Protocol fit is expressed
    qualitatively ("Aligned"), never numerically.
-3. **Micronutrients are the plot.** Iron (+ the vitamin C pairing rule), B12, vitamin D,
-   calcium (food-first — she rarely recommends supplements), omega-3/ALA, iodine, zinc,
-   choline, magnesium, protein (grams matter — "protein at every meal is a hormonal
-   intervention"), fiber. Per her explicit position: **never flag selenium**.
+3. **Micronutrients are the plot.** As of the nutrient-expansion phase, a full
+   nutrition-label-style set — minerals, fat-soluble vitamins, B-vitamins, vitamin C,
+   including selenium (her original standing exclusion on selenium was later reversed
+   on her direction) — plus protein (grams matter — "protein at every meal is a
+   hormonal intervention") and fiber. Sodium is deliberately not tracked (a "limit"
+   nutrient, doesn't fit the "how much are you getting" framing). Doctor- and
+   patient-set "focus nutrients" determine emphasis, not evaluation — see `docs/ETHOS.md`
+   principle 3.
 4. **Absorption intelligence is the superpower.** Vitamin C with iron; coffee/tea an hour
    away from iron-rich meals; cooked brassicas for Hashimoto's; oxalates vs spinach
    calcium; phytates and soaking/sprouting for zinc; carminative spices with beans.
@@ -394,6 +398,42 @@ Phase 4 before the live demo.
   Node `.listen('::')` fails), so the dev server can't start here; typecheck/lint/
   ethos-lint/build are all clean, but the camera/mic UI itself needs a real-browser pass
   (the user has said they'll test it directly).
+
+### Post-demo milestone #2 — Full nutrient panel, selenium restoration, focus nutrients — **shipped**
+- [x] **Selenium restoration**: her prior standing exclusion on selenium (Part 1,
+  principle 3) was deliberately reversed on her direction — it's now a normal tracked
+  nutrient, no special-casing anywhere in schema, prompt, or docs.
+- [x] **Full nutrient expansion**: `TRACKED_NUTRIENTS` grew from 9 to a ~27-nutrient,
+  label-style set (minerals, fat-soluble vitamins, B-vitamins, vitamin C — see
+  `docs/ETHOS.md` principle 3 for the full list). Sodium deliberately excluded — a
+  "limit" nutrient, doesn't fit the app's "how much are you getting" framing.
+- [x] **Focus nutrients**: doctor sets a default per-patient focus list
+  (`doctorFocusNutrients`), patient can override (`patientFocusNutrients`) — see
+  `resolveEffectiveFocusNutrients` in `src/lib/users.schema.ts`. The AI still evaluates
+  every tracked nutrient on every reading regardless of focus; focus only changes
+  emphasis and what's displayed. Simple mode now shows only focus nutrients (with the
+  list tripling in size, showing all of them would defeat Simple mode's whole purpose);
+  Detailed mode shows everything with focus nutrients pinned to the top.
+  New `/settings` route (patient) and a focus-nutrient card on the doctor's per-patient
+  page, sharing `src/components/app/focus-nutrient-picker.tsx`.
+- [x] **Nutrient Profile**: a new daily rollup (`src/lib/nutrient-profile.ts`,
+  `src/components/app/nutrient-profile-panel.tsx`) embedded in the existing Patterns
+  page — Detailed mode shows a percentage per nutrient against a general adult
+  reference value (a deliberate, narrow exception to `trends.ts`'s "no percentage"
+  rule, scoped to this one feature — see `docs/ETHOS.md` principle 2's second
+  carve-out); Simple mode shows the same data as three qualitative bands. The existing
+  14-day "Micronutrient coverage" section now scopes to focus nutrients by default, for
+  the same reason Simple mode does.
+- [x] `nutrient-reference.ts`'s food-suggestion list backfilled for all 18 new
+  nutrients (`Record<TrackedNutrient, ...>` is a complete map — the build enforces this).
+- [ ] **`max_tokens`/`ANALYSIS_TIMEOUT_MS` re-measurement** — raised `max_tokens` to
+  4096 (from 2048) as an estimate given the ~27-nutrient schema roughly triples that
+  part of the output; not yet measured against a live API call. *Owner action once
+  real `ANTHROPIC_API_KEY` access exists — see `docs/OWNER-TODO.md`.*
+- **Not visually verified against a live model this session** — same sandbox
+  constraint as milestone #1 (no live Anthropic key); Preview/mock mode UI was
+  confirmed with hand-populated fixtures (`mock-data.ts`'s selenium/vitamin C entries,
+  the two-tier doctor/patient focus-nutrient fixture patients).
 
 ---
 

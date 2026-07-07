@@ -13,11 +13,15 @@ import {
   RECORD_READING_TOOL_NAME,
   buildSystemPrompt,
 } from "@/lib/clinical-spine";
+import { resolveEffectiveFocusNutrients } from "@/lib/users.schema";
 
 // Sized against the Vercel function's 60s maxDuration (see vite.config.ts):
 // a failed first attempt plus the one corrective retry is at most 2x this,
 // leaving headroom for the photo download/upload and Firestore writes around
-// it. Do not raise this without also raising maxDuration.
+// it. Do not raise this without also raising maxDuration. NOTE: max_tokens
+// above was raised for the ~27-nutrient schema (was 9) — a larger structured
+// response takes longer to generate, so this budget may no longer leave
+// enough headroom. Re-measure real latency before trusting this number.
 const ANALYSIS_TIMEOUT_MS = 25_000;
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 
@@ -66,7 +70,13 @@ async function callAnalysisModel(
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 2048,
+    // Raised from 2048 now that TRACKED_NUTRIENTS has ~27 entries (was 9) —
+    // each micronutrients[] item is a full {nutrient, level, from,
+    // amount_estimate} object, so this part of the output roughly tripled.
+    // Re-measure real usage once live API access exists and tune this and
+    // ANALYSIS_TIMEOUT_MS/vite.config.ts's maxDuration together — this is an
+    // estimate, not a measured figure.
+    max_tokens: 4096,
     system: systemPrompt,
     messages,
     tools: [RECORD_READING_TOOL],
@@ -104,7 +114,11 @@ async function runAnalysis(mealId: string, userId: string) {
         return `### ${r.title}\n${r.description ?? ""}\n${r.extractedText ?? ""}`.trim();
       })
       .join("\n\n---\n\n");
-    const systemPrompt = buildSystemPrompt(rubricContext);
+
+    const patientSnap = await adminDb.collection("users").doc(meal.patientId).get();
+    const focusNutrients = resolveEffectiveFocusNutrients(patientSnap.data() ?? {});
+
+    const systemPrompt = buildSystemPrompt(rubricContext, focusNutrients);
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("AI service is not configured");

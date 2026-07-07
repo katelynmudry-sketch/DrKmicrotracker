@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card } from "@/components/ui/card";
-import { NUTRIENT_LABELS, type Meal } from "@/lib/analysis.schema";
+import { NUTRIENT_LABELS, type Meal, type TrackedNutrient } from "@/lib/analysis.schema";
 import {
   computeBuildingBlocksSeries,
   computeColourDiversity,
@@ -21,21 +21,31 @@ import {
   PROTEIN_BAND_G,
 } from "@/lib/trends";
 import { splitFoodsForNutrient } from "@/lib/nutrient-reference";
+import { NutrientProfilePanel } from "@/components/app/nutrient-profile-panel";
+import { DEFAULT_FOCUS_NUTRIENTS, type DetailLevel } from "@/lib/users.schema";
 import { Leaf, Palette, Sparkles, Flame } from "lucide-react";
 
 // Patterns — the aggregate view over a patient's readings (docs/PLAN.md Phase
 // 4a). Counts and qualitative coverage only, never a percentage or verdict
-// (see CLAUDE.md's hard rules). Shared by the patient's own /patterns route
-// and the doctor's per-patient review page.
+// (see CLAUDE.md's hard rules — the embedded NutrientProfilePanel is the one
+// deliberate exception, scoped to its own component). Shared by the
+// patient's own /patterns route and the doctor's per-patient review page.
 export function PatternsPanel({
   meals,
   pantryItemNames = [],
+  focusNutrients = DEFAULT_FOCUS_NUTRIENTS,
+  detailLevel = "simple",
 }: {
   meals: Meal[];
   // Active pantry item names, patient's own — omitted entirely in the
   // doctor's embed, where "already have this" isn't meaningful. See
   // src/lib/nutrient-reference.ts's splitFoodsForNutrient.
   pantryItemNames?: string[];
+  // Scopes the 14-day coverage section and Nutrient Profile to the patient's
+  // focus list — with ~27 tracked nutrients now, showing all of them would
+  // undermine the same "don't overwhelm" goal Simple mode exists for.
+  focusNutrients?: TrackedNutrient[];
+  detailLevel?: DetailLevel;
 }) {
   const analyzedCount = useMemo(
     () => meals.filter((m) => m.status === "analyzed" && m.analysis).length,
@@ -55,7 +65,7 @@ export function PatternsPanel({
     );
   }
 
-  const coverage = computeNutrientCoverage(meals);
+  const coverage = computeNutrientCoverage(meals, 14, focusNutrients);
   const plants = computePlantVariety(meals);
   const colours = computeColourDiversity(meals);
   const streak = computeLoggingStreak(meals);
@@ -84,6 +94,12 @@ export function PatternsPanel({
           hint={streak.currentStreakDays === 1 ? "day" : "days"}
         />
       </div>
+
+      <NutrientProfilePanel
+        meals={meals}
+        detailLevel={detailLevel}
+        focusNutrients={focusNutrients}
+      />
 
       <Card className="p-5">
         <p className="mb-1 text-sm font-semibold">Micronutrient coverage</p>

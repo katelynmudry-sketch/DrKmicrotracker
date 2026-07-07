@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Leaf, LogOut } from "lucide-react";
+import { Leaf, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { isMockMode, setMockRole } from "@/lib/mock-mode";
@@ -49,6 +49,13 @@ export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNo
           <div className="flex items-center gap-3">
             {nav}
             <DetailLevelToggle detailLevel={detailLevel} onChange={setDetailLevelPreference} />
+            {!isDoctor && (
+              <Button size="icon" variant="ghost" asChild>
+                <Link to="/settings">
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
             <span className="hidden text-xs text-muted-foreground md:inline">
               {user?.email} {isDoctor ? "· Doctor" : ""}
             </span>

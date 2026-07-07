@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/meals/$mealId")({
 function MealDetail() {
   const { mealId } = useParams({ from: "/_authenticated/meals/$mealId" });
   const qc = useQueryClient();
-  const { detailLevel } = useAuth();
+  const { detailLevel, effectiveFocusNutrients } = useAuth();
   const analyzeFn = useServerFn(analyzeMeal);
   const [retrying, setRetrying] = useState(false);
   const meal = useQuery({
@@ -138,6 +138,7 @@ function MealDetail() {
                 editable
                 onSaved={() => qc.invalidateQueries({ queryKey: ["meal", mealId] })}
                 initialDetailLevel={detailLevel}
+                focusNutrients={effectiveFocusNutrients}
               />
             )}
           </Card>

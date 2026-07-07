@@ -19,12 +19,15 @@ Before touching product code, read:
 - Never add a numeric, letter, or colour-coded score or grade. Protocol fit is
   always a qualitative tier only, never a number — no exception. Nutrient levels
   are qualitative tiers by default (Simple mode); in **Detailed mode** only, a
-  micronutrient may additionally show an approximate mg/mcg range (see
-  `docs/ETHOS.md` principle 2, `docs/VOICE.md`) — a deliberate, scoped exception
-  directed by Dr. K, not a precedent for adding numbers to protocol fit or
-  calories, both of which remain untouched.
+  micronutrient may additionally show an approximate mg/mcg range, and the
+  Nutrient Profile page may show a daily percentage against a general adult
+  reference value (see `docs/ETHOS.md` principle 2, `docs/VOICE.md`) — both are
+  deliberate, scoped exceptions directed by Dr. K, not a precedent for adding
+  numbers to protocol fit or calories, both of which remain untouched.
+- Focus nutrients (doctor- and patient-set, see `docs/ETHOS.md` principle 3)
+  change what's emphasized and displayed, never what's evaluated — every
+  tracked nutrient is scored on every reading regardless of focus.
 - Never use shaming, warning-red, or diet-culture language.
-- Never flag selenium.
 - All patient-facing wording follows `docs/VOICE.md`. The AI prompt spine lives in
   `src/lib/clinical-spine.ts` — edit wording there, never inline in engine code.
 
