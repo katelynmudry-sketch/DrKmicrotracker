@@ -33,6 +33,7 @@ import {
   LineChart,
   Loader2,
   NotebookPen,
+  Settings,
   ShoppingCart,
   Sparkles,
   Stethoscope,
@@ -176,6 +177,12 @@ function PatientDashboard() {
             <Link to="/pantry">
               <ShoppingCart className="mr-1 h-4 w-4" />
               Pantry
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/settings">
+              <Settings className="mr-1 h-4 w-4" />
+              Settings
             </Link>
           </Button>
           {isDoctor && (

@@ -394,6 +394,53 @@ Phase 4 before the live demo.
   ethos-lint/build are all clean, but the camera/mic UI itself needs a real-browser pass
   (the user has said they'll test it directly).
 
+### Post-demo milestone #2 — Cultural food relevance *(1 session)* — **shipped**
+- [x] **Ethos codified**: `docs/ETHOS.md` principle 8 — a patient's own food should be
+  recognizable in the app, not translated into a Western analog first. This was implicit
+  in the food-first framing but wasn't written down before this session.
+- [x] **Standardized cuisine categories**: `src/lib/cuisines.ts`'s `CUISINE_OPTIONS` — ten
+  broad, fixed regions (South Asian, East Asian, Southeast Asian, Middle Eastern, Eastern
+  European, Mediterranean, Caribbean, West African, East African, Latin American), not
+  individual countries. Deliberately broad so a patient can actually pick one in Settings
+  and so `nutrient-reference.ts`'s tags line up with that picker — narrower one-off labels
+  (an earlier pass in this same session used "Peruvian," "Levantine," etc.) don't scale to
+  a fixed selector.
+- [x] **~3x larger hand-curated list**: `src/lib/nutrient-reference.ts`'s `NUTRIENT_FOODS`
+  grew from 4-5 entries per nutrient to roughly 14-16, spanning all ten categories above
+  (where a real, accurate source exists — vitamin D and iodine skew toward seafood-heavy
+  cuisines by nutritional reality, not by omission). The `cuisine` tag is **never rendered
+  to the patient** — `cultural-food-suggest.tsx` and the "Try something new" lists show
+  only `name`/`reason`. It exists purely so `splitFoodsForNutrient` can reorder a
+  nutrient's food list, putting matches for the patient's own pick first without hiding
+  anything else — priority, not a filter.
+- [x] **Persisted preference**: `src/routes/_authenticated/settings.tsx` (new route, linked
+  from the dashboard nav) — a patient picks their cuisine/heritage once from the ten
+  options above, saved to `users/{uid}.preferredCuisine`. `firestore.rules` now allows a
+  signed-in user to update *only* that one field on their own doc (`diff().affectedKeys()
+  .hasOnly(['preferredCuisine'])`, mirroring the existing `doctorNotes`/`isActive` pattern)
+  — `role` and everything else on that doc stays server-only, exactly as before.
+  `use-auth.ts` now reads `preferredCuisine` off the same `getDoc` call it already made for
+  `role`, and exposes it from the hook — no second round trip. The Patterns page, grocery
+  list, and the doctor's per-patient Patterns embed (using the *patient's* pick, not the
+  doctor's own) all pass it into `splitFoodsForNutrient`.
+- [x] **AI-generated fallback for what the fixed list still doesn't cover**:
+  `src/lib/cultural-food.functions.ts`'s `suggestCulturalFoods` server function — a patient
+  types any cuisine or region (not limited to the ten standardized ones) plus the nutrient
+  that's come up light, and Claude (forced tool-use, zod-validated, same reliability
+  pattern as `scanPantryPhoto`) returns 2-3 real, specific foods in the same
+  `{name, reason}` shape as the static list. Prompt wording lives in
+  `src/lib/clinical-spine.ts`'s `buildCulturalFoodSuggestionPrompt` per CLAUDE.md's rule
+  that AI wording never lives inline in engine code — same hard exclusions (no calories,
+  no grades, no selenium) and voice rule as a meal reading. `src/components/app/
+  cultural-food-suggest.tsx` is the "Don't see food from your culture? Ask" link on each
+  nutrient's "Try something new" card; results are session-local, never persisted.
+- **Not visually verified** — same sandbox IPv6 limitation as the pantry suite;
+  typecheck/lint/build are clean but the Settings picker and the new suggestion flow both
+  need a real-browser pass.
+- **Deliberately not done this session**: no onboarding step that prompts a new patient to
+  set their cuisine on first sign-in — Settings is opt-in and self-serve for now. Worth
+  revisiting if most patients never find the page on their own.
+
 ---
 
 ## Part 6 — Carrying the ethos through every future session: CLAUDE.md setup

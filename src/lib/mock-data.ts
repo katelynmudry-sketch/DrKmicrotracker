@@ -170,12 +170,27 @@ export const mockMeals: Meal[] = [
   },
 ];
 
-export type MockPatient = { id: string; fullName: string | null; email: string | null };
+export type MockPatient = {
+  id: string;
+  fullName: string | null;
+  email: string | null;
+  preferredCuisine: string | null;
+};
 
 export const mockPatients: MockPatient[] = [
-  { id: MOCK_PATIENT_ID, fullName: "Preview Patient", email: "preview@example.com" },
-  { id: "patient-2", fullName: "Casey Rivera", email: "casey@example.com" },
-  { id: "patient-3", fullName: null, email: "sam@example.com" },
+  {
+    id: MOCK_PATIENT_ID,
+    fullName: "Preview Patient",
+    email: "preview@example.com",
+    preferredCuisine: null,
+  },
+  {
+    id: "patient-2",
+    fullName: "Casey Rivera",
+    email: "casey@example.com",
+    preferredCuisine: "Latin American",
+  },
+  { id: "patient-3", fullName: null, email: "sam@example.com", preferredCuisine: "East African" },
 ];
 
 export type MockRubric = {

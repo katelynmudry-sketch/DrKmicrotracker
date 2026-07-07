@@ -21,6 +21,7 @@ import {
   PROTEIN_BAND_G,
 } from "@/lib/trends";
 import { splitFoodsForNutrient } from "@/lib/nutrient-reference";
+import { CulturalFoodSuggest } from "@/components/app/cultural-food-suggest";
 import { Leaf, Palette, Sparkles, Flame } from "lucide-react";
 
 // Patterns — the aggregate view over a patient's readings (docs/PLAN.md Phase
@@ -30,12 +31,16 @@ import { Leaf, Palette, Sparkles, Flame } from "lucide-react";
 export function PatternsPanel({
   meals,
   pantryItemNames = [],
+  preferredCuisine = null,
 }: {
   meals: Meal[];
   // Active pantry item names, patient's own — omitted entirely in the
   // doctor's embed, where "already have this" isn't meaningful. See
   // src/lib/nutrient-reference.ts's splitFoodsForNutrient.
   pantryItemNames?: string[];
+  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8) — in
+  // the doctor's embed this is the *patient's*, not the doctor's own.
+  preferredCuisine?: string | null;
 }) {
   const analyzedCount = useMemo(
     () => meals.filter((m) => m.status === "analyzed" && m.analysis).length,
@@ -124,7 +129,12 @@ export function PatternsPanel({
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {gaps.map((g) => {
-              const { inPantry, tryNew } = splitFoodsForNutrient(g.nutrient, pantryItemNames);
+              const { inPantry, tryNew } = splitFoodsForNutrient(
+                g.nutrient,
+                pantryItemNames,
+                3,
+                preferredCuisine,
+              );
               return (
                 <div key={g.nutrient} className="rounded-xl border border-border bg-card p-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -162,6 +172,7 @@ export function PatternsPanel({
                       </ul>
                     </>
                   )}
+                  <CulturalFoodSuggest nutrient={g.nutrient} />
                 </div>
               );
             })}

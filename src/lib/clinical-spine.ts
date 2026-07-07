@@ -83,3 +83,65 @@ photo or description is unclear, make reasonable estimates and say so plainly in
 DOCTOR'S ACTIVE RUBRIC(S):
 ${rubricContext || "(no rubric uploaded yet — use the clinical positions above as the protocol)"}`;
 }
+
+// Cultural-relevance fallback (docs/ETHOS.md, src/lib/nutrient-reference.ts): the
+// hand-curated food list is necessarily incomplete, so a patient can name their
+// own cuisine or region and get real, specific suggestions instead of a Western
+// stand-in. Same hard exclusions and voice as a meal reading.
+
+export const RECORD_CULTURAL_FOODS_TOOL_NAME = "record_cultural_food_suggestions";
+
+export const RECORD_CULTURAL_FOODS_TOOL: Anthropic.Tool = {
+  name: RECORD_CULTURAL_FOODS_TOOL_NAME,
+  description:
+    "Record 2-3 food-first suggestions from the patient's named cuisine or region for the nutrient in question.",
+  input_schema: {
+    type: "object",
+    properties: {
+      items: {
+        type: "array",
+        minItems: 1,
+        maxItems: 3,
+        items: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "The food or dish name, as it's actually called.",
+            },
+            reason: {
+              type: "string",
+              description:
+                "One warm, specific sentence — why it helps with this nutrient, in Dr. K's voice. No calories, no numbers.",
+            },
+          },
+          required: ["name", "reason"],
+        },
+      },
+    },
+    required: ["items"],
+  },
+  strict: true,
+};
+
+export function buildCulturalFoodSuggestionPrompt(): string {
+  return `You help patients using Dr. K's Kitchen, a meal-logging app for a naturopathic
+doctor's practice, find food-first suggestions for a nutrient that's come up light lately —
+foods that are genuinely part of their own cuisine or region, not a Western substitute
+standing in for it. Being able to see food close to where you're from or how you grew up,
+not just a generic pantry list, is part of what this app is for.
+
+${HARD_EXCLUSIONS}
+
+${VOICE_RULE}
+
+The patient will name a cuisine, region, or culture (e.g. "Ukrainian," "Gujarati," "Yoruba,"
+"my grandmother's cooking from Oaxaca") and a nutrient they're a little light on. Suggest 2-3
+real, specific foods or dishes from that cuisine that are genuinely good sources of that
+nutrient — not a vague "eat more vegetables," and not something that only loosely fits. If a
+classic absorption pairing applies (vitamin C with iron, spacing coffee/tea from iron, soaking
+or sprouting for zinc), mention it naturally in the reason, the same way you would for any
+other food. If you aren't confident a food is a strong source of the nutrient, leave it out
+rather than guess — a shorter, accurate list is better than a padded one. Call the
+${RECORD_CULTURAL_FOODS_TOOL_NAME} tool exactly once.`;
+}

@@ -8,7 +8,7 @@ the three design drafts (`design-drafts/`), and the product backlog in `TODO.md`
 Read this before writing a prompt, a component, or a line of copy that touches a
 meal, a nutrient, or a patient.
 
-## The seven principles
+## The eight principles
 
 1. **No calories. Anywhere. Ever.** Never counted, displayed, stored, or charted.
    The story is what a meal *gives you* — micronutrients, protein, fiber, colour,
@@ -47,6 +47,19 @@ meal, a nutrient, or a patient.
    Every reading is scored against *her* written protocol — "scored to YOUR plan,
    not a generic database" — and she reviews, corrects, annotates, and re-runs it.
    The AI assists her judgment; it never replaces it.
+
+8. **Food from home is not a substitute — it's the standard.** A patient's plate
+   doesn't have to be translated into a Western pantry list to be complete.
+   Injera, dal, varenyky, jollof, kimchi — these carry the same iron, B12, and
+   calcium the app tracks, and deserve to be recognized on sight, not converted
+   into a generic analog first. The food reference (`src/lib/nutrient-reference.ts`)
+   is curated across cuisines and regions, not just North American ones; a patient
+   can name their own cuisine or heritage once in Settings and suggestions close to
+   home lead the list from then on — quietly, as priority, never as a label the
+   patient sees. When a patient's own cuisine or region isn't in the curated list
+   at all, the app asks and generates a real suggestion
+   (`src/lib/cultural-food.functions.ts`) rather than leaving the list empty for
+   them.
 
 ## Voice rule
 

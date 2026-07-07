@@ -19,6 +19,10 @@ const MOCK_USER = {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(isMockMode ? MOCK_USER : null);
   const [role, setRole] = useState<AppRole | null>(isMockMode ? getMockRole() : null);
+  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8), set on
+  // the Settings page and stored on their users/{uid} doc. Not fetchable in
+  // mock mode — there's no Firestore doc to read there (see isMockMode below).
+  const [preferredCuisine, setPreferredCuisine] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isMockMode);
   const ensureRoleFn = useServerFn(ensureRole);
 
@@ -31,15 +35,19 @@ export function useAuth() {
       if (u) {
         const snap = await getDoc(doc(db, "users", u.uid));
         if (snap.exists()) {
-          setRole((snap.data()?.role as AppRole) ?? null);
+          const data = snap.data();
+          setRole((data?.role as AppRole) ?? null);
+          setPreferredCuisine((data?.preferredCuisine as string | undefined) ?? null);
         } else {
           // First sign-in: no profile yet — the server decides the role
           // (DOCTOR_EMAILS allowlist) and creates it. Never written by the client.
           const { role: assignedRole } = await ensureRoleFn({});
           setRole(assignedRole);
+          setPreferredCuisine(null);
         }
       } else {
         setRole(null);
+        setPreferredCuisine(null);
       }
       setLoading(false);
     });
@@ -49,6 +57,7 @@ export function useAuth() {
   return {
     user,
     role,
+    preferredCuisine,
     isDoctor: role === "doctor",
     isPatient: role === "patient",
     loading,

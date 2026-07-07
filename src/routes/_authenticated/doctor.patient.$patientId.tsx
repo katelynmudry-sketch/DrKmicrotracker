@@ -46,6 +46,7 @@ function PatientView() {
             id: patientId,
             fullName: null,
             email: null,
+            preferredCuisine: null,
           }
         );
       const snap = await getDoc(doc(db, "users", patientId));
@@ -53,6 +54,7 @@ function PatientView() {
         id: string;
         fullName: string | null;
         email: string | null;
+        preferredCuisine: string | null;
       };
     },
   });
@@ -126,7 +128,10 @@ function PatientView() {
           </div>
         </TabsContent>
         <TabsContent value="patterns">
-          <PatternsPanel meals={meals.data ?? []} />
+          <PatternsPanel
+            meals={meals.data ?? []}
+            preferredCuisine={profile.data?.preferredCuisine ?? null}
+          />
         </TabsContent>
       </Tabs>
     </AppShell>
