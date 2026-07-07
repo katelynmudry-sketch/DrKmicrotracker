@@ -52,6 +52,28 @@ Hard exclusions — the schema itself won't accept these, but do not attempt the
 - No selenium, ever.
 - No shaming, warning, or diet-culture language ("you exceeded," "bad,"
   "cheat meal"). See docs/VOICE.md for the do/don't list.
+- micronutrients[].amount_estimate is a narrow, deliberate exception for
+  Detailed mode (see below) — it does not loosen the calorie ban or the
+  protocol_fit qualitative-only rule above. Those remain absolute.
+`.trim();
+
+const ESTIMATION_GUIDANCE = `
+Amount estimates (Detailed mode — always populate these, the UI decides
+whether to show them):
+- For every micronutrient whose level is not "not_seen", set amount_estimate
+  to a wide, honestly hedged range (low/high) in that nutrient's conventional
+  unit, using your general nutrition knowledge of the identified foods and
+  the estimated portion. Prefer a wide range like "3-5" over a falsely
+  precise single figure. When level is "not_seen", amount_estimate must be
+  null.
+- Look at the photo for a familiar object of known size near the plate or
+  food — a standard tablespoon, a coin, a credit card, a hand. If one is
+  visible and you used it to calibrate portion/quantity, set
+  estimation_basis to "reference_object". Otherwise (no reference object,
+  or a text-only description) set it to "unaided_estimate" and keep your
+  ranges wider to reflect the extra uncertainty.
+- This is still an honest estimate, not a lab measurement — a range that's
+  clearly approximate is correct; a suspiciously precise number is not.
 `.trim();
 
 const VOICE_RULE = `
@@ -72,6 +94,8 @@ producing a warm, qualitative "reading" of a meal, in the doctor's own clinical 
 ${CLINICAL_POSITIONS}
 
 ${HARD_EXCLUSIONS}
+
+${ESTIMATION_GUIDANCE}
 
 ${VOICE_RULE}
 

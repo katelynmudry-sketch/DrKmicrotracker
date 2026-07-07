@@ -17,7 +17,19 @@ meal, a nutrient, or a patient.
 2. **No grades.** No 1–10 scores, no red/yellow/green verdicts, no letter grades.
    *"Without scores designed to shame."* Protocol fit is expressed qualitatively
    ("Aligned"), never numerically — a number invites comparison and shame in a way
-   a sentence doesn't.
+   a sentence doesn't. This is absolute; there is no exception for protocol fit.
+
+   In **Detailed mode** (an explicit toggle a patient can opt out of back to
+   Simple — see `docs/VOICE.md`), a micronutrient reading may also show an
+   honest, wide, approximate range in mg/mcg — e.g. "Iron: Present · ~3–5mg" —
+   optionally grounded by a familiar sized object (a spoon, a coin, a card, a
+   hand) visible in the meal photo. This is different in kind from a grade: a
+   range doesn't rank or compare, it just answers "roughly how much," the same
+   job `protein_g`/`fiber_g` have quietly done in `building_blocks` since the
+   schema shipped. The range must stay wide and clearly approximate — never a
+   single decimal figure presented as exact; database math on a photo-guessed
+   portion is still fake precision if it claims false certainty. Simple mode —
+   today's tier-only behavior — remains available and never shows a number.
 
 3. **Micronutrients are the plot.** The nutrients that matter, in her clinical
    experience: iron (+ the vitamin C pairing rule), B12, vitamin D, calcium

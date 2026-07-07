@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, NotebookPen, RotateCw } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { toast } from "sonner";
 import type { Meal } from "@/lib/analysis.schema";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/meals/$mealId")({
   head: () => ({ meta: [{ title: "Meal — Dr. K's Kitchen" }] }),
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/meals/$mealId")({
 function MealDetail() {
   const { mealId } = useParams({ from: "/_authenticated/meals/$mealId" });
   const qc = useQueryClient();
+  const { detailLevel } = useAuth();
   const analyzeFn = useServerFn(analyzeMeal);
   const [retrying, setRetrying] = useState(false);
   const meal = useQuery({
@@ -135,6 +137,7 @@ function MealDetail() {
                 mealId={meal.data.id}
                 editable
                 onSaved={() => qc.invalidateQueries({ queryKey: ["meal", mealId] })}
+                initialDetailLevel={detailLevel}
               />
             )}
           </Card>

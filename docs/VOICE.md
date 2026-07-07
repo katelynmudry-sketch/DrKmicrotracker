@@ -16,7 +16,10 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | Suggestions | **Worth trying** |
 | Doctor's notes | **Notes from Dr. K** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
-| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Simple mode) | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Detailed mode) | **Strong source · ~3–5mg** (tier + an honest range, never a bare decimal) |
+| Detail toggle | **Simple / Detailed** |
+| Estimate grounding | "Grounded by your photo's reference object" / "A rough visual estimate" |
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" |
@@ -32,6 +35,9 @@ See `docs/ETHOS.md` for the principles behind these choices.
 - "Considered, not clinical."
 - "Food is medicine — but only when you can actually see what it's doing for you."
   — Dr. Katelyn Mudry, ND
+- "Pop a spoon, coin, credit card, or your hand next to the plate — it helps us
+  judge portion size more precisely." (reference-object photo tip, Detailed mode
+  only, always optional — never a blocking step)
 
 ## Do / don't
 
@@ -39,7 +45,7 @@ See `docs/ETHOS.md` for the principles behind these choices.
 |---|---|
 | "You exceeded your sugar target." | "This one leaned sweet — worth pairing with protein next time." |
 | "Rubric score: 6/10" | "Protocol fit: Getting there" |
-| "320 kcal, 12g protein" | "A strong source of protein, present fiber" |
+| "320 kcal, a numeric protocol score" | "A strong source of protein, present fiber, or (Detailed mode) an approximate range like ~3–5mg" |
 | "Low iron — warning" | "Iron's a little light this week — pumpkin seeds or blackstrap molasses would help" |
 | "Selenium: low" | (never mention selenium) |
 | "You forgot your vegetables" | "Worth trying: adding a plant at this meal" |

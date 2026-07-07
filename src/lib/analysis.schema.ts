@@ -4,10 +4,14 @@ import { z } from "zod";
 // docs/ETHOS.md and docs/VOICE.md — this schema is the enforcement mechanism
 // for the hard rules in CLAUDE.md, not just a data contract:
 //   - there is no calories field anywhere below, by construction.
-//   - protocol_fit is a qualitative tier, never a number.
+//   - protocol_fit is a qualitative tier, never a number — no exception.
 //   - TRACKED_NUTRIENTS is a closed enum that does not include selenium, so a
 //     reading literally cannot flag it — the model can't emit an enum value
 //     that doesn't exist in the schema.
+//   - micronutrients[].amount_estimate and estimation_basis are the one
+//     deliberate, narrow exception to "qualitative tiers only" — a Detailed
+//     mode approximate range, never a score/grade. See docs/ETHOS.md
+//     principle 2 and CLAUDE.md's hard rules.
 
 export const TRACKED_NUTRIENTS = [
   "iron",
@@ -34,6 +38,21 @@ export const NUTRIENT_LABELS: Record<TrackedNutrient, string> = {
   magnesium: "Magnesium",
 };
 
+// Display unit per nutrient — fixed in code (not model-chosen) so the same
+// nutrient always renders in the same unit across readings. Only consulted
+// in Detailed mode; see docs/ETHOS.md principle 2.
+export const NUTRIENT_UNITS: Record<TrackedNutrient, "mg" | "mcg" | "g"> = {
+  iron: "mg",
+  b12: "mcg",
+  vitamin_d: "mcg",
+  calcium: "mg",
+  omega_3: "g",
+  iodine: "mcg",
+  zinc: "mg",
+  choline: "mg",
+  magnesium: "mg",
+};
+
 export const NUTRIENT_LEVELS = ["strong", "present", "light", "not_seen"] as const;
 export type NutrientLevel = (typeof NUTRIENT_LEVELS)[number];
 
@@ -42,6 +61,17 @@ export const LEVEL_LABELS: Record<NutrientLevel, string> = {
   present: "Present",
   light: "A little light",
   not_seen: "Not seen",
+};
+
+// Detailed-mode only: how the reading's amount_estimate ranges were grounded.
+// One value per reading (a photo's reference object calibrates the whole
+// reading, not one nutrient at a time) — see docs/ETHOS.md principle 2.
+export const ESTIMATION_BASES = ["reference_object", "unaided_estimate"] as const;
+export type EstimationBasis = (typeof ESTIMATION_BASES)[number];
+
+export const ESTIMATION_BASIS_LABELS: Record<EstimationBasis, string> = {
+  reference_object: "Grounded by your photo's reference object",
+  unaided_estimate: "A rough visual estimate",
 };
 
 export const CARB_QUALITIES = ["mostly_complex", "mixed", "mostly_refined"] as const;
@@ -65,10 +95,20 @@ export const TIER_LABELS: Record<ProtocolFitTier, string> = {
 export const MEAL_STATUSES = ["pending", "analyzing", "analyzed", "failed"] as const;
 export type MealStatus = (typeof MEAL_STATUSES)[number];
 
+// Detailed-mode only: a wide, honest approximate range in NUTRIENT_UNITS[nutrient].
+// Must be null when level is "not_seen" — enforced by prompt instruction (see
+// clinical-spine.ts), not a zod refinement.
+export const AmountEstimateSchema = z.object({
+  low: z.number().min(0),
+  high: z.number().min(0),
+});
+export type AmountEstimate = z.infer<typeof AmountEstimateSchema>;
+
 export const MicronutrientSchema = z.object({
   nutrient: z.enum(TRACKED_NUTRIENTS),
   level: z.enum(NUTRIENT_LEVELS),
   from: z.string().min(1),
+  amount_estimate: AmountEstimateSchema.nullable(),
 });
 export type Micronutrient = z.infer<typeof MicronutrientSchema>;
 
@@ -98,6 +138,7 @@ export const MealAnalysisSchema = z.object({
   absorption_notes: z.array(z.string().min(1)),
   protocol_fit: ProtocolFitSchema,
   uncertainty: z.string().nullable(),
+  estimation_basis: z.enum(ESTIMATION_BASES).nullable(),
 });
 export type MealAnalysis = z.infer<typeof MealAnalysisSchema>;
 
@@ -148,8 +189,18 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
           nutrient: { type: "string", enum: TRACKED_NUTRIENTS },
           level: { type: "string", enum: NUTRIENT_LEVELS },
           from: { type: "string", description: "Which identified food this reading comes from." },
+          amount_estimate: {
+            type: ["object", "null"],
+            description:
+              "A wide, honest approximate range in this nutrient's fixed unit (see NUTRIENT_UNITS). Null when level is 'not_seen'.",
+            properties: {
+              low: { type: "number" },
+              high: { type: "number" },
+            },
+            required: ["low", "high"],
+          },
         },
-        required: ["nutrient", "level", "from"],
+        required: ["nutrient", "level", "from", "amount_estimate"],
       },
     },
     offered: {
@@ -181,6 +232,12 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
       description:
         "Plain statement of what couldn't be determined, or null if nothing was ambiguous.",
     },
+    estimation_basis: {
+      type: ["string", "null"],
+      enum: [...ESTIMATION_BASES, null],
+      description:
+        "'reference_object' if a familiar sized object (spoon, coin, card, hand) near the plate was used to calibrate amount_estimate ranges; 'unaided_estimate' otherwise (including text-only readings).",
+    },
   },
   required: [
     "meal_name",
@@ -194,6 +251,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
     "absorption_notes",
     "protocol_fit",
     "uncertainty",
+    "estimation_basis",
   ],
 } as const;
 

@@ -27,6 +27,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { analyzeMeal } from "@/lib/meals.functions";
 import type { Meal } from "@/lib/analysis.schema";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
@@ -135,6 +136,7 @@ function PatientView() {
 
 function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
   const qc = useQueryClient();
+  const { detailLevel } = useAuth();
   const analyzeFn = useServerFn(analyzeMeal);
   const [notes, setNotes] = useState<string>(meal.doctorNotes ?? "");
   const [saving, setSaving] = useState(false);
@@ -223,7 +225,13 @@ function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
             Re-analyze with current rubric
           </Button>
         </div>
-        <AnalysisView analysis={meal.analysis} mealId={meal.id} editable onSaved={invalidate} />
+        <AnalysisView
+          analysis={meal.analysis}
+          mealId={meal.id}
+          editable
+          onSaved={invalidate}
+          initialDetailLevel={detailLevel}
+        />
       </Card>
     </div>
   );

@@ -4,9 +4,10 @@ import { Leaf, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { isMockMode, setMockRole } from "@/lib/mock-mode";
+import type { DetailLevel } from "@/lib/users.schema";
 
 export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNode }) {
-  const { user, isDoctor, signOut } = useAuth();
+  const { user, isDoctor, signOut, detailLevel, setDetailLevelPreference } = useAuth();
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
@@ -47,6 +48,7 @@ export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNo
           </Link>
           <div className="flex items-center gap-3">
             {nav}
+            <DetailLevelToggle detailLevel={detailLevel} onChange={setDetailLevelPreference} />
             <span className="hidden text-xs text-muted-foreground md:inline">
               {user?.email} {isDoctor ? "· Doctor" : ""}
             </span>
@@ -57,6 +59,36 @@ export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNo
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+    </div>
+  );
+}
+
+// A patient's default reading detail level — Simple (tiers only) or Detailed
+// (tiers + approximate mg/mcg ranges). See docs/ETHOS.md principle 2. Each
+// meal can still be viewed in the other mode without changing this default
+// (see AnalysisView).
+function DetailLevelToggle({
+  detailLevel,
+  onChange,
+}: {
+  detailLevel: DetailLevel;
+  onChange: (next: DetailLevel) => void;
+}) {
+  return (
+    <div className="flex items-center rounded-full bg-secondary p-0.5 text-xs">
+      {(["simple", "detailed"] as const).map((level) => (
+        <button
+          key={level}
+          onClick={() => onChange(level)}
+          className={`rounded-full px-2.5 py-1 capitalize transition-colors ${
+            detailLevel === level
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {level}
+        </button>
+      ))}
     </div>
   );
 }

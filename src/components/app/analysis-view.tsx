@@ -13,12 +13,15 @@ import {
   NUTRIENT_LABELS,
   NUTRIENT_LEVELS,
   LEVEL_LABELS,
+  NUTRIENT_UNITS,
+  ESTIMATION_BASIS_LABELS,
   CARB_QUALITIES,
   CARB_QUALITY_LABELS,
   TIER_LABELS,
   type MealAnalysis,
   type Micronutrient,
 } from "@/lib/analysis.schema";
+import type { DetailLevel } from "@/lib/users.schema";
 
 // Functional rendering of the new reading shape — the Botanical Clinic-style
 // visual pass (reading rows, dashed dividers) is Phase 3's job (docs/PLAN.md).
@@ -43,15 +46,20 @@ export function AnalysisView({
   mealId,
   editable,
   onSaved,
+  initialDetailLevel,
 }: {
   analysis: MealAnalysis | null;
   mealId?: string;
   editable?: boolean;
   onSaved?: (analysis: MealAnalysis) => void;
+  initialDetailLevel: DetailLevel;
 }) {
   const updateFn = useServerFn(updateMealAnalysis);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Per-meal override of the user's default — never persisted, resets to the
+  // default on next render (see docs/ETHOS.md principle 2).
+  const [mode, setMode] = useState<DetailLevel>(initialDetailLevel);
 
   const canEdit = !!editable && !!mealId;
 
@@ -71,7 +79,12 @@ export function AnalysisView({
             healthy_fat_sources: analysis.building_blocks.healthy_fat_sources.join(", "),
             carb_quality: analysis.building_blocks.carb_quality,
           },
-          micronutrients: analysis.micronutrients,
+          // Normalized to a concrete object here so the edit form always has
+          // a stable shape to bind number inputs to; saved back as-is.
+          micronutrients: analysis.micronutrients.map((m) => ({
+            ...m,
+            amount_estimate: m.amount_estimate ?? { low: 0, high: 0 },
+          })),
         }
       : {
           meal_name: "",
@@ -274,18 +287,48 @@ export function AnalysisView({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Micronutrients
           </p>
-          {editing && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => microFields.append({ nutrient: "iron", level: "present", from: "" })}
-            >
-              <Plus className="mr-1 h-3 w-3" />
-              Add
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-full bg-secondary p-0.5 text-xs">
+              {(["simple", "detailed"] as const).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setMode(level)}
+                  className={`rounded-full px-2 py-0.5 capitalize transition-colors ${
+                    mode === level
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            {editing && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  microFields.append({
+                    nutrient: "iron",
+                    level: "present",
+                    from: "",
+                    amount_estimate: null,
+                  })
+                }
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Add
+              </Button>
+            )}
+          </div>
         </div>
+        {mode === "detailed" && a.estimation_basis && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            {ESTIMATION_BASIS_LABELS[a.estimation_basis]}
+          </p>
+        )}
         {editing ? (
           <div className="space-y-2">
             {microFields.fields.map((field, i) => (
@@ -315,6 +358,28 @@ export function AnalysisView({
                   className="flex-1"
                   {...form.register(`micronutrients.${i}.from`)}
                 />
+                {mode === "detailed" && (
+                  <>
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="Low"
+                      className="w-20"
+                      {...form.register(`micronutrients.${i}.amount_estimate.low`, {
+                        valueAsNumber: true,
+                      })}
+                    />
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="High"
+                      className="w-20"
+                      {...form.register(`micronutrients.${i}.amount_estimate.high`, {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </>
+                )}
                 <Button
                   type="button"
                   size="icon"
@@ -336,6 +401,13 @@ export function AnalysisView({
                 <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
                 <span className="text-muted-foreground">
                   {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
+                  {mode === "detailed" && m.amount_estimate && (
+                    <>
+                      {" "}
+                      · ~{m.amount_estimate.low}–{m.amount_estimate.high}
+                      {NUTRIENT_UNITS[m.nutrient]}
+                    </>
+                  )}
                 </span>
               </li>
             ))}

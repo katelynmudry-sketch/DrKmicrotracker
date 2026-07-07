@@ -16,8 +16,13 @@ Before touching product code, read:
 
 - Never add calories, calorie math, or a calorie field — anywhere, in the schema,
   the prompt, the UI, or a chart.
-- Never add a numeric, letter, or colour-coded score or grade. Protocol fit and
-  nutrient levels are qualitative tiers only (see `docs/VOICE.md`).
+- Never add a numeric, letter, or colour-coded score or grade. Protocol fit is
+  always a qualitative tier only, never a number — no exception. Nutrient levels
+  are qualitative tiers by default (Simple mode); in **Detailed mode** only, a
+  micronutrient may additionally show an approximate mg/mcg range (see
+  `docs/ETHOS.md` principle 2, `docs/VOICE.md`) — a deliberate, scoped exception
+  directed by Dr. K, not a precedent for adding numbers to protocol fit or
+  calories, both of which remain untouched.
 - Never use shaming, warning-red, or diet-culture language.
 - Never flag selenium.
 - All patient-facing wording follows `docs/VOICE.md`. The AI prompt spine lives in

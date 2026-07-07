@@ -83,7 +83,8 @@ branch for reference).
 | Suggestions | **Worth trying** |
 | Doctor's notes | **Notes from Dr. K** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
-| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Simple mode) | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Detailed mode) | **Strong source · ~3–5mg** (tier + an honest range — see `docs/VOICE.md`) |
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" (from the pantry branch — already perfectly phrased) |
