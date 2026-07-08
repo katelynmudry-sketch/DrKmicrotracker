@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { MealTiming } from "@/lib/meal-timing";
 
 // The reading shape produced by the AI and rendered by the UI. See
 // docs/ETHOS.md and docs/VOICE.md — this schema is the enforcement mechanism
@@ -215,6 +216,9 @@ export interface MealDoc {
   analysis: MealAnalysis | null;
   eatenAt: string;
   createdAt: unknown;
+  // Optional so meals logged before this field existed still typecheck —
+  // display code falls back to inferMealTiming(eatenAt) when absent.
+  mealTiming?: MealTiming;
   // Only present once the corresponding lifecycle event has happened.
   statusError?: string | null;
   rubricIds?: string[];

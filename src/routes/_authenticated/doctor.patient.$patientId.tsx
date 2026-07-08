@@ -27,6 +27,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { analyzeMeal } from "@/lib/meals.functions";
 import type { Meal } from "@/lib/analysis.schema";
+import { mealTimingLabel } from "@/lib/meal-timing";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
@@ -114,7 +115,7 @@ function PatientView() {
                   >
                     <p className="text-sm font-medium">{m.mealLabel ?? "Untitled meal"}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(m.eatenAt).toLocaleString()}
+                      {mealTimingLabel(m)} · {new Date(m.eatenAt).toLocaleString()}
                     </p>
                   </button>
                 ))
@@ -183,7 +184,7 @@ function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
         </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {new Date(meal.eatenAt).toLocaleString()}
+            {mealTimingLabel(meal)} · {new Date(meal.eatenAt).toLocaleString()}
           </p>
           <p className="font-semibold">{meal.mealLabel ?? "Untitled meal"}</p>
           {meal.patientNotes && (

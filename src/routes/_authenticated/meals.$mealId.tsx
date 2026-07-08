@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, NotebookPen, RotateCw } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { toast } from "sonner";
 import type { Meal } from "@/lib/analysis.schema";
+import { mealTimingLabel } from "@/lib/meal-timing";
 
 export const Route = createFileRoute("/_authenticated/meals/$mealId")({
   head: () => ({ meta: [{ title: "Meal — Dr. K's Kitchen" }] }),
@@ -81,7 +82,7 @@ function MealDetail() {
             </Card>
             <Card className="p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                {new Date(meal.data.eatenAt).toLocaleString()}
+                {mealTimingLabel(meal.data)} · {new Date(meal.data.eatenAt).toLocaleString()}
               </p>
               <h1 className="text-xl font-semibold tracking-tight">
                 {meal.data.mealLabel ?? "Untitled meal"}
