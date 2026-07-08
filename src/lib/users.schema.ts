@@ -2,7 +2,8 @@
 // firestore.rules: `allow create, update, delete: if false`) — writes go
 // through Admin-SDK server functions only (ensureRole in rubrics.functions.ts,
 // setDetailLevel/setPatientFocusNutrients/setDoctorFocusNutrients/
-// setPreferredCuisine in users.functions.ts), never a direct client write.
+// setCurrentRegions/setFoodHeritage in users.functions.ts), never a direct
+// client write.
 import type { TrackedNutrient } from "@/lib/analysis.schema";
 
 export const DETAIL_LEVELS = ["simple", "detailed"] as const;
@@ -40,10 +41,23 @@ export interface UserDoc {
   // doctorFocusNutrients. An explicit [] is a deliberate "no focus" choice,
   // distinct from unset — see resolveEffectiveFocusNutrients below.
   patientFocusNutrients?: TrackedNutrient[] | null;
-  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8, one
-  // of src/lib/cuisines.ts's CUISINE_OPTIONS) — prioritizes, never filters,
-  // src/lib/nutrient-reference.ts's suggestions. null/unset = no preference.
-  preferredCuisine?: string | null;
+  // The patient's own picks (docs/ETHOS.md principle 8, from
+  // src/lib/cuisines.ts's CUISINE_OPTIONS) — prioritize, never filter,
+  // src/lib/nutrient-reference.ts's suggestions. null/unset/[] = no
+  // preference. Kept as two separate questions since where a patient
+  // currently lives and where their food heritage comes from are often
+  // different things, and either can be more than one.
+  currentRegions?: string[] | null;
+  foodHeritage?: string[] | null;
+}
+
+// The combined, deduped set used anywhere food suggestions are prioritized —
+// callers don't need to care that "cuisine" is actually two separate
+// patient-facing questions under the hood.
+export function resolveEffectiveCuisines(
+  doc: Pick<UserDoc, "currentRegions" | "foodHeritage">,
+): string[] {
+  return Array.from(new Set([...(doc.currentRegions ?? []), ...(doc.foodHeritage ?? [])]));
 }
 
 // Patient override (if explicitly set, including []) → doctor default (if

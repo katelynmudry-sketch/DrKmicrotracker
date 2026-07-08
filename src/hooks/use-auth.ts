@@ -16,20 +16,25 @@ import {
   getMockPatientFocusNutrients,
   setMockPatientFocusNutrients,
   onMockPatientFocusNutrientsChange,
-  getMockPreferredCuisine,
-  setMockPreferredCuisine,
-  onMockPreferredCuisineChange,
+  getMockCurrentRegions,
+  setMockCurrentRegions,
+  onMockCurrentRegionsChange,
+  getMockFoodHeritage,
+  setMockFoodHeritage,
+  onMockFoodHeritageChange,
 } from "@/lib/mock-mode";
 import { MOCK_PATIENT_ID } from "@/lib/mock-data";
 import { ensureRole } from "@/lib/rubrics.functions";
 import {
   setDetailLevel,
   setPatientFocusNutrients,
-  setPreferredCuisine,
+  setCurrentRegions,
+  setFoodHeritage,
 } from "@/lib/users.functions";
 import {
   DEFAULT_DETAIL_LEVEL,
   resolveEffectiveFocusNutrients,
+  resolveEffectiveCuisines,
   type DetailLevel,
 } from "@/lib/users.schema";
 import type { TrackedNutrient } from "@/lib/analysis.schema";
@@ -54,18 +59,23 @@ export function useAuth() {
   const [patientFocusNutrients, setPatientFocusNutrientsState] = useState<
     TrackedNutrient[] | null | undefined
   >(isMockMode ? getMockPatientFocusNutrients() : undefined);
-  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8), set
-  // on the Settings page and stored on their users/{uid} doc. Not fetchable
-  // in mock mode from Firestore — mock-mode.ts's localStorage stand-in
-  // covers it there instead.
-  const [preferredCuisine, setPreferredCuisineState] = useState<string | null>(
-    isMockMode ? getMockPreferredCuisine() : null,
+  // The patient's own "where do you currently live" / "what's your food
+  // heritage" picks (docs/ETHOS.md principle 8), set on the Settings page
+  // and stored on their users/{uid} doc. Not fetchable in mock mode from
+  // Firestore — mock-mode.ts's localStorage stand-in covers it there
+  // instead.
+  const [currentRegions, setCurrentRegionsState] = useState<string[]>(
+    isMockMode ? getMockCurrentRegions() : [],
+  );
+  const [foodHeritage, setFoodHeritageState] = useState<string[]>(
+    isMockMode ? getMockFoodHeritage() : [],
   );
   const [loading, setLoading] = useState(!isMockMode);
   const ensureRoleFn = useServerFn(ensureRole);
   const setDetailLevelFn = useServerFn(setDetailLevel);
   const setPatientFocusNutrientsFn = useServerFn(setPatientFocusNutrients);
-  const setPreferredCuisineFn = useServerFn(setPreferredCuisine);
+  const setCurrentRegionsFn = useServerFn(setCurrentRegions);
+  const setFoodHeritageFn = useServerFn(setFoodHeritage);
 
   useEffect(() => {
     if (isMockMode) {
@@ -77,15 +87,19 @@ export function useAuth() {
       const offPatientFocus = onMockPatientFocusNutrientsChange(() =>
         setPatientFocusNutrientsState(getMockPatientFocusNutrients()),
       );
-      const offCuisine = onMockPreferredCuisineChange(() =>
-        setPreferredCuisineState(getMockPreferredCuisine()),
+      const offRegions = onMockCurrentRegionsChange(() =>
+        setCurrentRegionsState(getMockCurrentRegions()),
+      );
+      const offHeritage = onMockFoodHeritageChange(() =>
+        setFoodHeritageState(getMockFoodHeritage()),
       );
       return () => {
         offRole();
         offDetail();
         offDoctorFocus();
         offPatientFocus();
-        offCuisine();
+        offRegions();
+        offHeritage();
       };
     }
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -100,7 +114,8 @@ export function useAuth() {
           setPatientFocusNutrientsState(
             data?.patientFocusNutrients as TrackedNutrient[] | null | undefined,
           );
-          setPreferredCuisineState((data?.preferredCuisine as string | undefined) ?? null);
+          setCurrentRegionsState((data?.currentRegions as string[] | undefined) ?? []);
+          setFoodHeritageState((data?.foodHeritage as string[] | undefined) ?? []);
         } else {
           // First sign-in: no profile yet — the server decides the role
           // (DOCTOR_EMAILS allowlist) and creates it, seeded with the default
@@ -111,7 +126,8 @@ export function useAuth() {
           setDetailLevelState(DEFAULT_DETAIL_LEVEL);
           setDoctorFocusNutrientsState(undefined);
           setPatientFocusNutrientsState(undefined);
-          setPreferredCuisineState(null);
+          setCurrentRegionsState([]);
+          setFoodHeritageState([]);
         }
       } else {
         setRole(null);
@@ -139,19 +155,29 @@ export function useAuth() {
     await setPatientFocusNutrientsFn({ data: { focusNutrients: next } });
   };
 
-  const setPreferredCuisinePreference = async (next: string | null) => {
-    setPreferredCuisineState(next);
+  const setCurrentRegionsPreference = async (next: string[]) => {
+    setCurrentRegionsState(next);
     if (isMockMode) {
-      setMockPreferredCuisine(next);
+      setMockCurrentRegions(next);
       return;
     }
-    await setPreferredCuisineFn({ data: { preferredCuisine: next } });
+    await setCurrentRegionsFn({ data: { regions: next } });
+  };
+
+  const setFoodHeritagePreference = async (next: string[]) => {
+    setFoodHeritageState(next);
+    if (isMockMode) {
+      setMockFoodHeritage(next);
+      return;
+    }
+    await setFoodHeritageFn({ data: { heritage: next } });
   };
 
   const effectiveFocusNutrients = resolveEffectiveFocusNutrients({
     doctorFocusNutrients,
     patientFocusNutrients,
   });
+  const effectiveCuisines = resolveEffectiveCuisines({ currentRegions, foodHeritage });
 
   return {
     user,
@@ -164,8 +190,11 @@ export function useAuth() {
     patientFocusNutrients,
     effectiveFocusNutrients,
     setPatientFocusNutrientsPreference,
-    preferredCuisine,
-    setPreferredCuisinePreference,
+    currentRegions,
+    setCurrentRegionsPreference,
+    foodHeritage,
+    setFoodHeritagePreference,
+    effectiveCuisines,
     loading,
     signOut: () => (isMockMode ? Promise.resolve() : firebaseSignOut(auth)),
   };

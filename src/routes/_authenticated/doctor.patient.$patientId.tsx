@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   DEFAULT_FOCUS_NUTRIENTS,
   resolveEffectiveFocusNutrients,
+  resolveEffectiveCuisines,
   type UserDoc,
 } from "@/lib/users.schema";
 
@@ -56,7 +57,8 @@ function PatientView() {
             id: patientId,
             fullName: null,
             email: null,
-            preferredCuisine: null,
+            currentRegions: null,
+            foodHeritage: null,
           }
         );
       const snap = await getDoc(doc(db, "users", patientId));
@@ -154,7 +156,7 @@ function PatientView() {
         <TabsContent value="patterns">
           <PatternsPanel
             meals={meals.data ?? []}
-            preferredCuisine={profile.data?.preferredCuisine ?? null}
+            cuisines={resolveEffectiveCuisines(profile.data ?? {})}
             focusNutrients={patientFocusNutrients}
             detailLevel={detailLevel}
           />

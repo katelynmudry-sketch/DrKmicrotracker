@@ -615,6 +615,43 @@ merge (`git merge origin/preview`, resolved by hand file by file, not auto-resol
   and no dropped functionality from either side is the top priority for the next
   real-browser pass.
 
+### Post-demo milestone #6 — Split region from food heritage, reorder Settings by priority *(1 session)* — **shipped**
+- [x] **Split the single cuisine picker into two questions**: the Settings page's single
+  "Cuisine or heritage" dropdown (`preferredCuisine: string | null`) conflated *where a
+  patient currently lives* with *their food heritage* — a patient living in Canada whose
+  food heritage is Ukrainian had to pick one. `src/lib/users.schema.ts`'s `UserDoc` now
+  has `currentRegions?: string[] | null` and `foodHeritage?: string[] | null` — two
+  separate multi-select questions, both drawing from the same `CUISINE_OPTIONS` vocabulary
+  (`src/lib/cuisines.ts`) so `nutrient-reference.ts`'s `cuisines` tags still line up either
+  way. `resolveEffectiveCuisines` merges the two (deduped) for anywhere food-suggestion
+  priority is computed — `nutrient-reference.ts`'s `prioritizeByCuisine`/
+  `foodsForNutrient`/`splitFoodsForNutrient` now take a `cuisines: string[]` instead of a
+  single string.
+- [x] **Reordered by priority**: Focus nutrients — the doctor-prescribed, per-patient
+  micronutrient emphasis (`doctorFocusNutrients`/`patientFocusNutrients`, already
+  doctor-assignable via `setDoctorFocusNutrients`) — now renders first on the Settings
+  page, above the region and heritage pickers, since it's the doctor's clinical call and
+  outranks a patient's own cultural/geographic context.
+- [x] **New reusable multi-select**: `src/components/app/checkbox-option-list.tsx` — a
+  flat checkbox list (no nutrient grouping) shared by both the region and heritage
+  pickers, instead of duplicating the markup twice.
+- [x] **Server functions**: `setPreferredCuisine` replaced by `setCurrentRegions` and
+  `setFoodHeritage` in `src/lib/users.functions.ts` — same self-only, Admin-SDK,
+  zod-validated-against-`CUISINE_OPTIONS` pattern as before, just array-typed and split in
+  two.
+- [x] **Consumers updated**: `patterns-panel.tsx`'s `preferredCuisine` prop became
+  `cuisines: string[]`; `patterns.tsx`, `grocery-list.tsx`, and
+  `doctor.patient.$patientId.tsx` all pass the merged `resolveEffectiveCuisines` result
+  instead of a single string. `use-auth.ts` and `mock-mode.ts` got the equivalent
+  array-typed split (mock localStorage keys: `mockCurrentRegions`/`mockFoodHeritage`).
+- **Deliberately not done this session**: a therapeutic-diet-type picker
+  (anti-inflammatory, high protein, etc.) was discussed and explicitly scoped out — not
+  added.
+- **Not visually verified** — same sandbox constraint as every milestone above; the next
+  real-browser pass should confirm Focus nutrients renders first, both new pickers save
+  and reload independently, and cuisine-based food-suggestion priority still works with a
+  region and a heritage both set.
+
 ---
 
 ## Part 6 — Carrying the ethos through every future session: CLAUDE.md setup

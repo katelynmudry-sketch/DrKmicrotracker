@@ -37,7 +37,7 @@ export function PatternsPanel({
   pantryItemNames = [],
   focusNutrients = DEFAULT_FOCUS_NUTRIENTS,
   detailLevel = "simple",
-  preferredCuisine = null,
+  cuisines = [],
 }: {
   meals: Meal[];
   // Active pantry item names, patient's own — omitted entirely in the
@@ -49,9 +49,11 @@ export function PatternsPanel({
   // undermine the same "don't overwhelm" goal Simple mode exists for.
   focusNutrients?: TrackedNutrient[];
   detailLevel?: DetailLevel;
-  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8) — in
-  // the doctor's embed this is the *patient's*, not the doctor's own.
-  preferredCuisine?: string | null;
+  // The patient's own currentRegions + foodHeritage picks, combined
+  // (docs/ETHOS.md principle 8, src/lib/users.schema.ts's
+  // resolveEffectiveCuisines) — in the doctor's embed this is the
+  // *patient's*, not the doctor's own.
+  cuisines?: string[];
 }) {
   const analyzedCount = useMemo(
     () => meals.filter((m) => m.status === "analyzed" && m.analysis).length,
@@ -150,7 +152,7 @@ export function PatternsPanel({
                 g.nutrient,
                 pantryItemNames,
                 3,
-                preferredCuisine,
+                cuisines,
               );
               return (
                 <div key={g.nutrient} className="rounded-xl border border-border bg-card p-3">

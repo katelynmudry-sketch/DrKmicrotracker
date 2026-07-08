@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/grocery-list")({
 });
 
 function GroceryListPage() {
-  const { user, preferredCuisine } = useAuth();
+  const { user, effectiveCuisines } = useAuth();
   const qc = useQueryClient();
   const [newItem, setNewItem] = useState("");
 
@@ -134,7 +134,7 @@ function GroceryListPage() {
         gap.nutrient,
         activePantryNames,
         3,
-        preferredCuisine,
+        effectiveCuisines,
       );
       for (const food of tryNew) {
         const key = food.name.toLowerCase();
@@ -144,7 +144,7 @@ function GroceryListPage() {
       }
     }
     return suggested;
-  }, [meals.data, pantryItems.data, groceryItems.data, preferredCuisine]);
+  }, [meals.data, pantryItems.data, groceryItems.data, effectiveCuisines]);
 
   return (
     <AppShell
