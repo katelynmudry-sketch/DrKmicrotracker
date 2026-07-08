@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { setDoctorFocusNutrients } from "@/lib/users.functions";
 import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
+import { mealTimingLabel } from "@/lib/meal-timing";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DEFAULT_FOCUS_NUTRIENTS,
@@ -133,7 +134,7 @@ function PatientView() {
                   >
                     <p className="text-sm font-medium">{m.mealLabel ?? "Untitled meal"}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(m.eatenAt).toLocaleString()}
+                      {mealTimingLabel(m)} · {new Date(m.eatenAt).toLocaleString()}
                     </p>
                   </button>
                 ))
@@ -287,7 +288,7 @@ function MealReview({
         </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {new Date(meal.eatenAt).toLocaleString()}
+            {mealTimingLabel(meal)} · {new Date(meal.eatenAt).toLocaleString()}
           </p>
           <p className="font-semibold">{meal.mealLabel ?? "Untitled meal"}</p>
           {meal.patientNotes && (
