@@ -37,6 +37,7 @@ import {
   resolveEffectiveCuisines,
   type UserDoc,
 } from "@/lib/users.schema";
+import { CARE_PROFILES, CARE_PROFILE_LABELS, CARE_PROFILE_NUTRIENTS } from "@/lib/care-profiles";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
@@ -223,6 +224,25 @@ function DoctorFocusNutrientsCard({
           them.
         </p>
       )}
+      <div className="mb-3">
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Start from a care profile
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {CARE_PROFILES.map((p) => (
+            <Button
+              key={p}
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-auto py-1 text-xs"
+              onClick={() => setSelected(CARE_PROFILE_NUTRIENTS[p])}
+            >
+              {CARE_PROFILE_LABELS[p]}
+            </Button>
+          ))}
+        </div>
+      </div>
       <FocusNutrientPicker value={selected} onChange={setSelected} />
       <Button size="sm" className="mt-4" onClick={save} disabled={saving}>
         Save
@@ -339,6 +359,7 @@ function MealReview({
           onSaved={invalidate}
           initialDetailLevel={detailLevel}
           focusNutrients={focusNutrients}
+          isDoctor
         />
       </Card>
     </div>

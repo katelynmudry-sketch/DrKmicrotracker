@@ -652,6 +652,33 @@ merge (`git merge origin/preview`, resolved by hand file by file, not auto-resol
   and reload independently, and cuisine-based food-suggestion priority still works with a
   region and a heritage both set.
 
+### Post-demo milestone #7 — Collapsible Micronutrients card + named care-profile presets *(1 session)* — **shipped**
+- [x] **Collapsible Micronutrients card**: `analysis-view.tsx`'s Micronutrients card is
+  now a `Collapsible` — collapsed by default for the doctor (many meals to review per
+  patient; new `isDoctor` prop), unchanged expanded-by-default for the patient. Collapsed
+  state shows a one-line name-only summary of the currently displayed (Simple/Detailed-
+  filtered) nutrients, never tiers or amounts. Editing forces the card open.
+- [x] **Named care-profile presets**: `src/lib/care-profiles.ts` (new) — six named
+  condition shortcuts (Iron deficiency, Prenatal, Menopausal, Ovarian hormone support,
+  Testosterone support, Nervous system support), each mapping to a subset of the existing
+  27 tracked nutrients. **This is a UI convenience layered on the existing
+  `doctorFocusNutrients` system, not a new field or server function** — clicking a preset
+  on the doctor's per-patient page just populates `DoctorFocusNutrientsCard`'s
+  `FocusNutrientPicker` selection, which still saves via the existing
+  `setDoctorFocusNutrients`. The doctor can hand-adjust checkboxes after applying a
+  preset. Distinct from the milestone #6 note above about a "therapeutic-diet-type
+  picker" being scoped out — these are clinical-focus presets, not diet types.
+- [x] **Focus badge on individual rows**: a small "On your protocol" badge now appears
+  next to a micronutrient row in Detailed mode when that nutrient is in the patient's
+  effective focus list (reuses the file's existing `isFocus()` sort helper) — Simple mode
+  already implies focus by only showing those nutrients, so the badge is Detailed-mode
+  only to avoid redundant clutter.
+- **Flagged for Dr. K's review, not yet clinically validated**: the six profiles' exact
+  nutrient sets (compiled from a PubMed/web research pass this session, documented with
+  citations in the session's plan file) — see the review comment at the top of
+  `care-profiles.ts`.
+- **Not visually verified** — same sandbox constraint as every milestone above.
+
 ---
 
 ## Part 6 — Carrying the ethos through every future session: CLAUDE.md setup
