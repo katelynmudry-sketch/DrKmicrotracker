@@ -104,26 +104,53 @@ export function onMockPatientFocusNutrientsChange(cb: () => void) {
   return () => window.removeEventListener(PATIENT_FOCUS_CHANGE_EVENT, cb);
 }
 
-// The mock patient's cuisine/heritage pick (docs/ETHOS.md principle 8) — no
-// real users/{uid} doc to read/write in mock mode, so this stands in for it.
-const PREFERRED_CUISINE_STORAGE_KEY = "mockPreferredCuisine";
-const PREFERRED_CUISINE_CHANGE_EVENT = "mock-preferred-cuisine-change";
+// The mock patient's "where do you currently live" / "what's your food
+// heritage" picks (docs/ETHOS.md principle 8) — no real users/{uid} doc to
+// read/write in mock mode, so this stands in for it.
+const CURRENT_REGIONS_STORAGE_KEY = "mockCurrentRegions";
+const CURRENT_REGIONS_CHANGE_EVENT = "mock-current-regions-change";
 
-export function getMockPreferredCuisine(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(PREFERRED_CUISINE_STORAGE_KEY);
-}
-
-export function setMockPreferredCuisine(preferredCuisine: string | null) {
-  if (preferredCuisine == null) {
-    localStorage.removeItem(PREFERRED_CUISINE_STORAGE_KEY);
-  } else {
-    localStorage.setItem(PREFERRED_CUISINE_STORAGE_KEY, preferredCuisine);
+export function getMockCurrentRegions(): string[] {
+  if (typeof window === "undefined") return [];
+  const raw = localStorage.getItem(CURRENT_REGIONS_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
   }
-  window.dispatchEvent(new Event(PREFERRED_CUISINE_CHANGE_EVENT));
 }
 
-export function onMockPreferredCuisineChange(cb: () => void) {
-  window.addEventListener(PREFERRED_CUISINE_CHANGE_EVENT, cb);
-  return () => window.removeEventListener(PREFERRED_CUISINE_CHANGE_EVENT, cb);
+export function setMockCurrentRegions(regions: string[]) {
+  localStorage.setItem(CURRENT_REGIONS_STORAGE_KEY, JSON.stringify(regions));
+  window.dispatchEvent(new Event(CURRENT_REGIONS_CHANGE_EVENT));
+}
+
+export function onMockCurrentRegionsChange(cb: () => void) {
+  window.addEventListener(CURRENT_REGIONS_CHANGE_EVENT, cb);
+  return () => window.removeEventListener(CURRENT_REGIONS_CHANGE_EVENT, cb);
+}
+
+const FOOD_HERITAGE_STORAGE_KEY = "mockFoodHeritage";
+const FOOD_HERITAGE_CHANGE_EVENT = "mock-food-heritage-change";
+
+export function getMockFoodHeritage(): string[] {
+  if (typeof window === "undefined") return [];
+  const raw = localStorage.getItem(FOOD_HERITAGE_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function setMockFoodHeritage(heritage: string[]) {
+  localStorage.setItem(FOOD_HERITAGE_STORAGE_KEY, JSON.stringify(heritage));
+  window.dispatchEvent(new Event(FOOD_HERITAGE_CHANGE_EVENT));
+}
+
+export function onMockFoodHeritageChange(cb: () => void) {
+  window.addEventListener(FOOD_HERITAGE_CHANGE_EVENT, cb);
+  return () => window.removeEventListener(FOOD_HERITAGE_CHANGE_EVENT, cb);
 }

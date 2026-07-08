@@ -31,6 +31,8 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | Profile amount (Detailed mode) | **~9mg · 50%** (amount + percentage, capped display at "100%+", never "exceeded") |
 | Profile caption | "A rough estimate against general adult reference values — not personalized to you; we don't collect age, sex, or weight." |
 | Reset patient override | "Reset to your doctor's picks" |
+| Region question | **Where you currently live** |
+| Heritage question | **Food heritage** |
 
 ## Microcopy bank (preserve verbatim)
 

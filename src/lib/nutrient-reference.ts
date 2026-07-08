@@ -9,10 +9,11 @@
 // Cultural relevance (docs/ETHOS.md principle 8): a patient's own food should
 // be recognizable here, not translated into a Western analog first. `cuisines`
 // tags entries specific to one or more of the standardized categories in
-// src/lib/cuisines.ts, matching what a patient picks in Settings
-// (`preferredCuisine`, on their `users/{uid}` doc). That tag is internal only
-// — it's never rendered to the patient, only used by `splitFoodsForNutrient`
-// to put food close to their own background first. Entries with no `cuisines`
+// src/lib/cuisines.ts, matching what a patient picks in Settings (their
+// `currentRegions` and `foodHeritage` picks, on their `users/{uid}` doc,
+// merged via `resolveEffectiveCuisines`). That tag is internal only — it's
+// never rendered to the patient, only used by `splitFoodsForNutrient` to put
+// food close to their own background first. Entries with no `cuisines`
 // are broadly familiar staples that don't belong to one place in particular.
 // This list is still hand-curated and necessarily incomplete — see
 // `src/lib/cultural-food.functions.ts` for the AI-generated fallback when a
@@ -710,26 +711,23 @@ export const NUTRIENT_FOODS: Record<TrackedNutrient, NutrientFood[]> = Object.fr
   ]),
 ) as Record<TrackedNutrient, NutrientFood[]>;
 
-// Bring the patient's own cuisine to the front without hiding everything
-// else — this is priority ordering, not filtering. Foods with no cuisines tag
-// (broadly familiar staples) and foods from other cuisines both stay in the
-// list, just after the match.
-function prioritizeByCuisine(
-  foods: NutrientFood[],
-  preferredCuisine?: string | null,
-): NutrientFood[] {
-  if (!preferredCuisine) return foods;
-  const matched = foods.filter((f) => f.cuisines?.includes(preferredCuisine));
-  const rest = foods.filter((f) => !f.cuisines?.includes(preferredCuisine));
+// Bring the patient's own cuisines (region + heritage, combined) to the
+// front without hiding everything else — this is priority ordering, not
+// filtering. Foods with no cuisines tag (broadly familiar staples) and foods
+// from other cuisines both stay in the list, just after the match.
+function prioritizeByCuisine(foods: NutrientFood[], cuisines?: string[] | null): NutrientFood[] {
+  if (!cuisines || cuisines.length === 0) return foods;
+  const matched = foods.filter((f) => f.cuisines?.some((c) => cuisines.includes(c)));
+  const rest = foods.filter((f) => !f.cuisines?.some((c) => cuisines.includes(c)));
   return [...matched, ...rest];
 }
 
 export function foodsForNutrient(
   nutrient: TrackedNutrient,
   limit = 3,
-  preferredCuisine?: string | null,
+  cuisines?: string[] | null,
 ): NutrientFood[] {
-  return prioritizeByCuisine(NUTRIENT_FOODS[nutrient], preferredCuisine).slice(0, limit);
+  return prioritizeByCuisine(NUTRIENT_FOODS[nutrient], cuisines).slice(0, limit);
 }
 
 // Pantry-first tier (post-demo milestone #1, docs/PLAN.md): a gap suggestion
@@ -747,9 +745,9 @@ export function splitFoodsForNutrient(
   nutrient: TrackedNutrient,
   pantryItemNames: string[],
   limit = 3,
-  preferredCuisine?: string | null,
+  cuisines?: string[] | null,
 ): { inPantry: NutrientFood[]; tryNew: NutrientFood[] } {
-  const foods = prioritizeByCuisine(NUTRIENT_FOODS[nutrient], preferredCuisine);
+  const foods = prioritizeByCuisine(NUTRIENT_FOODS[nutrient], cuisines);
   const inPantry = foods.filter((f) => pantryItemNames.some((p) => namesOverlap(f.name, p)));
   const tryNew = foods.filter((f) => !inPantry.includes(f)).slice(0, limit);
   return { inPantry, tryNew };

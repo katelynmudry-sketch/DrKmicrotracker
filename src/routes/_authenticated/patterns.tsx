@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/patterns")({
 });
 
 function PatternsPage() {
-  const { user, preferredCuisine, detailLevel, effectiveFocusNutrients } = useAuth();
+  const { user, effectiveCuisines, detailLevel, effectiveFocusNutrients } = useAuth();
 
   const meals = useQuery({
     queryKey: ["meals", user?.uid],
@@ -73,7 +73,7 @@ function PatternsPage() {
         <PatternsPanel
           meals={meals.data ?? []}
           pantryItemNames={pantryItemNames}
-          preferredCuisine={preferredCuisine}
+          cuisines={effectiveCuisines}
           focusNutrients={effectiveFocusNutrients}
           detailLevel={detailLevel}
         />

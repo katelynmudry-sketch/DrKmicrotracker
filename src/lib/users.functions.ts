@@ -3,6 +3,7 @@ import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
 import { DETAIL_LEVELS } from "@/lib/users.schema";
 import { TRACKED_NUTRIENTS } from "@/lib/analysis.schema";
+import { CUISINE_OPTIONS } from "@/lib/cuisines";
 
 const SetDetailLevelInput = z.object({ detailLevel: z.enum(DETAIL_LEVELS) });
 
@@ -46,25 +47,46 @@ export const setPatientFocusNutrients = createServerFn({ method: "POST" })
     return { patientFocusNutrients: data.focusNutrients };
   });
 
-const SetPreferredCuisineInput = z.object({
-  preferredCuisine: z.string().trim().min(1).max(80).nullable(),
+const SetCurrentRegionsInput = z.object({
+  regions: z.array(z.enum(CUISINE_OPTIONS)),
 });
 
 /**
- * Update the signed-in patient's own cuisine/heritage preference
+ * Update the signed-in patient's own "where do you currently live" picks
  * (docs/ETHOS.md principle 8). Always writes to context.userId, same
  * self-only rule as setDetailLevel/setPatientFocusNutrients.
  */
-export const setPreferredCuisine = createServerFn({ method: "POST" })
+export const setCurrentRegions = createServerFn({ method: "POST" })
   .middleware([requireFirebaseAuth])
-  .inputValidator((input: unknown) => SetPreferredCuisineInput.parse(input))
+  .inputValidator((input: unknown) => SetCurrentRegionsInput.parse(input))
   .handler(async ({ data, context }) => {
     const { adminDb } = await import("@/integrations/firebase/admin.server");
     await adminDb
       .collection("users")
       .doc(context.userId)
-      .set({ preferredCuisine: data.preferredCuisine }, { merge: true });
-    return { preferredCuisine: data.preferredCuisine };
+      .set({ currentRegions: data.regions }, { merge: true });
+    return { currentRegions: data.regions };
+  });
+
+const SetFoodHeritageInput = z.object({
+  heritage: z.array(z.enum(CUISINE_OPTIONS)),
+});
+
+/**
+ * Update the signed-in patient's own "what's your food heritage" picks
+ * (docs/ETHOS.md principle 8). Always writes to context.userId, same
+ * self-only rule as setDetailLevel/setPatientFocusNutrients.
+ */
+export const setFoodHeritage = createServerFn({ method: "POST" })
+  .middleware([requireFirebaseAuth])
+  .inputValidator((input: unknown) => SetFoodHeritageInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { adminDb } = await import("@/integrations/firebase/admin.server");
+    await adminDb
+      .collection("users")
+      .doc(context.userId)
+      .set({ foodHeritage: data.heritage }, { merge: true });
+    return { foodHeritage: data.heritage };
   });
 
 async function assertDoctor(userId: string) {

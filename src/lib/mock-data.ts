@@ -218,7 +218,8 @@ export type MockPatient = {
   id: string;
   fullName: string | null;
   email: string | null;
-  preferredCuisine?: string | null;
+  currentRegions?: string[] | null;
+  foodHeritage?: string[] | null;
   // Exercises resolveEffectiveFocusNutrients's fallback chain in Preview
   // mode's doctor view — see src/lib/users.schema.ts.
   doctorFocusNutrients?: TrackedNutrient[];
@@ -230,20 +231,23 @@ export const mockPatients: MockPatient[] = [
     id: MOCK_PATIENT_ID,
     fullName: "Preview Patient",
     email: "preview@example.com",
-    preferredCuisine: null,
+    currentRegions: null,
+    foodHeritage: null,
   },
   {
     id: "patient-2",
     fullName: "Casey Rivera",
     email: "casey@example.com",
-    preferredCuisine: "Mexican",
+    currentRegions: ["Canadian / North American"],
+    foodHeritage: ["Mexican"],
     doctorFocusNutrients: ["iron", "vitamin_d", "b12", "magnesium"],
   },
   {
     id: "patient-3",
     fullName: null,
     email: "sam@example.com",
-    preferredCuisine: "East African",
+    currentRegions: ["Canadian / North American"],
+    foodHeritage: ["East African"],
     doctorFocusNutrients: ["iron", "vitamin_d", "b12", "magnesium"],
     patientFocusNutrients: ["iron", "vitamin_c", "selenium"],
   },

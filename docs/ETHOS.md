@@ -97,13 +97,17 @@ meal, a nutrient, or a patient.
    Injera, dal, varenyky, jollof, kimchi — these carry the same iron, B12, and
    calcium the app tracks, and deserve to be recognized on sight, not converted
    into a generic analog first. The food reference (`src/lib/nutrient-reference.ts`)
-   is curated across cuisines and regions, not just North American ones; a patient
-   can name their own cuisine or heritage once in Settings and suggestions close to
-   home lead the list from then on — quietly, as priority, never as a label the
-   patient sees. When a patient's own cuisine or region isn't in the curated list
-   at all, the app asks and generates a real suggestion
-   (`src/lib/cultural-food.functions.ts`) rather than leaving the list empty for
-   them.
+   is curated across cuisines and regions, not just North American ones. This is
+   deliberately two separate questions in Settings, not one — **where a patient
+   currently lives** (`currentRegions`) and **their food heritage** (`foodHeritage`),
+   since the two are often different and a patient may have more than one of
+   either. Both are multi-select, and both feed the same underlying priority
+   ordering (`resolveEffectiveCuisines` in `src/lib/users.schema.ts` merges
+   them) — suggestions close to home lead the list from then on, quietly, as
+   priority, never as a label the patient sees. When a patient's own cuisine or
+   region isn't in the curated list at all, the app asks and generates a real
+   suggestion (`src/lib/cultural-food.functions.ts`) rather than leaving the
+   list empty for them.
 
 ## Voice rule
 
