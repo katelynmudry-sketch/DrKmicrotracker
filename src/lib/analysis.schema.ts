@@ -8,6 +8,11 @@ import { z } from "zod";
 //   - TRACKED_NUTRIENTS is a closed enum that does not include selenium, so a
 //     reading literally cannot flag it — the model can't emit an enum value
 //     that doesn't exist in the schema.
+//   - a micronutrient's `amount` is the one deliberate exception to "no
+//     numbers" (CLAUDE.md's hard rules, revised) — a real, best-effort
+//     estimate in the nutrient's canonical unit (src/lib/rdi-reference.ts),
+//     always secondary to `level`'s qualitative tier and omitted rather than
+//     guessed when the model isn't reasonably confident.
 
 export const TRACKED_NUTRIENTS = [
   "iron",
@@ -19,6 +24,11 @@ export const TRACKED_NUTRIENTS = [
   "zinc",
   "choline",
   "magnesium",
+  "folate",
+  "vitamin_b6",
+  "potassium",
+  "vitamin_c",
+  "vitamin_a",
 ] as const;
 export type TrackedNutrient = (typeof TRACKED_NUTRIENTS)[number];
 
@@ -32,6 +42,11 @@ export const NUTRIENT_LABELS: Record<TrackedNutrient, string> = {
   zinc: "Zinc",
   choline: "Choline",
   magnesium: "Magnesium",
+  folate: "Folate (B9)",
+  vitamin_b6: "Vitamin B6",
+  potassium: "Potassium",
+  vitamin_c: "Vitamin C",
+  vitamin_a: "Vitamin A",
 };
 
 export const NUTRIENT_LEVELS = ["strong", "present", "light", "not_seen"] as const;
@@ -69,6 +84,10 @@ export const MicronutrientSchema = z.object({
   nutrient: z.enum(TRACKED_NUTRIENTS),
   level: z.enum(NUTRIENT_LEVELS),
   from: z.string().min(1),
+  // Best-effort estimate in the nutrient's canonical unit (NUTRIENT_UNITS in
+  // rdi-reference.ts) — null when not confident enough to estimate. Detail
+  // under the tier, never a replacement for it.
+  amount: z.number().min(0).nullable().optional(),
 });
 export type Micronutrient = z.infer<typeof MicronutrientSchema>;
 
@@ -148,8 +167,13 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
           nutrient: { type: "string", enum: TRACKED_NUTRIENTS },
           level: { type: "string", enum: NUTRIENT_LEVELS },
           from: { type: "string", description: "Which identified food this reading comes from." },
+          amount: {
+            type: ["number", "null"],
+            description:
+              "Best-effort estimate in the nutrient's canonical unit (see the system prompt's unit table) — null if not reasonably confident. Never invent precision.",
+          },
         },
-        required: ["nutrient", "level", "from"],
+        required: ["nutrient", "level", "from", "amount"],
       },
     },
     offered: {

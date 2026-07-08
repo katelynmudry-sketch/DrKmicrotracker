@@ -64,6 +64,6 @@ export const suggestCulturalFoods = createServerFn({ method: "POST" })
     if (!toolUse) return { items: [] };
 
     const parsed = ResultSchema.catch({ items: [] }).parse(toolUse.input);
-    const cuisine = data.cuisineOrRegion.trim();
-    return { items: parsed.items.map((i) => ({ ...i, cuisine })) };
+    const cuisines = [data.cuisineOrRegion.trim()];
+    return { items: parsed.items.map((i) => ({ ...i, cuisines })) };
   });

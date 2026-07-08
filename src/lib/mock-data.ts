@@ -188,7 +188,7 @@ export const mockPatients: MockPatient[] = [
     id: "patient-2",
     fullName: "Casey Rivera",
     email: "casey@example.com",
-    preferredCuisine: "Latin American",
+    preferredCuisine: "Mexican",
   },
   { id: "patient-3", fullName: null, email: "sam@example.com", preferredCuisine: "East African" },
 ];

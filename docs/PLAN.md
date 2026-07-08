@@ -440,6 +440,67 @@ Phase 4 before the live demo.
 - **Deliberately not done this session**: no onboarding step that prompts a new patient to
   set their cuisine on first sign-in — Settings is opt-in and self-serve for now. Worth
   revisiting if most patients never find the page on their own.
+- **Superseded by Post-demo milestone #3 below** — the ten broad regions above were
+  replaced with the fourteen categories matching Dr. K's own master food priority list.
+
+### Post-demo milestone #3 — Master food priority list import *(1 session)* — **shipped**
+
+Dr. K supplied `master_food_priority_list.csv` — 622 rows across 15 nutrient labels, with
+a cultural cuisine tag, a vegan flag, a serving size, and a real amount (mg/mcg/IU) per
+food. Three decisions came out of this before writing code (asked directly, not assumed,
+since each one touches a CLAUDE.md hard rule or an existing architectural choice):
+
+- [x] **Hard rule revised — numbers are allowed for micronutrients, never for calories or
+  a verdict.** CLAUDE.md, `docs/ETHOS.md` principle 2, and `docs/VOICE.md`'s do/don't table
+  all now distinguish an *evaluative* number (a score/grade — still banned) from an
+  *informational* one (how much iron is in a cup of lentils — now expected). Calories stay
+  banned outright; `protocol_fit.tier` stays a qualitative-only enum. The qualitative tier
+  is always the headline; a real amount is detail underneath, mirroring how protein/fiber
+  grams already worked before this session.
+- [x] **Tracked nutrients grew from 9 to 14**: `folate`, `vitamin_b6`, `potassium`,
+  `vitamin_c`, `vitamin_a` added to `TRACKED_NUTRIENTS` in `analysis.schema.ts` (labels,
+  tool schema, everything downstream — Patterns coverage/gaps are generic over the enum, so
+  they picked up the 5 new nutrients with no separate change). `MicronutrientSchema` gained
+  an optional `amount: number | null` — a best-effort estimate in the nutrient's canonical
+  unit, null when the model isn't confident, always secondary to `level`. New file
+  `src/lib/rdi-reference.ts` holds `NUTRIENT_UNITS`, general-adult `DAILY_TARGET` figures
+  (a nutrition-facts-panel-style reference, explicitly not personalized by age/sex/
+  pregnancy — no such profile field exists), `formatAmount`, and `rdiProgressPhrase` (a
+  coarse-bucketed "about two-thirds of a typical day's target" phrase — never a bare "%
+  RDI" per VOICE.md). `clinical-spine.ts`'s `CLINICAL_POSITIONS` now spells out the
+  per-nutrient unit table so the model's `amount` estimates are internally consistent.
+  `analysis-view.tsx` renders the amount + RDI phrase as a quiet line under each
+  micronutrient row, both read-only and in the edit form.
+- [x] **Cuisine taxonomy replaced, not extended**: the CSV's own structure (13 primary
+  regions × ~42 rows each, tagged `"Regional table"`, plus 76 more specific additions
+  tagged `"Dr. K Ebook (added)"`) became `src/lib/cuisines.ts`'s new 14-option
+  `CUISINE_OPTIONS`, superseding milestone #2's 10 broad regions. `NutrientFood.cuisine`
+  (singular string) became `cuisines?: string[]` everywhere (nutrient-reference.ts,
+  cultural-food.functions.ts, prioritizeByCuisine) since several source rows carry more
+  than one region (e.g. "Middle Eastern, South Asian, Mediterranean").
+- [x] **Merge, not replace**: `src/lib/nutrient-reference.ts`'s hand-written ~140 entries
+  from milestone #2 stayed (their `cuisine` tags remapped 1:1 to the new 14-option
+  vocabulary — a few "Latin American"-tagged foods were split by hand into "Mexican" vs.
+  "Andean / South American" since the CSV treats those as distinct regions). A generated
+  file, `src/lib/nutrient-reference.data.ts` (**do not hand-edit** — see its header),
+  holds the CSV import; `mergeFoodLists` in `nutrient-reference.ts` appends only the
+  imported foods whose name doesn't already match a hand-curated one for that nutrient
+  (exact-name match only — an earlier fuzzy-matching pass wrongly collapsed culturally
+  distinct dishes like "Lentils (misir wot)" into plain "Lentils" and was reverted).
+  `NutrientFood` gained `vegan?: boolean` (stored, not surfaced in any UI yet) and
+  `amount`/`servingSize` (rendered as a detail line on Patterns' "Try something new" and
+  the grocery list's "Worth adding," same treatment as a meal reading's micronutrient
+  amount).
+- **Known gap, disclosed rather than silently shipped**: the ~470 imported entries' `reason`
+  text is the CSV's own "Context" column (e.g. "soups, shepherd's pie base, everyday
+  pantry staple"), lowercased at the start — accurate and sourced directly from Dr. K's
+  list, but terser and less warm than `docs/VOICE.md`'s full-sentence register used
+  throughout the ~140 hand-curated entries. Rewriting 470 rows into full warm sentences by
+  hand was out of scope for one session; worth a follow-up pass, ideally in batches Dr. K
+  can spot-check rather than all at once.
+- **Not visually verified** — same sandbox IPv6 limitation as prior milestones;
+  typecheck/lint/build are clean but the amount/RDI-phrase detail lines, the 14-nutrient
+  Patterns coverage grid, and the expanded Settings picker all need a real-browser pass.
 
 ---
 

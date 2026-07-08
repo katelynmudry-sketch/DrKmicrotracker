@@ -16,7 +16,9 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | Suggestions | **Worth trying** |
 | Doctor's notes | **Notes from Dr. K** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
-| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels | **Strong source / Present / A little light** (the headline tier — always shown first) |
+| A nutrient's real amount | a plain number with its unit, e.g. **"about 6.6mg"** — detail under the tier, never the headline |
+| Progress toward a target | **"about two-thirds of a typical day's target"** — never "% RDI" or clinical target-tracking language |
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" |
@@ -44,6 +46,8 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | "Selenium: low" | (never mention selenium) |
 | "You forgot your vegetables" | "Worth trying: adding a plant at this meal" |
 | Red/yellow/green badges | Plain qualitative tiers, no colour-as-verdict |
+| "Iron: low" (bare number, no context) | "Iron's a little light today — about 3mg, roughly a third of a typical day's target. Pumpkin seeds or blackstrap molasses would help close the gap." |
+| "You're at 33% of your RDI" | "About a third of the way to a typical day's target" |
 
 ## Style notes
 

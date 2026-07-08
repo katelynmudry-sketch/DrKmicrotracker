@@ -16,9 +16,15 @@ Before touching product code, read:
 
 - Never add calories, calorie math, or a calorie field — anywhere, in the schema,
   the prompt, the UI, or a chart.
-- Never add a numeric, letter, or colour-coded score or grade. Protocol fit and
-  nutrient levels are qualitative tiers only (see `docs/VOICE.md`).
-- Never use shaming, warning-red, or diet-culture language.
+- Never add an evaluative score or grade — no 1–10 rating, no letter grade, no
+  colour-coded verdict on the patient. `protocol_fit` stays a qualitative tier
+  only (see `docs/VOICE.md`). This is distinct from a nutrient *amount*: real
+  numbers (mg/mcg/IU, and roughly what portion of a typical day's target a food
+  or meal covers) are allowed and expected for micronutrients — vibes-first,
+  never vibes-only. A number is the problem when it's a verdict on the patient
+  (a score); it's the point when it's informational (how much iron is in a cup
+  of lentils, how close to a typical day's target that gets you).
+- Never use shaming, warning-red, or diet-culture language — numeric or not.
 - Never flag selenium.
 - All patient-facing wording follows `docs/VOICE.md`. The AI prompt spine lives in
   `src/lib/clinical-spine.ts` — edit wording there, never inline in engine code.

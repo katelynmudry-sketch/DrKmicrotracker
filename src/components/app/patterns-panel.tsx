@@ -20,9 +20,11 @@ import {
   FIBER_BAND_G,
   PROTEIN_BAND_G,
 } from "@/lib/trends";
-import { splitFoodsForNutrient } from "@/lib/nutrient-reference";
+import { splitFoodsForNutrient, type NutrientFood } from "@/lib/nutrient-reference";
 import { CulturalFoodSuggest } from "@/components/app/cultural-food-suggest";
+import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
 import { Leaf, Palette, Sparkles, Flame } from "lucide-react";
+import type { TrackedNutrient } from "@/lib/analysis.schema";
 
 // Patterns — the aggregate view over a patient's readings (docs/PLAN.md Phase
 // 4a). Counts and qualitative coverage only, never a percentage or verdict
@@ -147,10 +149,7 @@ export function PatternsPanel({
                       </p>
                       <ul className="mt-1 space-y-1.5 text-sm">
                         {inPantry.map((f) => (
-                          <li key={f.name}>
-                            <span className="font-medium">{f.name}</span>
-                            <span className="text-muted-foreground"> — {f.reason}</span>
-                          </li>
+                          <FoodListItem key={f.name} food={f} nutrient={g.nutrient} />
                         ))}
                       </ul>
                     </>
@@ -164,10 +163,7 @@ export function PatternsPanel({
                       )}
                       <ul className="mt-1 space-y-1.5 text-sm">
                         {tryNew.map((f) => (
-                          <li key={f.name}>
-                            <span className="font-medium">{f.name}</span>
-                            <span className="text-muted-foreground"> — {f.reason}</span>
-                          </li>
+                          <FoodListItem key={f.name} food={f} nutrient={g.nutrient} />
                         ))}
                       </ul>
                     </>
@@ -180,6 +176,25 @@ export function PatternsPanel({
         </Card>
       )}
     </div>
+  );
+}
+
+// The reason is always the headline; amount/servingSize (when the master
+// list has them) are quiet detail underneath — same "vibes first, never
+// vibes-only" rule as a meal reading's micronutrient.amount (docs/ETHOS.md
+// principle 2).
+function FoodListItem({ food, nutrient }: { food: NutrientFood; nutrient: TrackedNutrient }) {
+  return (
+    <li>
+      <span className="font-medium">{food.name}</span>
+      <span className="text-muted-foreground"> — {food.reason}</span>
+      {food.amount != null && (
+        <p className="text-xs text-muted-foreground">
+          {food.servingSize ? `${food.servingSize} · ` : ""}
+          about {formatAmount(nutrient, food.amount)} — {rdiProgressPhrase(nutrient, food.amount)}
+        </p>
+      )}
+    </li>
   );
 }
 

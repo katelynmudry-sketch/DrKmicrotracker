@@ -14,17 +14,24 @@ meal, a nutrient, or a patient.
    The story is what a meal *gives you* — micronutrients, protein, fiber, colour,
    variety. Calorie math is precisely the thing this app exists to replace.
 
-2. **No grades.** No 1–10 scores, no red/yellow/green verdicts, no letter grades.
-   *"Without scores designed to shame."* Protocol fit is expressed qualitatively
-   ("Aligned"), never numerically — a number invites comparison and shame in a way
-   a sentence doesn't.
+2. **No grades — but real numbers are welcome for nutrients.** No 1–10 scores,
+   no red/yellow/green verdicts, no letter grades *on the patient*. Protocol fit
+   is expressed qualitatively ("Aligned"), never numerically — a verdict number
+   invites comparison and shame in a way a sentence doesn't. That's a different
+   thing from a nutrient *amount*: knowing a cup of lentils carries about 6.6mg
+   of iron, or that today's readings put a patient roughly two-thirds of the way
+   to a typical day's iron target, is information, not a judgment. Vibes first,
+   never vibes-only — the qualitative tier ("Strong source") is still the
+   headline, with the real number as detail underneath, the same way the app
+   already treats protein and fiber grams.
 
 3. **Micronutrients are the plot.** The nutrients that matter, in her clinical
    experience: iron (+ the vitamin C pairing rule), B12, vitamin D, calcium
    (food-first — she rarely recommends supplements), omega-3/ALA, iodine, zinc,
-   choline, magnesium, protein (grams matter — "protein at every meal is a
-   hormonal intervention"), fiber. **Never flag selenium** — this is her explicit,
-   standing clinical position; treat it as a hard exclusion, not an oversight.
+   choline, magnesium, folate (B9), vitamin B6, potassium, vitamin C, vitamin A,
+   protein (grams matter — "protein at every meal is a hormonal intervention"),
+   and fiber. **Never flag selenium** — this is her explicit, standing clinical
+   position; treat it as a hard exclusion, not an oversight.
 
 4. **Absorption intelligence is the superpower.** No other nutrition app does
    this — it's the differentiator: vitamin C alongside iron; coffee/tea kept an

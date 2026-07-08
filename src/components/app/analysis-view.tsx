@@ -19,6 +19,7 @@ import {
   type MealAnalysis,
   type Micronutrient,
 } from "@/lib/analysis.schema";
+import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
 
 // Functional rendering of the new reading shape — the Botanical Clinic-style
 // visual pass (reading rows, dashed dividers) is Phase 3's job (docs/PLAN.md).
@@ -279,7 +280,9 @@ export function AnalysisView({
               type="button"
               size="sm"
               variant="ghost"
-              onClick={() => microFields.append({ nutrient: "iron", level: "present", from: "" })}
+              onClick={() =>
+                microFields.append({ nutrient: "iron", level: "present", from: "", amount: null })
+              }
             >
               <Plus className="mr-1 h-3 w-3" />
               Add
@@ -315,6 +318,15 @@ export function AnalysisView({
                   className="flex-1"
                   {...form.register(`micronutrients.${i}.from`)}
                 />
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder="Amount"
+                  className="w-24"
+                  {...form.register(`micronutrients.${i}.amount`, {
+                    setValueAs: (v) => (v === "" ? null : Number(v)),
+                  })}
+                />
                 <Button
                   type="button"
                   size="icon"
@@ -329,14 +341,19 @@ export function AnalysisView({
         ) : a.micronutrients.length > 0 ? (
           <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {a.micronutrients.map((m, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
-              >
-                <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
-                <span className="text-muted-foreground">
-                  {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
-                </span>
+              <li key={i} className="rounded-md border border-border bg-card px-3 py-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
+                  <span className="text-muted-foreground">
+                    {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
+                  </span>
+                </div>
+                {m.amount != null && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    About {formatAmount(m.nutrient, m.amount)} —{" "}
+                    {rdiProgressPhrase(m.nutrient, m.amount)}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
