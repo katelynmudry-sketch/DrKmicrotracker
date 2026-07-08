@@ -1,5 +1,5 @@
 // Fixture data used only in preview/mock mode (see mock-mode.ts).
-import type { Meal } from "@/lib/analysis.schema";
+import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 
 const photo = (seed: string) => `https://picsum.photos/seed/${seed}/640/480`;
@@ -37,9 +37,36 @@ export const mockMeals: Meal[] = [
         carb_quality: "mostly_complex",
       },
       micronutrients: [
-        { nutrient: "omega_3", level: "strong", from: "Salmon" },
-        { nutrient: "vitamin_d", level: "present", from: "Salmon" },
-        { nutrient: "iron", level: "light", from: "Spinach" },
+        {
+          nutrient: "omega_3",
+          level: "strong",
+          from: "Salmon",
+          amount_estimate: { low: 1.2, high: 1.8 },
+        },
+        {
+          nutrient: "vitamin_d",
+          level: "present",
+          from: "Salmon",
+          amount_estimate: { low: 8, high: 12 },
+        },
+        {
+          nutrient: "iron",
+          level: "light",
+          from: "Spinach",
+          amount_estimate: { low: 1, high: 2 },
+        },
+        {
+          nutrient: "selenium",
+          level: "strong",
+          from: "Salmon",
+          amount_estimate: { low: 35, high: 45 },
+        },
+        {
+          nutrient: "vitamin_c",
+          level: "light",
+          from: "Spinach",
+          amount_estimate: { low: 5, high: 10 },
+        },
       ],
       offered: ["Beautiful colours on that plate", "A strong omega-3 source"],
       worth_trying: ["A squeeze of lemon over the spinach would help the iron land further."],
@@ -51,6 +78,7 @@ export const mockMeals: Meal[] = [
         note: "Right in line with the anti-inflammatory protocol — great omega-3 source.",
       },
       uncertainty: null,
+      estimation_basis: "reference_object",
     },
   },
   {
@@ -81,7 +109,14 @@ export const mockMeals: Meal[] = [
         healthy_fat_sources: ["Chia seeds"],
         carb_quality: "mostly_complex",
       },
-      micronutrients: [{ nutrient: "magnesium", level: "present", from: "Chia seeds" }],
+      micronutrients: [
+        {
+          nutrient: "magnesium",
+          level: "present",
+          from: "Chia seeds",
+          amount_estimate: { low: 40, high: 60 },
+        },
+      ],
       offered: ["Good fiber content", "Colourful berries"],
       worth_trying: ["Adding a protein source would slow the morning glucose curve even further."],
       absorption_notes: [],
@@ -90,6 +125,7 @@ export const mockMeals: Meal[] = [
         note: "Solid fiber — a bit more protein would round it out.",
       },
       uncertainty: null,
+      estimation_basis: "unaided_estimate",
     },
   },
   {
@@ -158,7 +194,14 @@ export const mockMeals: Meal[] = [
         healthy_fat_sources: ["Almonds"],
         carb_quality: "mostly_complex",
       },
-      micronutrients: [{ nutrient: "magnesium", level: "present", from: "Almonds" }],
+      micronutrients: [
+        {
+          nutrient: "magnesium",
+          level: "present",
+          from: "Almonds",
+          amount_estimate: { low: 60, high: 80 },
+        },
+      ],
       offered: ["Good fiber-to-sugar ratio for a snack"],
       worth_trying: [
         "Pairing with a protein source if it's more than two hours before your next meal.",
@@ -166,6 +209,7 @@ export const mockMeals: Meal[] = [
       absorption_notes: [],
       protocol_fit: { tier: "aligned", note: "A well-balanced snack for between-meal energy." },
       uncertainty: null,
+      estimation_basis: "unaided_estimate",
     },
   },
 ];
@@ -174,7 +218,11 @@ export type MockPatient = {
   id: string;
   fullName: string | null;
   email: string | null;
-  preferredCuisine: string | null;
+  preferredCuisine?: string | null;
+  // Exercises resolveEffectiveFocusNutrients's fallback chain in Preview
+  // mode's doctor view — see src/lib/users.schema.ts.
+  doctorFocusNutrients?: TrackedNutrient[];
+  patientFocusNutrients?: TrackedNutrient[] | null;
 };
 
 export const mockPatients: MockPatient[] = [
@@ -189,8 +237,16 @@ export const mockPatients: MockPatient[] = [
     fullName: "Casey Rivera",
     email: "casey@example.com",
     preferredCuisine: "Mexican",
+    doctorFocusNutrients: ["iron", "vitamin_d", "b12", "magnesium"],
   },
-  { id: "patient-3", fullName: null, email: "sam@example.com", preferredCuisine: "East African" },
+  {
+    id: "patient-3",
+    fullName: null,
+    email: "sam@example.com",
+    preferredCuisine: "East African",
+    doctorFocusNutrients: ["iron", "vitamin_d", "b12", "magnesium"],
+    patientFocusNutrients: ["iron", "vitamin_c", "selenium"],
+  },
 ];
 
 export type MockRubric = {

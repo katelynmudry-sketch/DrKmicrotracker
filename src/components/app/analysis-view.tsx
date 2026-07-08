@@ -5,21 +5,24 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
-import { updateMealAnalysis } from "@/lib/meals.functions";
+import { Loader2, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { analyzeMeal, updateMealAnalysis } from "@/lib/meals.functions";
 import { isMockMode } from "@/lib/mock-mode";
 import {
   TRACKED_NUTRIENTS,
   NUTRIENT_LABELS,
   NUTRIENT_LEVELS,
   LEVEL_LABELS,
+  NUTRIENT_UNITS,
+  ESTIMATION_BASIS_LABELS,
   CARB_QUALITIES,
   CARB_QUALITY_LABELS,
   TIER_LABELS,
   type MealAnalysis,
   type Micronutrient,
+  type TrackedNutrient,
 } from "@/lib/analysis.schema";
-import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
+import type { DetailLevel } from "@/lib/users.schema";
 
 // Functional rendering of the new reading shape — the Botanical Clinic-style
 // visual pass (reading rows, dashed dividers) is Phase 3's job (docs/PLAN.md).
@@ -44,15 +47,35 @@ export function AnalysisView({
   mealId,
   editable,
   onSaved,
+  initialDetailLevel,
+  focusNutrients,
+  allowAddConfirmation,
+  onAddingChange,
 }: {
   analysis: MealAnalysis | null;
   mealId?: string;
   editable?: boolean;
   onSaved?: (analysis: MealAnalysis) => void;
+  initialDetailLevel: DetailLevel;
+  focusNutrients: TrackedNutrient[];
+  // Patient-only "I added: ___" confirm control (see the promoted card below)
+  // — omitted entirely in the doctor's view, which has no reason to add to a
+  // patient's plate. Distinct from `editable`, which is true in both views.
+  allowAddConfirmation?: boolean;
+  // Lets the caller keep the reading visible during the ~10-25s re-analysis
+  // this triggers, even if a background refetch would otherwise briefly show
+  // status "analyzing" (see meals.$mealId.tsx).
+  onAddingChange?: (busy: boolean) => void;
 }) {
   const updateFn = useServerFn(updateMealAnalysis);
+  const analyzeFn = useServerFn(analyzeMeal);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [addingText, setAddingText] = useState("");
+  const [addingBusy, setAddingBusy] = useState(false);
+  // Per-meal override of the user's default — never persisted, resets to the
+  // default on next render (see docs/ETHOS.md principle 2).
+  const [mode, setMode] = useState<DetailLevel>(initialDetailLevel);
 
   const canEdit = !!editable && !!mealId;
 
@@ -72,7 +95,12 @@ export function AnalysisView({
             healthy_fat_sources: analysis.building_blocks.healthy_fat_sources.join(", "),
             carb_quality: analysis.building_blocks.carb_quality,
           },
-          micronutrients: analysis.micronutrients,
+          // Normalized to a concrete object here so the edit form always has
+          // a stable shape to bind number inputs to; saved back as-is.
+          micronutrients: analysis.micronutrients.map((m) => ({
+            ...m,
+            amount_estimate: m.amount_estimate ?? { low: 0, high: 0 },
+          })),
         }
       : {
           meal_name: "",
@@ -94,6 +122,18 @@ export function AnalysisView({
     return <p className="text-sm text-muted-foreground">No reading yet.</p>;
   }
   const a = analysis;
+
+  // Simple mode = focus nutrients only (tier-only, including not_seen — "your
+  // iron didn't show up" is useful, non-overwhelming signal). Detailed mode =
+  // every nutrient that isn't not_seen, plus any not_seen focus nutrient,
+  // with focus nutrients pinned to the top. See docs/ETHOS.md principle 3.
+  const isFocus = (n: TrackedNutrient) => focusNutrients.includes(n);
+  const displayedMicronutrients =
+    mode === "simple"
+      ? a.micronutrients.filter((m) => isFocus(m.nutrient))
+      : [...a.micronutrients]
+          .filter((m) => isFocus(m.nutrient) || m.level !== "not_seen")
+          .sort((x, y) => Number(isFocus(y.nutrient)) - Number(isFocus(x.nutrient)));
 
   const startEditing = () => {
     form.reset(snapshot());
@@ -147,6 +187,27 @@ export function AnalysisView({
     }
   };
 
+  const confirmAddition = async () => {
+    if (!mealId || !addingText.trim()) return;
+    if (isMockMode) {
+      toast.info("Preview mode — nothing to update.");
+      return;
+    }
+    setAddingBusy(true);
+    onAddingChange?.(true);
+    try {
+      const result = await analyzeFn({ data: { mealId, patientAddition: addingText.trim() } });
+      toast.success("We've updated your reading with what you added.");
+      setAddingText("");
+      onSaved?.(result.analysis as MealAnalysis);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't update your reading — try again.");
+    } finally {
+      setAddingBusy(false);
+      onAddingChange?.(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -180,6 +241,72 @@ export function AnalysisView({
       </div>
 
       <p className="text-base italic text-foreground">{a.opening_note}</p>
+
+      {(a.worth_trying.length > 0 || a.absorption_notes.length > 0) && (
+        <Card className="border-primary/30 bg-primary/5 p-5">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Worth trying
+            </p>
+          </div>
+          {a.worth_trying.length > 0 && (
+            <ul className="list-disc space-y-1 pl-5 text-sm">
+              {a.worth_trying.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          )}
+          {a.absorption_notes.length > 0 && (
+            <div className={a.worth_trying.length > 0 ? "mt-3" : undefined}>
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Pairing &amp; timing
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-sm">
+                {a.absorption_notes.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {allowAddConfirmation && mealId && (
+            <div className="mt-3 border-t border-border/60 pt-3">
+              <div className="flex gap-2">
+                <Input
+                  value={addingText}
+                  onChange={(e) => setAddingText(e.target.value)}
+                  placeholder="I added…"
+                  maxLength={300}
+                  disabled={addingBusy || editing}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") confirmAddition();
+                  }}
+                />
+                <Button
+                  size="sm"
+                  onClick={confirmAddition}
+                  disabled={addingBusy || editing || !addingText.trim()}
+                >
+                  {addingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update my reading"}
+                </Button>
+              </div>
+              {addingBusy && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Updating your reading with what you added…
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {a.offered.length > 0 && (
+        <Section title="What this meal offered" items={a.offered} tone="accent" />
+      )}
+
+      <p className="pt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        The full picture
+      </p>
 
       {editing ? (
         <Input
@@ -275,20 +402,48 @@ export function AnalysisView({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Micronutrients
           </p>
-          {editing && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                microFields.append({ nutrient: "iron", level: "present", from: "", amount: null })
-              }
-            >
-              <Plus className="mr-1 h-3 w-3" />
-              Add
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-full bg-secondary p-0.5 text-xs">
+              {(["simple", "detailed"] as const).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setMode(level)}
+                  className={`rounded-full px-2 py-0.5 capitalize transition-colors ${
+                    mode === level
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            {editing && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  microFields.append({
+                    nutrient: "iron",
+                    level: "present",
+                    from: "",
+                    amount_estimate: null,
+                  })
+                }
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Add
+              </Button>
+            )}
+          </div>
         </div>
+        {mode === "detailed" && a.estimation_basis && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            {ESTIMATION_BASIS_LABELS[a.estimation_basis]}
+          </p>
+        )}
         {editing ? (
           <div className="space-y-2">
             {microFields.fields.map((field, i) => (
@@ -318,15 +473,28 @@ export function AnalysisView({
                   className="flex-1"
                   {...form.register(`micronutrients.${i}.from`)}
                 />
-                <Input
-                  type="number"
-                  step="any"
-                  placeholder="Amount"
-                  className="w-24"
-                  {...form.register(`micronutrients.${i}.amount`, {
-                    setValueAs: (v) => (v === "" ? null : Number(v)),
-                  })}
-                />
+                {mode === "detailed" && (
+                  <>
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="Low"
+                      className="w-20"
+                      {...form.register(`micronutrients.${i}.amount_estimate.low`, {
+                        valueAsNumber: true,
+                      })}
+                    />
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="High"
+                      className="w-20"
+                      {...form.register(`micronutrients.${i}.amount_estimate.high`, {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </>
+                )}
                 <Button
                   type="button"
                   size="icon"
@@ -338,27 +506,33 @@ export function AnalysisView({
               </div>
             ))}
           </div>
-        ) : a.micronutrients.length > 0 ? (
+        ) : displayedMicronutrients.length > 0 ? (
           <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {a.micronutrients.map((m, i) => (
-              <li key={i} className="rounded-md border border-border bg-card px-3 py-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
-                  <span className="text-muted-foreground">
-                    {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
-                  </span>
-                </div>
-                {m.amount != null && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    About {formatAmount(m.nutrient, m.amount)} —{" "}
-                    {rdiProgressPhrase(m.nutrient, m.amount)}
-                  </p>
-                )}
+            {displayedMicronutrients.map((m, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
+              >
+                <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
+                <span className="text-muted-foreground">
+                  {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
+                  {mode === "detailed" && m.amount_estimate && (
+                    <>
+                      {" "}
+                      · ~{m.amount_estimate.low}–{m.amount_estimate.high}
+                      {NUTRIENT_UNITS[m.nutrient]}
+                    </>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
-        ) : (
+        ) : a.micronutrients.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing tracked for this reading.</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No focus nutrients chosen yet — pick a few in Settings to see them here.
+          </p>
         )}
       </Card>
 
@@ -372,14 +546,6 @@ export function AnalysisView({
             Cancel
           </Button>
         </div>
-      )}
-
-      {a.offered.length > 0 && (
-        <Section title="What this meal offered" items={a.offered} tone="accent" />
-      )}
-      {a.worth_trying.length > 0 && <Section title="Worth trying" items={a.worth_trying} />}
-      {a.absorption_notes.length > 0 && (
-        <Section title="Absorption notes" items={a.absorption_notes} />
       )}
 
       <Card className="flex flex-wrap items-center justify-between gap-3 p-4">

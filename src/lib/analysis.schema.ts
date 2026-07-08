@@ -4,17 +4,25 @@ import { z } from "zod";
 // docs/ETHOS.md and docs/VOICE.md — this schema is the enforcement mechanism
 // for the hard rules in CLAUDE.md, not just a data contract:
 //   - there is no calories field anywhere below, by construction.
-//   - protocol_fit is a qualitative tier, never a number.
-//   - TRACKED_NUTRIENTS is a closed enum that does not include selenium, so a
-//     reading literally cannot flag it — the model can't emit an enum value
-//     that doesn't exist in the schema.
-//   - a micronutrient's `amount` is the one deliberate exception to "no
-//     numbers" (CLAUDE.md's hard rules, revised) — a real, best-effort
-//     estimate in the nutrient's canonical unit (src/lib/rdi-reference.ts),
-//     always secondary to `level`'s qualitative tier and omitted rather than
-//     guessed when the model isn't reasonably confident.
+//   - protocol_fit is a qualitative tier, never a number — no exception.
+//   - TRACKED_NUTRIENTS is the full set of nutrients Dr. K tracks (as of this
+//     writing, a nutrition-label-style set including selenium — the prior
+//     standing exclusion on selenium was deliberately reversed on her
+//     direction; see docs/ETHOS.md principle 3).
+//   - micronutrients[].amount_estimate and estimation_basis are a deliberate,
+//     narrow exception to "qualitative tiers only" — a Detailed mode
+//     approximate range, never a score/grade. See docs/ETHOS.md principle 2
+//     and CLAUDE.md's hard rules. The Nutrient Profile page's daily
+//     percentage (src/lib/nutrient-profile.ts) is a second, similarly scoped
+//     exception.
+//   - The tool schema's micronutrients.items.properties.nutrient.enum below
+//     references TRACKED_NUTRIENTS directly, so growing this list alone is
+//     enough to keep the AI tool schema in sync — no manual mirroring needed
+//     for nutrient additions specifically (other enums in the tool schema
+//     below, e.g. carb_quality/protocol_fit.tier, are still hand-kept).
 
 export const TRACKED_NUTRIENTS = [
+  // original 9
   "iron",
   "b12",
   "vitamin_d",
@@ -24,11 +32,27 @@ export const TRACKED_NUTRIENTS = [
   "zinc",
   "choline",
   "magnesium",
-  "folate",
-  "vitamin_b6",
-  "potassium",
-  "vitamin_c",
+  // restored — see docs/ETHOS.md principle 3
+  "selenium",
+  // vitamins
   "vitamin_a",
+  "vitamin_c",
+  "vitamin_e",
+  "vitamin_k",
+  "thiamin",
+  "riboflavin",
+  "niacin",
+  "vitamin_b6",
+  "folate",
+  "biotin",
+  "pantothenic_acid",
+  // minerals
+  "phosphorus",
+  "potassium",
+  "copper",
+  "manganese",
+  "chromium",
+  "molybdenum",
 ] as const;
 export type TrackedNutrient = (typeof TRACKED_NUTRIENTS)[number];
 
@@ -42,11 +66,95 @@ export const NUTRIENT_LABELS: Record<TrackedNutrient, string> = {
   zinc: "Zinc",
   choline: "Choline",
   magnesium: "Magnesium",
-  folate: "Folate (B9)",
-  vitamin_b6: "Vitamin B6",
-  potassium: "Potassium",
-  vitamin_c: "Vitamin C",
+  selenium: "Selenium",
   vitamin_a: "Vitamin A",
+  vitamin_c: "Vitamin C",
+  vitamin_e: "Vitamin E",
+  vitamin_k: "Vitamin K",
+  thiamin: "Thiamin (B1)",
+  riboflavin: "Riboflavin (B2)",
+  niacin: "Niacin (B3)",
+  vitamin_b6: "Vitamin B6",
+  folate: "Folate (B9)",
+  biotin: "Biotin",
+  pantothenic_acid: "Pantothenic acid (B5)",
+  phosphorus: "Phosphorus",
+  potassium: "Potassium",
+  copper: "Copper",
+  manganese: "Manganese",
+  chromium: "Chromium",
+  molybdenum: "Molybdenum",
+};
+
+// Display unit per nutrient — fixed in code (not model-chosen) so the same
+// nutrient always renders in the same unit across readings. Only consulted
+// in Detailed mode; see docs/ETHOS.md principle 2.
+export const NUTRIENT_UNITS: Record<TrackedNutrient, "mg" | "mcg" | "g"> = {
+  iron: "mg",
+  b12: "mcg",
+  vitamin_d: "mcg",
+  calcium: "mg",
+  omega_3: "g",
+  iodine: "mcg",
+  zinc: "mg",
+  choline: "mg",
+  magnesium: "mg",
+  selenium: "mcg",
+  vitamin_a: "mcg",
+  vitamin_c: "mg",
+  vitamin_e: "mg",
+  vitamin_k: "mcg",
+  thiamin: "mg",
+  riboflavin: "mg",
+  niacin: "mg",
+  vitamin_b6: "mg",
+  folate: "mcg",
+  biotin: "mcg",
+  pantothenic_acid: "mg",
+  phosphorus: "mg",
+  potassium: "mg",
+  copper: "mg",
+  manganese: "mg",
+  chromium: "mcg",
+  molybdenum: "mcg",
+};
+
+// General adult Daily Values (FDA/NIH 2020 label figures), same units as
+// NUTRIENT_UNITS above. Population-average reference points, not personalized
+// — the app collects no age/sex/weight/pregnancy data. Only consulted by the
+// Nutrient Profile page (src/lib/nutrient-profile.ts), Detailed mode only;
+// see docs/ETHOS.md principle 2's second carve-out.
+export const NUTRIENT_DAILY_VALUES: Record<TrackedNutrient, number> = {
+  iron: 18,
+  b12: 2.4,
+  vitamin_d: 20,
+  calcium: 1300,
+  // omega_3 (ALA) has no official FDA %DV. This is a sex-agnostic
+  // approximation — the midpoint of the general adult Adequate Intake range
+  // (~1.1g/day women, ~1.6g/day men) — since the app doesn't collect sex.
+  omega_3: 1.4,
+  iodine: 150,
+  zinc: 11,
+  choline: 550,
+  magnesium: 420,
+  selenium: 55,
+  vitamin_a: 900,
+  vitamin_c: 90,
+  vitamin_e: 15,
+  vitamin_k: 120,
+  thiamin: 1.2,
+  riboflavin: 1.3,
+  niacin: 16,
+  vitamin_b6: 1.7,
+  folate: 400,
+  biotin: 30,
+  pantothenic_acid: 5,
+  phosphorus: 1250,
+  potassium: 4700,
+  copper: 0.9,
+  manganese: 2.3,
+  chromium: 35,
+  molybdenum: 45,
 };
 
 export const NUTRIENT_LEVELS = ["strong", "present", "light", "not_seen"] as const;
@@ -57,6 +165,17 @@ export const LEVEL_LABELS: Record<NutrientLevel, string> = {
   present: "Present",
   light: "A little light",
   not_seen: "Not seen",
+};
+
+// Detailed-mode only: how the reading's amount_estimate ranges were grounded.
+// One value per reading (a photo's reference object calibrates the whole
+// reading, not one nutrient at a time) — see docs/ETHOS.md principle 2.
+export const ESTIMATION_BASES = ["reference_object", "unaided_estimate"] as const;
+export type EstimationBasis = (typeof ESTIMATION_BASES)[number];
+
+export const ESTIMATION_BASIS_LABELS: Record<EstimationBasis, string> = {
+  reference_object: "Grounded by your photo's reference object",
+  unaided_estimate: "A rough visual estimate",
 };
 
 export const CARB_QUALITIES = ["mostly_complex", "mixed", "mostly_refined"] as const;
@@ -80,14 +199,20 @@ export const TIER_LABELS: Record<ProtocolFitTier, string> = {
 export const MEAL_STATUSES = ["pending", "analyzing", "analyzed", "failed"] as const;
 export type MealStatus = (typeof MEAL_STATUSES)[number];
 
+// Detailed-mode only: a wide, honest approximate range in NUTRIENT_UNITS[nutrient].
+// Must be null when level is "not_seen" — enforced by prompt instruction (see
+// clinical-spine.ts), not a zod refinement.
+export const AmountEstimateSchema = z.object({
+  low: z.number().min(0),
+  high: z.number().min(0),
+});
+export type AmountEstimate = z.infer<typeof AmountEstimateSchema>;
+
 export const MicronutrientSchema = z.object({
   nutrient: z.enum(TRACKED_NUTRIENTS),
   level: z.enum(NUTRIENT_LEVELS),
   from: z.string().min(1),
-  // Best-effort estimate in the nutrient's canonical unit (NUTRIENT_UNITS in
-  // rdi-reference.ts) — null when not confident enough to estimate. Detail
-  // under the tier, never a replacement for it.
-  amount: z.number().min(0).nullable().optional(),
+  amount_estimate: AmountEstimateSchema.nullable(),
 });
 export type Micronutrient = z.infer<typeof MicronutrientSchema>;
 
@@ -117,6 +242,7 @@ export const MealAnalysisSchema = z.object({
   absorption_notes: z.array(z.string().min(1)),
   protocol_fit: ProtocolFitSchema,
   uncertainty: z.string().nullable(),
+  estimation_basis: z.enum(ESTIMATION_BASES).nullable(),
 });
 export type MealAnalysis = z.infer<typeof MealAnalysisSchema>;
 
@@ -167,13 +293,18 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
           nutrient: { type: "string", enum: TRACKED_NUTRIENTS },
           level: { type: "string", enum: NUTRIENT_LEVELS },
           from: { type: "string", description: "Which identified food this reading comes from." },
-          amount: {
-            type: ["number", "null"],
+          amount_estimate: {
+            type: ["object", "null"],
             description:
-              "Best-effort estimate in the nutrient's canonical unit (see the system prompt's unit table) — null if not reasonably confident. Never invent precision.",
+              "A wide, honest approximate range in this nutrient's fixed unit (see NUTRIENT_UNITS). Null when level is 'not_seen'.",
+            properties: {
+              low: { type: "number" },
+              high: { type: "number" },
+            },
+            required: ["low", "high"],
           },
         },
-        required: ["nutrient", "level", "from", "amount"],
+        required: ["nutrient", "level", "from", "amount_estimate"],
       },
     },
     offered: {
@@ -205,6 +336,12 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
       description:
         "Plain statement of what couldn't be determined, or null if nothing was ambiguous.",
     },
+    estimation_basis: {
+      type: ["string", "null"],
+      enum: [...ESTIMATION_BASES, null],
+      description:
+        "'reference_object' if a familiar sized object (spoon, coin, card, hand) near the plate was used to calibrate amount_estimate ranges; 'unaided_estimate' otherwise (including text-only readings).",
+    },
   },
   required: [
     "meal_name",
@@ -218,6 +355,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
     "absorption_notes",
     "protocol_fit",
     "uncertainty",
+    "estimation_basis",
   ],
 } as const;
 

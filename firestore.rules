@@ -20,16 +20,14 @@ service cloud.firestore {
     }
 
     // Role is never client-writable — profiles are created and promoted only
-    // by the ensureRole / promoteToDoctor server functions (Admin SDK). A
-    // patient may update only their own preferredCuisine (docs/ETHOS.md
-    // principle 8, set from the Settings page) — every other field, role
-    // included, stays server-only.
+    // by the ensureRole / promoteToDoctor server functions (Admin SDK).
+    // Every other user preference (detailLevel, focus nutrients,
+    // preferredCuisine) also goes through a users.functions.ts server
+    // function, not a direct client write — see that file.
     match /users/{userId} {
       allow get: if isSignedIn() && (request.auth.uid == userId || isDoctor());
       allow list: if isDoctor();
-      allow update: if isSignedIn() && request.auth.uid == userId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferredCuisine']);
-      allow create, delete: if false;
+      allow create, update, delete: if false;
     }
 
     // Meals: owner may create and read their own; doctor may read all and

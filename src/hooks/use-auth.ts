@@ -4,9 +4,35 @@ import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useServerFn } from "@tanstack/react-start";
 import { auth, db } from "@/integrations/firebase/client";
-import { isMockMode, getMockRole, onMockRoleChange } from "@/lib/mock-mode";
+import {
+  isMockMode,
+  getMockRole,
+  onMockRoleChange,
+  getMockDetailLevel,
+  setMockDetailLevel,
+  onMockDetailLevelChange,
+  getMockDoctorFocusNutrients,
+  onMockDoctorFocusNutrientsChange,
+  getMockPatientFocusNutrients,
+  setMockPatientFocusNutrients,
+  onMockPatientFocusNutrientsChange,
+  getMockPreferredCuisine,
+  setMockPreferredCuisine,
+  onMockPreferredCuisineChange,
+} from "@/lib/mock-mode";
 import { MOCK_PATIENT_ID } from "@/lib/mock-data";
 import { ensureRole } from "@/lib/rubrics.functions";
+import {
+  setDetailLevel,
+  setPatientFocusNutrients,
+  setPreferredCuisine,
+} from "@/lib/users.functions";
+import {
+  DEFAULT_DETAIL_LEVEL,
+  resolveEffectiveFocusNutrients,
+  type DetailLevel,
+} from "@/lib/users.schema";
+import type { TrackedNutrient } from "@/lib/analysis.schema";
 
 export type AppRole = "doctor" | "patient";
 
@@ -19,16 +45,48 @@ const MOCK_USER = {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(isMockMode ? MOCK_USER : null);
   const [role, setRole] = useState<AppRole | null>(isMockMode ? getMockRole() : null);
-  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8), set on
-  // the Settings page and stored on their users/{uid} doc. Not fetchable in
-  // mock mode — there's no Firestore doc to read there (see isMockMode below).
-  const [preferredCuisine, setPreferredCuisine] = useState<string | null>(null);
+  const [detailLevel, setDetailLevelState] = useState<DetailLevel>(
+    isMockMode ? getMockDetailLevel() : DEFAULT_DETAIL_LEVEL,
+  );
+  const [doctorFocusNutrients, setDoctorFocusNutrientsState] = useState<
+    TrackedNutrient[] | undefined
+  >(isMockMode ? getMockDoctorFocusNutrients() : undefined);
+  const [patientFocusNutrients, setPatientFocusNutrientsState] = useState<
+    TrackedNutrient[] | null | undefined
+  >(isMockMode ? getMockPatientFocusNutrients() : undefined);
+  // The patient's own cuisine/heritage pick (docs/ETHOS.md principle 8), set
+  // on the Settings page and stored on their users/{uid} doc. Not fetchable
+  // in mock mode from Firestore — mock-mode.ts's localStorage stand-in
+  // covers it there instead.
+  const [preferredCuisine, setPreferredCuisineState] = useState<string | null>(
+    isMockMode ? getMockPreferredCuisine() : null,
+  );
   const [loading, setLoading] = useState(!isMockMode);
   const ensureRoleFn = useServerFn(ensureRole);
+  const setDetailLevelFn = useServerFn(setDetailLevel);
+  const setPatientFocusNutrientsFn = useServerFn(setPatientFocusNutrients);
+  const setPreferredCuisineFn = useServerFn(setPreferredCuisine);
 
   useEffect(() => {
     if (isMockMode) {
-      return onMockRoleChange(() => setRole(getMockRole()));
+      const offRole = onMockRoleChange(() => setRole(getMockRole()));
+      const offDetail = onMockDetailLevelChange(() => setDetailLevelState(getMockDetailLevel()));
+      const offDoctorFocus = onMockDoctorFocusNutrientsChange(() =>
+        setDoctorFocusNutrientsState(getMockDoctorFocusNutrients()),
+      );
+      const offPatientFocus = onMockPatientFocusNutrientsChange(() =>
+        setPatientFocusNutrientsState(getMockPatientFocusNutrients()),
+      );
+      const offCuisine = onMockPreferredCuisineChange(() =>
+        setPreferredCuisineState(getMockPreferredCuisine()),
+      );
+      return () => {
+        offRole();
+        offDetail();
+        offDoctorFocus();
+        offPatientFocus();
+        offCuisine();
+      };
     }
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
@@ -37,29 +95,77 @@ export function useAuth() {
         if (snap.exists()) {
           const data = snap.data();
           setRole((data?.role as AppRole) ?? null);
-          setPreferredCuisine((data?.preferredCuisine as string | undefined) ?? null);
+          setDetailLevelState((data?.detailLevel as DetailLevel) ?? DEFAULT_DETAIL_LEVEL);
+          setDoctorFocusNutrientsState(data?.doctorFocusNutrients as TrackedNutrient[] | undefined);
+          setPatientFocusNutrientsState(
+            data?.patientFocusNutrients as TrackedNutrient[] | null | undefined,
+          );
+          setPreferredCuisineState((data?.preferredCuisine as string | undefined) ?? null);
         } else {
           // First sign-in: no profile yet — the server decides the role
-          // (DOCTOR_EMAILS allowlist) and creates it. Never written by the client.
+          // (DOCTOR_EMAILS allowlist) and creates it, seeded with the default
+          // detail level. Never written by the client. Focus nutrients start
+          // unset (no doctor default yet) until the doctor sets one.
           const { role: assignedRole } = await ensureRoleFn({});
           setRole(assignedRole);
-          setPreferredCuisine(null);
+          setDetailLevelState(DEFAULT_DETAIL_LEVEL);
+          setDoctorFocusNutrientsState(undefined);
+          setPatientFocusNutrientsState(undefined);
+          setPreferredCuisineState(null);
         }
       } else {
         setRole(null);
-        setPreferredCuisine(null);
       }
       setLoading(false);
     });
     return unsubscribe;
   }, [ensureRoleFn]);
 
+  const setDetailLevelPreference = async (next: DetailLevel) => {
+    setDetailLevelState(next);
+    if (isMockMode) {
+      setMockDetailLevel(next);
+      return;
+    }
+    await setDetailLevelFn({ data: { detailLevel: next } });
+  };
+
+  const setPatientFocusNutrientsPreference = async (next: TrackedNutrient[] | null) => {
+    setPatientFocusNutrientsState(next);
+    if (isMockMode) {
+      setMockPatientFocusNutrients(next);
+      return;
+    }
+    await setPatientFocusNutrientsFn({ data: { focusNutrients: next } });
+  };
+
+  const setPreferredCuisinePreference = async (next: string | null) => {
+    setPreferredCuisineState(next);
+    if (isMockMode) {
+      setMockPreferredCuisine(next);
+      return;
+    }
+    await setPreferredCuisineFn({ data: { preferredCuisine: next } });
+  };
+
+  const effectiveFocusNutrients = resolveEffectiveFocusNutrients({
+    doctorFocusNutrients,
+    patientFocusNutrients,
+  });
+
   return {
     user,
     role,
-    preferredCuisine,
     isDoctor: role === "doctor",
     isPatient: role === "patient",
+    detailLevel,
+    setDetailLevelPreference,
+    doctorFocusNutrients,
+    patientFocusNutrients,
+    effectiveFocusNutrients,
+    setPatientFocusNutrientsPreference,
+    preferredCuisine,
+    setPreferredCuisinePreference,
     loading,
     signOut: () => (isMockMode ? Promise.resolve() : firebaseSignOut(auth)),
   };

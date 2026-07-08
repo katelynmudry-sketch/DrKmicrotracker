@@ -6,11 +6,14 @@
 // src/lib/nutrient-reference.ts's NUTRIENT_FOODS at import time; a
 // hand-curated entry there always wins on a name collision (see
 // mergeFoodLists), so this file only ever *adds* coverage, never
-// overrides last session's voice-checked copy.
+// overrides last session's voice-checked copy. Only covers the 14
+// nutrients the source CSV tracks — TRACKED_NUTRIENTS grew to ~27 in a
+// later, separately-merged session (docs/ETHOS.md principle 3), so this
+// is deliberately a Partial, not every tracked nutrient.
 import type { TrackedNutrient } from "@/lib/analysis.schema";
 import type { NutrientFood } from "@/lib/nutrient-reference";
 
-export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
+export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = {
   iron: [
     {
       name: "Lentils, cooked",
@@ -625,7 +628,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "standard Canadian fortification",
       cuisines: ["Canadian / North American"],
       vegan: true,
-      amount: 100.0,
+      amount: 2.5,
       servingSize: "1 cup",
     },
     {
@@ -633,7 +636,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "pantry staple, wild-caught preferred",
       cuisines: ["Canadian / North American"],
       vegan: false,
-      amount: 550.0,
+      amount: 13.75,
       servingSize: "100g",
     },
     {
@@ -641,7 +644,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "breakfast staple",
       cuisines: ["Canadian / North American"],
       vegan: false,
-      amount: 80.0,
+      amount: 2.0,
       servingSize: "2 yolks",
     },
     {
@@ -649,7 +652,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "traditional preserved fish",
       cuisines: ["Ukrainian / Eastern European"],
       vegan: false,
-      amount: 250.0,
+      amount: 6.25,
       servingSize: "100g",
     },
     {
@@ -657,7 +660,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "foraged mushroom tradition",
       cuisines: ["Ukrainian / Eastern European"],
       vegan: true,
-      amount: 275.0,
+      amount: 6.88,
       servingSize: "1 cup",
     },
     {
@@ -665,7 +668,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common pantry fish",
       cuisines: ["Italian"],
       vegan: false,
-      amount: 300.0,
+      amount: 7.5,
       servingSize: "100g",
     },
     {
@@ -673,7 +676,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common in risotto",
       cuisines: ["Italian"],
       vegan: true,
-      amount: 150.0,
+      amount: 3.75,
       servingSize: "1/2 cup",
     },
     {
@@ -681,7 +684,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "tapas staple",
       cuisines: ["Spanish / Mediterranean"],
       vegan: false,
-      amount: 350.0,
+      amount: 8.75,
       servingSize: "100g",
     },
     {
@@ -689,7 +692,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "grilled or canned",
       cuisines: ["Spanish / Mediterranean"],
       vegan: false,
-      amount: 350.0,
+      amount: 8.75,
       servingSize: "100g",
     },
     {
@@ -697,7 +700,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "affordable pantry staple",
       cuisines: ["Mexican"],
       vegan: false,
-      amount: 250.0,
+      amount: 6.25,
       servingSize: "100g",
     },
     {
@@ -705,7 +708,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "huevos rancheros, daily staple",
       cuisines: ["Mexican"],
       vegan: false,
-      amount: 40.0,
+      amount: 1.0,
       servingSize: "1 whole",
     },
     {
@@ -713,7 +716,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "where available",
       cuisines: ["Mexican"],
       vegan: false,
-      amount: 100.0,
+      amount: 2.5,
       servingSize: "1 cup",
     },
     {
@@ -721,7 +724,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "budget-friendly staple",
       cuisines: ["Cuban / Caribbean"],
       vegan: false,
-      amount: 300.0,
+      amount: 7.5,
       servingSize: "100g",
     },
     {
@@ -729,7 +732,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "traditional preservation method",
       cuisines: ["Cuban / Caribbean"],
       vegan: false,
-      amount: 150.0,
+      amount: 3.75,
       servingSize: "50g",
     },
     {
@@ -737,7 +740,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common soup addition",
       cuisines: ["West African"],
       vegan: false,
-      amount: 200.0,
+      amount: 5.0,
       servingSize: "50g",
     },
     {
@@ -752,7 +755,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "lake Victoria region staple",
       cuisines: ["East African"],
       vegan: false,
-      amount: 150.0,
+      amount: 3.75,
       servingSize: "50g",
     },
     {
@@ -767,7 +770,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "bengali/coastal staple",
       cuisines: ["South Asian (Indian)"],
       vegan: false,
-      amount: 300.0,
+      amount: 7.5,
       servingSize: "100g",
     },
     {
@@ -775,7 +778,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common fish staple",
       cuisines: ["Southeast Asian"],
       vegan: false,
-      amount: 350.0,
+      amount: 8.75,
       servingSize: "100g",
     },
     {
@@ -783,7 +786,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common flavour base",
       cuisines: ["Southeast Asian"],
       vegan: false,
-      amount: 50.0,
+      amount: 1.25,
       servingSize: "1 oz",
     },
     {
@@ -791,7 +794,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common in Japanese/Korean cuisine",
       cuisines: ["East Asian"],
       vegan: false,
-      amount: 550.0,
+      amount: 13.75,
       servingSize: "100g",
     },
     {
@@ -799,7 +802,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "traditional sun-drying boosts vitamin D",
       cuisines: ["East Asian"],
       vegan: true,
-      amount: 275.0,
+      amount: 6.88,
       servingSize: "4 mushrooms",
     },
     {
@@ -807,7 +810,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "common fish option",
       cuisines: ["Middle Eastern"],
       vegan: false,
-      amount: 300.0,
+      amount: 7.5,
       servingSize: "100g",
     },
     {
@@ -815,14 +818,14 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "where fortified products available",
       cuisines: ["Middle Eastern"],
       vegan: false,
-      amount: 75.0,
+      amount: 1.88,
       servingSize: "1/2 cup",
     },
     {
       name: "Fatty fish (salmon, sardines, mackerel)",
       reason: "widely available",
       vegan: false,
-      amount: 450.0,
+      amount: 11.25,
       servingSize: "100g",
     },
     {
@@ -837,7 +840,7 @@ export const IMPORTED_FOODS: Record<TrackedNutrient, NutrientFood[]> = {
       reason: "gills-up in direct sun 30 min",
       cuisines: ["Canadian / North American", "Italian"],
       vegan: true,
-      amount: 700.0,
+      amount: 17.5,
       servingSize: "1/2 cup",
     },
     {

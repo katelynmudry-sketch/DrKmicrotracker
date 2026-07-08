@@ -23,10 +23,14 @@ drafts + TODO.md) as product principles governing every screen, prompt, and char
    *"without scores designed to shame"*, *"no spreadsheets, no guilt, no clinical
    coldness — just gentle clarity between visits."* Protocol fit is expressed
    qualitatively ("Aligned"), never numerically.
-3. **Micronutrients are the plot.** Iron (+ the vitamin C pairing rule), B12, vitamin D,
-   calcium (food-first — she rarely recommends supplements), omega-3/ALA, iodine, zinc,
-   choline, magnesium, protein (grams matter — "protein at every meal is a hormonal
-   intervention"), fiber. Per her explicit position: **never flag selenium**.
+3. **Micronutrients are the plot.** As of the nutrient-expansion phase, a full
+   nutrition-label-style set — minerals, fat-soluble vitamins, B-vitamins, vitamin C,
+   including selenium (her original standing exclusion on selenium was later reversed
+   on her direction) — plus protein (grams matter — "protein at every meal is a
+   hormonal intervention") and fiber. Sodium is deliberately not tracked (a "limit"
+   nutrient, doesn't fit the "how much are you getting" framing). Doctor- and
+   patient-set "focus nutrients" determine emphasis, not evaluation — see `docs/ETHOS.md`
+   principle 3.
 4. **Absorption intelligence is the superpower.** Vitamin C with iron; coffee/tea an hour
    away from iron-rich meals; cooked brassicas for Hashimoto's; oxalates vs spinach
    calcium; phytates and soaking/sprouting for zinc; carminative spices with beans.
@@ -83,7 +87,8 @@ branch for reference).
 | Suggestions | **Worth trying** |
 | Doctor's notes | **Notes from Dr. K** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
-| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Simple mode) | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Detailed mode) | **Strong source · ~3–5mg** (tier + an honest range — see `docs/VOICE.md`) |
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" (from the pantry branch — already perfectly phrased) |
@@ -501,6 +506,114 @@ since each one touches a CLAUDE.md hard rule or an existing architectural choice
 - **Not visually verified** — same sandbox IPv6 limitation as prior milestones;
   typecheck/lint/build are clean but the amount/RDI-phrase detail lines, the 14-nutrient
   Patterns coverage grid, and the expanded Settings picker all need a real-browser pass.
+- **Superseded/reconciled by Post-demo milestones #4 and #5 below** — this milestone's
+  14-nutrient `analysis.schema.ts` (a single `amount: number | null` per micronutrient,
+  `DAILY_TARGET` in `src/lib/rdi-reference.ts`) was built in parallel with, and later
+  merged into, milestone #4's independently-developed ~27-nutrient expansion
+  (`amount_estimate: {low, high}`, `NUTRIENT_DAILY_VALUES` in `analysis.schema.ts`
+  itself). Milestone #5 is that reconciliation.
+
+### Post-demo milestone #4 — Full nutrient panel, selenium restoration, focus nutrients — **shipped**
+- [x] **Selenium restoration**: her prior standing exclusion on selenium (Part 1,
+  principle 3) was deliberately reversed on her direction — it's now a normal tracked
+  nutrient, no special-casing anywhere in schema, prompt, or docs.
+- [x] **Full nutrient expansion**: `TRACKED_NUTRIENTS` grew from 9 to a ~27-nutrient,
+  label-style set (minerals, fat-soluble vitamins, B-vitamins, vitamin C — see
+  `docs/ETHOS.md` principle 3 for the full list). Sodium deliberately excluded — a
+  "limit" nutrient, doesn't fit the app's "how much are you getting" framing.
+- [x] **Focus nutrients**: doctor sets a default per-patient focus list
+  (`doctorFocusNutrients`), patient can override (`patientFocusNutrients`) — see
+  `resolveEffectiveFocusNutrients` in `src/lib/users.schema.ts`. The AI still evaluates
+  every tracked nutrient on every reading regardless of focus; focus only changes
+  emphasis and what's displayed. Simple mode now shows only focus nutrients (with the
+  list tripling in size, showing all of them would defeat Simple mode's whole purpose);
+  Detailed mode shows everything with focus nutrients pinned to the top.
+  New `/settings` route (patient) and a focus-nutrient card on the doctor's per-patient
+  page, sharing `src/components/app/focus-nutrient-picker.tsx`.
+- [x] **Nutrient Profile**: a new daily rollup (`src/lib/nutrient-profile.ts`,
+  `src/components/app/nutrient-profile-panel.tsx`) embedded in the existing Patterns
+  page — Detailed mode shows a percentage per nutrient against a general adult
+  reference value (a deliberate, narrow exception to `trends.ts`'s "no percentage"
+  rule, scoped to this one feature — see `docs/ETHOS.md` principle 2's second
+  carve-out); Simple mode shows the same data as three qualitative bands. The existing
+  14-day "Micronutrient coverage" section now scopes to focus nutrients by default, for
+  the same reason Simple mode does.
+- [x] `nutrient-reference.ts`'s food-suggestion list backfilled for all 18 new
+  nutrients (`Record<TrackedNutrient, ...>` is a complete map — the build enforces this).
+- [ ] **`max_tokens`/`ANALYSIS_TIMEOUT_MS` re-measurement** — raised `max_tokens` to
+  4096 (from 2048) as an estimate given the ~27-nutrient schema roughly triples that
+  part of the output; not yet measured against a live API call. *Owner action once
+  real `ANTHROPIC_API_KEY` access exists — see `docs/OWNER-TODO.md`.*
+- **Not visually verified against a live model this session** — same sandbox
+  constraint as milestone #1 (no live Anthropic key); Preview/mock mode UI was
+  confirmed with hand-populated fixtures (`mock-data.ts`'s selenium/vitamin C entries,
+  the two-tier doctor/patient focus-nutrient fixture patients).
+
+### Post-demo milestone #5 — Reconcile the CSV import with the full nutrient panel *(1 session)* — **shipped**
+
+Milestones #2/#3 (cultural food relevance, the master CSV import) and milestone #4 (the
+~27-nutrient expansion, focus nutrients, Detailed mode) were built in separate sessions on
+separate branches — `preview` carried #4, this branch carried #2/#3 — and diverged on
+overlapping ground: two different nutrient-count schemas, two different `/settings` routes,
+two different micronutrient-amount shapes. Asked directly rather than guessing which side
+should win; told to expand this branch to the full nutrient set. This milestone is that
+merge (`git merge origin/preview`, resolved by hand file by file, not auto-resolved).
+
+- [x] **`analysis.schema.ts`/`clinical-spine.ts`**: took milestone #4's ~27-nutrient,
+  `amount_estimate: {low, high}`, `estimation_basis`, focus-nutrient-aware schema and
+  prompt as the base (a strict superset of milestone #3's 14 nutrients); layered
+  milestone #2's `RECORD_CULTURAL_FOODS_TOOL`/`buildCulturalFoodSuggestionPrompt` back on
+  top, since preview never had the cultural-food-suggestion feature at all.
+- [x] **`/settings`**: preview's page (focus-nutrient picker) and this branch's page
+  (cuisine/heritage picker) were two different files claiming the same route — merged
+  into one page, two cards. `preferredCuisine`'s write path changed from a direct client
+  `updateDoc` + a scoped `firestore.rules` exception to a `setPreferredCuisine` Admin-SDK
+  server function in `users.functions.ts`, matching the pattern preview already
+  established for `detailLevel`/`patientFocusNutrients` — `firestore.rules`'
+  `users/{userId}` block reverts to `allow create, update, delete: if false` with no
+  exception, since every write now goes through a server function that bypasses rules
+  entirely. `preferredCuisine` also moved onto `users.schema.ts`'s `UserDoc` interface and
+  `use-auth.ts` gained a `setPreferredCuisinePreference` alongside the existing
+  `setDetailLevelPreference`/`setPatientFocusNutrientsPreference`, plus a mock-mode
+  localStorage stand-in (`mock-mode.ts`'s `getMockPreferredCuisine`/etc.) matching the
+  existing pattern for the other two preferences.
+- [x] **`nutrient-reference.ts`**: git's 3-way merge actually resolved this one cleanly on
+  its own — milestone #3's `HAND_CURATED_FOODS`/`IMPORTED_FOODS`/`mergeFoodLists`
+  architecture and milestone #4's 13 additional nutrients' starter food lists (selenium
+  through molybdenum) occupied non-overlapping regions of the file. Fixed by hand: the
+  `IMPORTED_FOODS` type in `nutrient-reference.data.ts` had to become a `Partial` (the CSV
+  only covers 14 of the now-27 tracked nutrients, and the type was previously a complete
+  `Record` back when 14 *was* the complete set).
+- [x] **Unit reconciliation**: the CSV records vitamin D in IU; milestone #4's canonical
+  `NUTRIENT_UNITS` (now the single source of truth, in `analysis.schema.ts`) has no IU
+  option — mcg only. Re-ran the CSV transform script with an IU→mcg conversion
+  (`amount / 40`) for every vitamin_d row rather than leaving a silent unit mismatch that
+  would have made every food's "how close to a typical day's target" phrase wrong by 40x.
+  vitamin_a's CSV unit ("mcg RAE") needed no conversion — numerically the same scale as
+  plain mcg.
+- [x] **`src/lib/rdi-reference.ts` simplified**: milestone #3's version duplicated a
+  `NUTRIENT_UNITS`/`DAILY_TARGET` table that now disagrees with milestone #4's canonical
+  `NUTRIENT_UNITS`/`NUTRIENT_DAILY_VALUES` in `analysis.schema.ts` (different figures for
+  several nutrients — milestone #4's were the ones confirmed with Dr. K). Rewrote it as a
+  thin wrapper (`formatAmount`/`rdiProgressPhrase`) over the canonical tables instead of a
+  second copy — used for a *food suggestion's* amount (`nutrient-reference.ts`), distinct
+  from `nutrient-profile.ts`'s daily-rollup percentage, which is milestone #4's and
+  untouched here.
+- [x] **`analysis-view.tsx`**: took milestone #4's version whole — it already renders
+  `amount_estimate` ranges, the Simple/Detailed toggle, and estimation-basis caption more
+  completely than this branch's single-`amount` rendering did, which is now redundant.
+- [x] **`patterns-panel.tsx`/`patterns.tsx`/`doctor.patient.$patientId.tsx`**: each now
+  passes both `preferredCuisine` (milestone #2/#3) and `focusNutrients`/`detailLevel`
+  (milestone #4) into `PatternsPanel`; the "Try something new" food cards gained the
+  amount/RDI-phrase detail line back (using the new `rdi-reference.ts`) alongside the
+  existing `CulturalFoodSuggest` "ask about my cuisine" link.
+- [x] **`mock-data.ts`**: `MockPatient` gained both branches' optional fields
+  (`preferredCuisine`, `doctorFocusNutrients`, `patientFocusNutrients`); the three demo
+  patients now carry a mix of both.
+- **Not visually verified** — same sandbox constraint as every milestone above; verifying
+  this merge produced a single coherent Settings page, correct amount units throughout,
+  and no dropped functionality from either side is the top priority for the next
+  real-browser pass.
 
 ---
 

@@ -54,7 +54,7 @@ const TextMealSchema = z.object({
 type TextMealValues = z.infer<typeof TextMealSchema>;
 
 function PatientDashboard() {
-  const { user, isDoctor } = useAuth();
+  const { user, isDoctor, detailLevel } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const analyzeFn = useServerFn(analyzeMeal);
@@ -212,6 +212,12 @@ function PatientDashboard() {
                 <div>
                   <Label className="mb-1.5">Photo</Label>
                   <Input ref={fileRef} type="file" accept="image/*" capture="environment" />
+                  {detailLevel === "detailed" && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      Tip: pop a spoon, coin, credit card, or your hand next to the plate — it helps
+                      us judge portion size more precisely.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="mb-1.5">Label (optional)</Label>
