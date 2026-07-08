@@ -39,6 +39,11 @@ Before touching product code, read:
 - All patient-facing wording follows `docs/VOICE.md`. The AI prompt spine lives in
   `src/lib/clinical-spine.ts` — edit wording there, never inline in engine code.
 
+## Workflow
+
+- Do all new edits on the `preview` branch unless Katelyn explicitly says
+  otherwise for a given change.
+
 ## Architecture rules
 
 - Firebase only (Auth, Firestore, Storage) — no second backend.
