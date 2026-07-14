@@ -27,6 +27,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { analyzeMeal } from "@/lib/meals.functions";
 import type { Meal } from "@/lib/analysis.schema";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
@@ -148,8 +149,8 @@ function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
     try {
       await analyzeFn({ data: { mealId: meal.id } });
       toast.success("Re-analyzed against the current rubric");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Re-analysis failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Re-analysis failed"));
     } finally {
       setReanalyzing(false);
       invalidate();
@@ -162,8 +163,8 @@ function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
     try {
       await updateDoc(doc(db, "meals", meal.id), { doctorNotes: notes });
       toast.success("Notes saved");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save notes");
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to save notes"));
     } finally {
       setSaving(false);
     }

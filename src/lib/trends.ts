@@ -29,7 +29,7 @@ export type NutrientCoverage = {
 const GAP_COVERAGE_RATIO = 0.4;
 
 // For each tracked nutrient: how many of the window's readings called it out
-// as a strong or present source. A nutrient that clears the bar in fewer than
+// as a strong source. A nutrient that clears the bar in fewer than
 // GAP_COVERAGE_RATIO of readings is a gap — a candidate for "Try something
 // new" (see nutrient-reference.ts), never a warning.
 export function computeNutrientCoverage(meals: Meal[], days = 14): NutrientCoverage[] {

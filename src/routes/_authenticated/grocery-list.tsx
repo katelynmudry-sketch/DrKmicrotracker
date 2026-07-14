@@ -28,6 +28,7 @@ import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 import { GROCERY_REASON_LABELS } from "@/lib/pantry.schema";
 import { computeNutrientCoverage } from "@/lib/trends";
 import { splitFoodsForNutrient } from "@/lib/nutrient-reference";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/grocery-list")({
   head: () => ({ meta: [{ title: "Grocery list — Dr. K's Kitchen" }] }),
@@ -95,8 +96,8 @@ function GroceryListPage() {
         createdAt: serverTimestamp(),
       });
       invalidateList();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't add item");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't add item"));
     }
   };
 

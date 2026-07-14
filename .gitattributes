@@ -1,0 +1,16 @@
+# Normalize all text files in the repo to LF; working-tree line endings follow
+# each machine's git config. Shell scripts must stay LF even on Windows checkouts
+# (they run under bash), and binaries must never be touched.
+* text=auto
+
+*.sh text eol=lf
+
+*.png -text
+*.ico -text
+*.jpg -text
+*.jpeg -text
+*.webp -text
+*.woff -text
+*.woff2 -text
+*.ttf -text
+*.pdf -text

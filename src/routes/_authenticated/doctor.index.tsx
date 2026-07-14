@@ -16,6 +16,7 @@ import { BookOpen, FlaskConical, Loader2, Users } from "lucide-react";
 import { promoteToDoctor } from "@/lib/rubrics.functions";
 import { seedDemoData, clearDemoData } from "@/lib/demo.functions";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/doctor/")({
   head: () => ({ meta: [{ title: "Doctor portal — Dr. K's Kitchen" }] }),
@@ -134,8 +135,8 @@ function DemoDataCard({ onChanged }: { onChanged: () => void }) {
       const result = await seed({});
       toast.success(`Seeded ${result.patients} demo patients and ${result.meals} meals.`);
       onChanged();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't seed demo data");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't seed demo data"));
     } finally {
       setBusy(null);
     }
@@ -148,8 +149,8 @@ function DemoDataCard({ onChanged }: { onChanged: () => void }) {
       const result = await clear({});
       toast.success(`Removed ${result.deleted} demo records.`);
       onChanged();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't clear demo data");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't clear demo data"));
     } finally {
       setBusy(null);
     }
@@ -193,8 +194,8 @@ function AddDoctorCard({ onAdded }: { onAdded: () => void }) {
       toast.success(`${email.trim()} can now sign in as a doctor.`);
       setEmail("");
       onAdded();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't add doctor");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't add doctor"));
     } finally {
       setBusy(false);
     }

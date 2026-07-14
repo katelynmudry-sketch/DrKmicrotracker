@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { updateMealAnalysis } from "@/lib/meals.functions";
 import { isMockMode } from "@/lib/mock-mode";
+import { errorMessage } from "@/lib/error-message";
 import {
   TRACKED_NUTRIENTS,
   NUTRIENT_LABELS,
@@ -139,8 +140,8 @@ export function AnalysisView({
       toast.success("Reading updated");
       setEditing(false);
       onSaved?.(result.analysis as MealAnalysis);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save changes");
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to save changes"));
     } finally {
       setSaving(false);
     }
@@ -331,10 +332,10 @@ export function AnalysisView({
             {a.micronutrients.map((m, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
               >
-                <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
-                <span className="text-muted-foreground">
+                <span className="shrink-0">{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
+                <span className="text-right text-muted-foreground">
                   {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
                 </span>
               </li>

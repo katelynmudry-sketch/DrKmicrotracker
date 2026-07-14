@@ -43,6 +43,18 @@ async function assertCanAccessMeal(adminDb: Firestore, userId: string, patientId
   if (userSnap.data()?.role !== "doctor") throw new Error("Forbidden");
 }
 
+// A schema-mismatch failure that carries the model's raw output so the retry
+// can feed it back for correction (network/timeout failures don't have one).
+class InvalidReadingError extends Error {
+  constructor(
+    message: string,
+    public readonly badInput: unknown,
+  ) {
+    super(message);
+    this.name = "InvalidReadingError";
+  }
+}
+
 // One call to the model that must return a single validated tool_use block.
 // Thrown errors (network, timeout, schema mismatch) are caught by the caller,
 // which retries once with the bad output fed back for correction.
@@ -78,7 +90,9 @@ async function callAnalysisModel(
       b.type === "tool_use" && b.name === RECORD_READING_TOOL_NAME,
   );
   if (!toolUse) throw new Error("The model didn't return a structured reading");
-  return MealAnalysisSchema.parse(toolUse.input);
+  const parsed = MealAnalysisSchema.safeParse(toolUse.input);
+  if (!parsed.success) throw new InvalidReadingError(parsed.error.message, toolUse.input);
+  return parsed.data;
 }
 
 async function runAnalysis(mealId: string, userId: string) {
@@ -148,9 +162,14 @@ async function runAnalysis(mealId: string, userId: string) {
       // One corrective retry: most failures here are a schema mismatch on the
       // model's first attempt, not a systemic outage — worth one more try
       // before giving up and marking the meal failed.
-      const issue = firstErr instanceof Error ? firstErr.message : "invalid output";
+      // Only frame the retry as a correction when we actually have the bad
+      // output — a timeout/network failure just gets a clean second attempt.
+      const correction =
+        firstErr instanceof InvalidReadingError
+          ? { badInput: firstErr.badInput, issue: firstErr.message }
+          : undefined;
       analysis = await withTimeout(
-        callAnalysisModel(anthropic, model, systemPrompt, content, { badInput: {}, issue }),
+        callAnalysisModel(anthropic, model, systemPrompt, content, correction),
         ANALYSIS_TIMEOUT_MS,
         "Analysis timed out",
       );

@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, NotebookPen, RotateCw } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { toast } from "sonner";
 import type { Meal } from "@/lib/analysis.schema";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/meals/$mealId")({
   head: () => ({ meta: [{ title: "Meal — Dr. K's Kitchen" }] }),
@@ -46,8 +47,8 @@ function MealDetail() {
     try {
       await analyzeFn({ data: { mealId } });
       toast.success("Reading ready");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Reading failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Reading failed"));
     } finally {
       setRetrying(false);
       qc.invalidateQueries({ queryKey: ["meal", mealId] });
