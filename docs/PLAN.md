@@ -23,10 +23,14 @@ drafts + TODO.md) as product principles governing every screen, prompt, and char
    *"without scores designed to shame"*, *"no spreadsheets, no guilt, no clinical
    coldness — just gentle clarity between visits."* Protocol fit is expressed
    qualitatively ("Aligned"), never numerically.
-3. **Micronutrients are the plot.** Iron (+ the vitamin C pairing rule), B12, vitamin D,
-   calcium (food-first — she rarely recommends supplements), omega-3/ALA, iodine, zinc,
-   choline, magnesium, protein (grams matter — "protein at every meal is a hormonal
-   intervention"), fiber. Per her explicit position: **never flag selenium**.
+3. **Micronutrients are the plot.** As of the nutrient-expansion phase, a full
+   nutrition-label-style set — minerals, fat-soluble vitamins, B-vitamins, vitamin C,
+   including selenium (her original standing exclusion on selenium was later reversed
+   on her direction) — plus protein (grams matter — "protein at every meal is a
+   hormonal intervention") and fiber. Sodium is deliberately not tracked (a "limit"
+   nutrient, doesn't fit the "how much are you getting" framing). Doctor- and
+   patient-set "focus nutrients" determine emphasis, not evaluation — see `docs/ETHOS.md`
+   principle 3.
 4. **Absorption intelligence is the superpower.** Vitamin C with iron; coffee/tea an hour
    away from iron-rich meals; cooked brassicas for Hashimoto's; oxalates vs spinach
    calcium; phytates and soaking/sprouting for zinc; carminative spices with beans.
@@ -83,7 +87,8 @@ branch for reference).
 | Suggestions | **Worth trying** |
 | Doctor's notes | **Notes from Dr. K** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
-| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Simple mode) | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Detailed mode) | **Strong source · ~3–5mg** (tier + an honest range — see `docs/VOICE.md`) |
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" (from the pantry branch — already perfectly phrased) |
@@ -393,6 +398,259 @@ Phase 4 before the live demo.
   Node `.listen('::')` fails), so the dev server can't start here; typecheck/lint/
   ethos-lint/build are all clean, but the camera/mic UI itself needs a real-browser pass
   (the user has said they'll test it directly).
+
+### Post-demo milestone #2 — Cultural food relevance *(1 session)* — **shipped**
+- [x] **Ethos codified**: `docs/ETHOS.md` principle 8 — a patient's own food should be
+  recognizable in the app, not translated into a Western analog first. This was implicit
+  in the food-first framing but wasn't written down before this session.
+- [x] **Standardized cuisine categories**: `src/lib/cuisines.ts`'s `CUISINE_OPTIONS` — ten
+  broad, fixed regions (South Asian, East Asian, Southeast Asian, Middle Eastern, Eastern
+  European, Mediterranean, Caribbean, West African, East African, Latin American), not
+  individual countries. Deliberately broad so a patient can actually pick one in Settings
+  and so `nutrient-reference.ts`'s tags line up with that picker — narrower one-off labels
+  (an earlier pass in this same session used "Peruvian," "Levantine," etc.) don't scale to
+  a fixed selector.
+- [x] **~3x larger hand-curated list**: `src/lib/nutrient-reference.ts`'s `NUTRIENT_FOODS`
+  grew from 4-5 entries per nutrient to roughly 14-16, spanning all ten categories above
+  (where a real, accurate source exists — vitamin D and iodine skew toward seafood-heavy
+  cuisines by nutritional reality, not by omission). The `cuisine` tag is **never rendered
+  to the patient** — `cultural-food-suggest.tsx` and the "Try something new" lists show
+  only `name`/`reason`. It exists purely so `splitFoodsForNutrient` can reorder a
+  nutrient's food list, putting matches for the patient's own pick first without hiding
+  anything else — priority, not a filter.
+- [x] **Persisted preference**: `src/routes/_authenticated/settings.tsx` (new route, linked
+  from the dashboard nav) — a patient picks their cuisine/heritage once from the ten
+  options above, saved to `users/{uid}.preferredCuisine`. `firestore.rules` now allows a
+  signed-in user to update *only* that one field on their own doc (`diff().affectedKeys()
+  .hasOnly(['preferredCuisine'])`, mirroring the existing `doctorNotes`/`isActive` pattern)
+  — `role` and everything else on that doc stays server-only, exactly as before.
+  `use-auth.ts` now reads `preferredCuisine` off the same `getDoc` call it already made for
+  `role`, and exposes it from the hook — no second round trip. The Patterns page, grocery
+  list, and the doctor's per-patient Patterns embed (using the *patient's* pick, not the
+  doctor's own) all pass it into `splitFoodsForNutrient`.
+- [x] **AI-generated fallback for what the fixed list still doesn't cover**:
+  `src/lib/cultural-food.functions.ts`'s `suggestCulturalFoods` server function — a patient
+  types any cuisine or region (not limited to the ten standardized ones) plus the nutrient
+  that's come up light, and Claude (forced tool-use, zod-validated, same reliability
+  pattern as `scanPantryPhoto`) returns 2-3 real, specific foods in the same
+  `{name, reason}` shape as the static list. Prompt wording lives in
+  `src/lib/clinical-spine.ts`'s `buildCulturalFoodSuggestionPrompt` per CLAUDE.md's rule
+  that AI wording never lives inline in engine code — same hard exclusions (no calories,
+  no grades, no selenium) and voice rule as a meal reading. `src/components/app/
+  cultural-food-suggest.tsx` is the "Don't see food from your culture? Ask" link on each
+  nutrient's "Try something new" card; results are session-local, never persisted.
+- **Not visually verified** — same sandbox IPv6 limitation as the pantry suite;
+  typecheck/lint/build are clean but the Settings picker and the new suggestion flow both
+  need a real-browser pass.
+- **Deliberately not done this session**: no onboarding step that prompts a new patient to
+  set their cuisine on first sign-in — Settings is opt-in and self-serve for now. Worth
+  revisiting if most patients never find the page on their own.
+- **Superseded by Post-demo milestone #3 below** — the ten broad regions above were
+  replaced with the fourteen categories matching Dr. K's own master food priority list.
+
+### Post-demo milestone #3 — Master food priority list import *(1 session)* — **shipped**
+
+Dr. K supplied `master_food_priority_list.csv` — 622 rows across 15 nutrient labels, with
+a cultural cuisine tag, a vegan flag, a serving size, and a real amount (mg/mcg/IU) per
+food. Three decisions came out of this before writing code (asked directly, not assumed,
+since each one touches a CLAUDE.md hard rule or an existing architectural choice):
+
+- [x] **Hard rule revised — numbers are allowed for micronutrients, never for calories or
+  a verdict.** CLAUDE.md, `docs/ETHOS.md` principle 2, and `docs/VOICE.md`'s do/don't table
+  all now distinguish an *evaluative* number (a score/grade — still banned) from an
+  *informational* one (how much iron is in a cup of lentils — now expected). Calories stay
+  banned outright; `protocol_fit.tier` stays a qualitative-only enum. The qualitative tier
+  is always the headline; a real amount is detail underneath, mirroring how protein/fiber
+  grams already worked before this session.
+- [x] **Tracked nutrients grew from 9 to 14**: `folate`, `vitamin_b6`, `potassium`,
+  `vitamin_c`, `vitamin_a` added to `TRACKED_NUTRIENTS` in `analysis.schema.ts` (labels,
+  tool schema, everything downstream — Patterns coverage/gaps are generic over the enum, so
+  they picked up the 5 new nutrients with no separate change). `MicronutrientSchema` gained
+  an optional `amount: number | null` — a best-effort estimate in the nutrient's canonical
+  unit, null when the model isn't confident, always secondary to `level`. New file
+  `src/lib/rdi-reference.ts` holds `NUTRIENT_UNITS`, general-adult `DAILY_TARGET` figures
+  (a nutrition-facts-panel-style reference, explicitly not personalized by age/sex/
+  pregnancy — no such profile field exists), `formatAmount`, and `rdiProgressPhrase` (a
+  coarse-bucketed "about two-thirds of a typical day's target" phrase — never a bare "%
+  RDI" per VOICE.md). `clinical-spine.ts`'s `CLINICAL_POSITIONS` now spells out the
+  per-nutrient unit table so the model's `amount` estimates are internally consistent.
+  `analysis-view.tsx` renders the amount + RDI phrase as a quiet line under each
+  micronutrient row, both read-only and in the edit form.
+- [x] **Cuisine taxonomy replaced, not extended**: the CSV's own structure (13 primary
+  regions × ~42 rows each, tagged `"Regional table"`, plus 76 more specific additions
+  tagged `"Dr. K Ebook (added)"`) became `src/lib/cuisines.ts`'s new 14-option
+  `CUISINE_OPTIONS`, superseding milestone #2's 10 broad regions. `NutrientFood.cuisine`
+  (singular string) became `cuisines?: string[]` everywhere (nutrient-reference.ts,
+  cultural-food.functions.ts, prioritizeByCuisine) since several source rows carry more
+  than one region (e.g. "Middle Eastern, South Asian, Mediterranean").
+- [x] **Merge, not replace**: `src/lib/nutrient-reference.ts`'s hand-written ~140 entries
+  from milestone #2 stayed (their `cuisine` tags remapped 1:1 to the new 14-option
+  vocabulary — a few "Latin American"-tagged foods were split by hand into "Mexican" vs.
+  "Andean / South American" since the CSV treats those as distinct regions). A generated
+  file, `src/lib/nutrient-reference.data.ts` (**do not hand-edit** — see its header),
+  holds the CSV import; `mergeFoodLists` in `nutrient-reference.ts` appends only the
+  imported foods whose name doesn't already match a hand-curated one for that nutrient
+  (exact-name match only — an earlier fuzzy-matching pass wrongly collapsed culturally
+  distinct dishes like "Lentils (misir wot)" into plain "Lentils" and was reverted).
+  `NutrientFood` gained `vegan?: boolean` (stored, not surfaced in any UI yet) and
+  `amount`/`servingSize` (rendered as a detail line on Patterns' "Try something new" and
+  the grocery list's "Worth adding," same treatment as a meal reading's micronutrient
+  amount).
+- **Known gap, disclosed rather than silently shipped**: the ~470 imported entries' `reason`
+  text is the CSV's own "Context" column (e.g. "soups, shepherd's pie base, everyday
+  pantry staple"), lowercased at the start — accurate and sourced directly from Dr. K's
+  list, but terser and less warm than `docs/VOICE.md`'s full-sentence register used
+  throughout the ~140 hand-curated entries. Rewriting 470 rows into full warm sentences by
+  hand was out of scope for one session; worth a follow-up pass, ideally in batches Dr. K
+  can spot-check rather than all at once.
+- **Not visually verified** — same sandbox IPv6 limitation as prior milestones;
+  typecheck/lint/build are clean but the amount/RDI-phrase detail lines, the 14-nutrient
+  Patterns coverage grid, and the expanded Settings picker all need a real-browser pass.
+- **Superseded/reconciled by Post-demo milestones #4 and #5 below** — this milestone's
+  14-nutrient `analysis.schema.ts` (a single `amount: number | null` per micronutrient,
+  `DAILY_TARGET` in `src/lib/rdi-reference.ts`) was built in parallel with, and later
+  merged into, milestone #4's independently-developed ~27-nutrient expansion
+  (`amount_estimate: {low, high}`, `NUTRIENT_DAILY_VALUES` in `analysis.schema.ts`
+  itself). Milestone #5 is that reconciliation.
+
+### Post-demo milestone #4 — Full nutrient panel, selenium restoration, focus nutrients — **shipped**
+- [x] **Selenium restoration**: her prior standing exclusion on selenium (Part 1,
+  principle 3) was deliberately reversed on her direction — it's now a normal tracked
+  nutrient, no special-casing anywhere in schema, prompt, or docs.
+- [x] **Full nutrient expansion**: `TRACKED_NUTRIENTS` grew from 9 to a ~27-nutrient,
+  label-style set (minerals, fat-soluble vitamins, B-vitamins, vitamin C — see
+  `docs/ETHOS.md` principle 3 for the full list). Sodium deliberately excluded — a
+  "limit" nutrient, doesn't fit the app's "how much are you getting" framing.
+- [x] **Focus nutrients**: doctor sets a default per-patient focus list
+  (`doctorFocusNutrients`), patient can override (`patientFocusNutrients`) — see
+  `resolveEffectiveFocusNutrients` in `src/lib/users.schema.ts`. The AI still evaluates
+  every tracked nutrient on every reading regardless of focus; focus only changes
+  emphasis and what's displayed. Simple mode now shows only focus nutrients (with the
+  list tripling in size, showing all of them would defeat Simple mode's whole purpose);
+  Detailed mode shows everything with focus nutrients pinned to the top.
+  New `/settings` route (patient) and a focus-nutrient card on the doctor's per-patient
+  page, sharing `src/components/app/focus-nutrient-picker.tsx`.
+- [x] **Nutrient Profile**: a new daily rollup (`src/lib/nutrient-profile.ts`,
+  `src/components/app/nutrient-profile-panel.tsx`) embedded in the existing Patterns
+  page — Detailed mode shows a percentage per nutrient against a general adult
+  reference value (a deliberate, narrow exception to `trends.ts`'s "no percentage"
+  rule, scoped to this one feature — see `docs/ETHOS.md` principle 2's second
+  carve-out); Simple mode shows the same data as three qualitative bands. The existing
+  14-day "Micronutrient coverage" section now scopes to focus nutrients by default, for
+  the same reason Simple mode does.
+- [x] `nutrient-reference.ts`'s food-suggestion list backfilled for all 18 new
+  nutrients (`Record<TrackedNutrient, ...>` is a complete map — the build enforces this).
+- [ ] **`max_tokens`/`ANALYSIS_TIMEOUT_MS` re-measurement** — raised `max_tokens` to
+  4096 (from 2048) as an estimate given the ~27-nutrient schema roughly triples that
+  part of the output; not yet measured against a live API call. *Owner action once
+  real `ANTHROPIC_API_KEY` access exists — see `docs/OWNER-TODO.md`.*
+- **Not visually verified against a live model this session** — same sandbox
+  constraint as milestone #1 (no live Anthropic key); Preview/mock mode UI was
+  confirmed with hand-populated fixtures (`mock-data.ts`'s selenium/vitamin C entries,
+  the two-tier doctor/patient focus-nutrient fixture patients).
+
+### Post-demo milestone #5 — Reconcile the CSV import with the full nutrient panel *(1 session)* — **shipped**
+
+Milestones #2/#3 (cultural food relevance, the master CSV import) and milestone #4 (the
+~27-nutrient expansion, focus nutrients, Detailed mode) were built in separate sessions on
+separate branches — `preview` carried #4, this branch carried #2/#3 — and diverged on
+overlapping ground: two different nutrient-count schemas, two different `/settings` routes,
+two different micronutrient-amount shapes. Asked directly rather than guessing which side
+should win; told to expand this branch to the full nutrient set. This milestone is that
+merge (`git merge origin/preview`, resolved by hand file by file, not auto-resolved).
+
+- [x] **`analysis.schema.ts`/`clinical-spine.ts`**: took milestone #4's ~27-nutrient,
+  `amount_estimate: {low, high}`, `estimation_basis`, focus-nutrient-aware schema and
+  prompt as the base (a strict superset of milestone #3's 14 nutrients); layered
+  milestone #2's `RECORD_CULTURAL_FOODS_TOOL`/`buildCulturalFoodSuggestionPrompt` back on
+  top, since preview never had the cultural-food-suggestion feature at all.
+- [x] **`/settings`**: preview's page (focus-nutrient picker) and this branch's page
+  (cuisine/heritage picker) were two different files claiming the same route — merged
+  into one page, two cards. `preferredCuisine`'s write path changed from a direct client
+  `updateDoc` + a scoped `firestore.rules` exception to a `setPreferredCuisine` Admin-SDK
+  server function in `users.functions.ts`, matching the pattern preview already
+  established for `detailLevel`/`patientFocusNutrients` — `firestore.rules`'
+  `users/{userId}` block reverts to `allow create, update, delete: if false` with no
+  exception, since every write now goes through a server function that bypasses rules
+  entirely. `preferredCuisine` also moved onto `users.schema.ts`'s `UserDoc` interface and
+  `use-auth.ts` gained a `setPreferredCuisinePreference` alongside the existing
+  `setDetailLevelPreference`/`setPatientFocusNutrientsPreference`, plus a mock-mode
+  localStorage stand-in (`mock-mode.ts`'s `getMockPreferredCuisine`/etc.) matching the
+  existing pattern for the other two preferences.
+- [x] **`nutrient-reference.ts`**: git's 3-way merge actually resolved this one cleanly on
+  its own — milestone #3's `HAND_CURATED_FOODS`/`IMPORTED_FOODS`/`mergeFoodLists`
+  architecture and milestone #4's 13 additional nutrients' starter food lists (selenium
+  through molybdenum) occupied non-overlapping regions of the file. Fixed by hand: the
+  `IMPORTED_FOODS` type in `nutrient-reference.data.ts` had to become a `Partial` (the CSV
+  only covers 14 of the now-27 tracked nutrients, and the type was previously a complete
+  `Record` back when 14 *was* the complete set).
+- [x] **Unit reconciliation**: the CSV records vitamin D in IU; milestone #4's canonical
+  `NUTRIENT_UNITS` (now the single source of truth, in `analysis.schema.ts`) has no IU
+  option — mcg only. Re-ran the CSV transform script with an IU→mcg conversion
+  (`amount / 40`) for every vitamin_d row rather than leaving a silent unit mismatch that
+  would have made every food's "how close to a typical day's target" phrase wrong by 40x.
+  vitamin_a's CSV unit ("mcg RAE") needed no conversion — numerically the same scale as
+  plain mcg.
+- [x] **`src/lib/rdi-reference.ts` simplified**: milestone #3's version duplicated a
+  `NUTRIENT_UNITS`/`DAILY_TARGET` table that now disagrees with milestone #4's canonical
+  `NUTRIENT_UNITS`/`NUTRIENT_DAILY_VALUES` in `analysis.schema.ts` (different figures for
+  several nutrients — milestone #4's were the ones confirmed with Dr. K). Rewrote it as a
+  thin wrapper (`formatAmount`/`rdiProgressPhrase`) over the canonical tables instead of a
+  second copy — used for a *food suggestion's* amount (`nutrient-reference.ts`), distinct
+  from `nutrient-profile.ts`'s daily-rollup percentage, which is milestone #4's and
+  untouched here.
+- [x] **`analysis-view.tsx`**: took milestone #4's version whole — it already renders
+  `amount_estimate` ranges, the Simple/Detailed toggle, and estimation-basis caption more
+  completely than this branch's single-`amount` rendering did, which is now redundant.
+- [x] **`patterns-panel.tsx`/`patterns.tsx`/`doctor.patient.$patientId.tsx`**: each now
+  passes both `preferredCuisine` (milestone #2/#3) and `focusNutrients`/`detailLevel`
+  (milestone #4) into `PatternsPanel`; the "Try something new" food cards gained the
+  amount/RDI-phrase detail line back (using the new `rdi-reference.ts`) alongside the
+  existing `CulturalFoodSuggest` "ask about my cuisine" link.
+- [x] **`mock-data.ts`**: `MockPatient` gained both branches' optional fields
+  (`preferredCuisine`, `doctorFocusNutrients`, `patientFocusNutrients`); the three demo
+  patients now carry a mix of both.
+- **Not visually verified** — same sandbox constraint as every milestone above; verifying
+  this merge produced a single coherent Settings page, correct amount units throughout,
+  and no dropped functionality from either side is the top priority for the next
+  real-browser pass.
+
+### Post-demo milestone #6 — Split region from food heritage, reorder Settings by priority *(1 session)* — **shipped**
+- [x] **Split the single cuisine picker into two questions**: the Settings page's single
+  "Cuisine or heritage" dropdown (`preferredCuisine: string | null`) conflated *where a
+  patient currently lives* with *their food heritage* — a patient living in Canada whose
+  food heritage is Ukrainian had to pick one. `src/lib/users.schema.ts`'s `UserDoc` now
+  has `currentRegions?: string[] | null` and `foodHeritage?: string[] | null` — two
+  separate multi-select questions, both drawing from the same `CUISINE_OPTIONS` vocabulary
+  (`src/lib/cuisines.ts`) so `nutrient-reference.ts`'s `cuisines` tags still line up either
+  way. `resolveEffectiveCuisines` merges the two (deduped) for anywhere food-suggestion
+  priority is computed — `nutrient-reference.ts`'s `prioritizeByCuisine`/
+  `foodsForNutrient`/`splitFoodsForNutrient` now take a `cuisines: string[]` instead of a
+  single string.
+- [x] **Reordered by priority**: Focus nutrients — the doctor-prescribed, per-patient
+  micronutrient emphasis (`doctorFocusNutrients`/`patientFocusNutrients`, already
+  doctor-assignable via `setDoctorFocusNutrients`) — now renders first on the Settings
+  page, above the region and heritage pickers, since it's the doctor's clinical call and
+  outranks a patient's own cultural/geographic context.
+- [x] **New reusable multi-select**: `src/components/app/checkbox-option-list.tsx` — a
+  flat checkbox list (no nutrient grouping) shared by both the region and heritage
+  pickers, instead of duplicating the markup twice.
+- [x] **Server functions**: `setPreferredCuisine` replaced by `setCurrentRegions` and
+  `setFoodHeritage` in `src/lib/users.functions.ts` — same self-only, Admin-SDK,
+  zod-validated-against-`CUISINE_OPTIONS` pattern as before, just array-typed and split in
+  two.
+- [x] **Consumers updated**: `patterns-panel.tsx`'s `preferredCuisine` prop became
+  `cuisines: string[]`; `patterns.tsx`, `grocery-list.tsx`, and
+  `doctor.patient.$patientId.tsx` all pass the merged `resolveEffectiveCuisines` result
+  instead of a single string. `use-auth.ts` and `mock-mode.ts` got the equivalent
+  array-typed split (mock localStorage keys: `mockCurrentRegions`/`mockFoodHeritage`).
+- **Deliberately not done this session**: a therapeutic-diet-type picker
+  (anti-inflammatory, high protein, etc.) was discussed and explicitly scoped out — not
+  added.
+- **Not visually verified** — same sandbox constraint as every milestone above; the next
+  real-browser pass should confirm Focus nutrients renders first, both new pickers save
+  and reload independently, and cuisine-based food-suggestion priority still works with a
+  region and a heritage both set.
 
 ---
 

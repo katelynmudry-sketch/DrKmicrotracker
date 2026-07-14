@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
 import type Anthropic from "@anthropic-ai/sdk";
+import { DEFAULT_DETAIL_LEVEL } from "@/lib/users.schema";
 
 async function assertDoctor(userId: string) {
   const { adminDb } = await import("@/integrations/firebase/admin.server");
@@ -126,6 +127,7 @@ export const ensureRole = createServerFn({ method: "POST" })
       email,
       fullName: (context.claims.name as string | undefined) ?? null,
       role,
+      detailLevel: DEFAULT_DETAIL_LEVEL,
       createdAt: new Date().toISOString(),
     });
     return { role };

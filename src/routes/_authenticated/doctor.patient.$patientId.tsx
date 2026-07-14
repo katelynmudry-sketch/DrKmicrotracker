@@ -12,22 +12,32 @@ import {
 } from "firebase/firestore";
 import { useServerFn } from "@tanstack/react-start";
 import { db } from "@/integrations/firebase/client";
-import { isMockMode } from "@/lib/mock-mode";
+import { isMockMode, setMockDoctorFocusNutrients } from "@/lib/mock-mode";
 import { mockMeals, mockPatients } from "@/lib/mock-data";
 import { AppShell } from "@/components/app/app-shell";
 import { MealPhoto } from "@/components/app/meal-photo";
 import { AnalysisView } from "@/components/app/analysis-view";
 import { PatternsPanel } from "@/components/app/patterns-panel";
+import { FocusNutrientPicker } from "@/components/app/focus-nutrient-picker";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2, RotateCw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { analyzeMeal } from "@/lib/meals.functions";
-import type { Meal } from "@/lib/analysis.schema";
 import { errorMessage } from "@/lib/error-message";
+import { setDoctorFocusNutrients } from "@/lib/users.functions";
+import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
+import { mealTimingLabel } from "@/lib/meal-timing";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  DEFAULT_FOCUS_NUTRIENTS,
+  resolveEffectiveFocusNutrients,
+  resolveEffectiveCuisines,
+  type UserDoc,
+} from "@/lib/users.schema";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
@@ -37,6 +47,8 @@ export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId"
 function PatientView() {
   const { patientId } = useParams({ from: "/_authenticated/doctor/patient/$patientId" });
   const [selected, setSelected] = useState<string | null>(null);
+  const { detailLevel } = useAuth();
+  const qc = useQueryClient();
 
   const profile = useQuery({
     queryKey: ["profile", patientId],
@@ -47,16 +59,20 @@ function PatientView() {
             id: patientId,
             fullName: null,
             email: null,
+            currentRegions: null,
+            foodHeritage: null,
           }
         );
       const snap = await getDoc(doc(db, "users", patientId));
-      return { id: snap.id, ...snap.data() } as {
-        id: string;
-        fullName: string | null;
-        email: string | null;
-      };
+      return { id: snap.id, ...snap.data() } as { id: string } & Partial<UserDoc>;
     },
   });
+
+  // The PATIENT's effective focus list (doctor default, patient-overridable)
+  // — not the doctor's own preference, which has no focus-nutrient concept.
+  const patientFocusNutrients: TrackedNutrient[] = resolveEffectiveFocusNutrients(
+    profile.data ?? {},
+  );
 
   const meals = useQuery({
     queryKey: ["doctor", "meals", patientId],
@@ -91,6 +107,12 @@ function PatientView() {
         </h1>
         <p className="text-sm text-muted-foreground">{profile.data?.email}</p>
       </div>
+      <DoctorFocusNutrientsCard
+        patientId={patientId}
+        doctorFocusNutrients={profile.data?.doctorFocusNutrients}
+        patientHasOverride={profile.data?.patientFocusNutrients != null}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["profile", patientId] })}
+      />
       <Tabs defaultValue="meals">
         <TabsList className="mb-4">
           <TabsTrigger value="meals">Meals</TabsTrigger>
@@ -115,7 +137,7 @@ function PatientView() {
                   >
                     <p className="text-sm font-medium">{m.mealLabel ?? "Untitled meal"}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(m.eatenAt).toLocaleString()}
+                      {mealTimingLabel(m)} · {new Date(m.eatenAt).toLocaleString()}
                     </p>
                   </button>
                 ))
@@ -123,19 +145,104 @@ function PatientView() {
                 <p className="text-sm text-muted-foreground">No meals yet.</p>
               )}
             </div>
-            {active ? <MealReview key={active.id} meal={active} patientId={patientId} /> : null}
+            {active ? (
+              <MealReview
+                key={active.id}
+                meal={active}
+                patientId={patientId}
+                focusNutrients={patientFocusNutrients}
+              />
+            ) : null}
           </div>
         </TabsContent>
         <TabsContent value="patterns">
-          <PatternsPanel meals={meals.data ?? []} />
+          <PatternsPanel
+            meals={meals.data ?? []}
+            cuisines={resolveEffectiveCuisines(profile.data ?? {})}
+            focusNutrients={patientFocusNutrients}
+            detailLevel={detailLevel}
+          />
         </TabsContent>
       </Tabs>
     </AppShell>
   );
 }
 
-function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
+// The doctor's default focus-nutrient list for this patient — principle 7
+// ("the doctor's rubric is the lens"), further tunable by the patient
+// themselves in their own Settings. See docs/ETHOS.md principle 3.
+function DoctorFocusNutrientsCard({
+  patientId,
+  doctorFocusNutrients,
+  patientHasOverride,
+  onSaved,
+}: {
+  patientId: string;
+  doctorFocusNutrients: TrackedNutrient[] | undefined;
+  patientHasOverride: boolean;
+  onSaved: () => void;
+}) {
+  const setDoctorFocusNutrientsFn = useServerFn(setDoctorFocusNutrients);
+  const [selected, setSelected] = useState<TrackedNutrient[]>(
+    doctorFocusNutrients ?? DEFAULT_FOCUS_NUTRIENTS,
+  );
+  const [saving, setSaving] = useState(false);
+
+  // Re-sync when the patient's saved default loads/changes (e.g. after a
+  // save elsewhere invalidates the profile query).
+  useEffect(() => {
+    setSelected(doctorFocusNutrients ?? DEFAULT_FOCUS_NUTRIENTS);
+  }, [doctorFocusNutrients]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (isMockMode) {
+        setMockDoctorFocusNutrients(selected);
+      } else {
+        await setDoctorFocusNutrientsFn({ data: { patientId, focusNutrients: selected } });
+      }
+      toast.success("Focus nutrients updated");
+      onSaved();
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to save focus nutrients"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="mb-6 p-4">
+      <p className="mb-1 text-sm font-semibold">Focus nutrients</p>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Emphasized on every reading and in Simple mode. Every nutrient is still evaluated regardless
+        of what's checked here.
+      </p>
+      {patientHasOverride && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          This patient has customized their own focus list — your default won't currently show for
+          them.
+        </p>
+      )}
+      <FocusNutrientPicker value={selected} onChange={setSelected} />
+      <Button size="sm" className="mt-4" onClick={save} disabled={saving}>
+        Save
+      </Button>
+    </Card>
+  );
+}
+
+function MealReview({
+  meal,
+  patientId,
+  focusNutrients,
+}: {
+  meal: Meal;
+  patientId: string;
+  focusNutrients: TrackedNutrient[];
+}) {
   const qc = useQueryClient();
+  const { detailLevel } = useAuth();
   const analyzeFn = useServerFn(analyzeMeal);
   const [notes, setNotes] = useState<string>(meal.doctorNotes ?? "");
   const [saving, setSaving] = useState(false);
@@ -184,11 +291,13 @@ function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
         </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {new Date(meal.eatenAt).toLocaleString()}
+            {mealTimingLabel(meal)} · {new Date(meal.eatenAt).toLocaleString()}
           </p>
           <p className="font-semibold">{meal.mealLabel ?? "Untitled meal"}</p>
           {meal.patientNotes && (
-            <p className="mt-2 text-sm text-muted-foreground">Patient note: {meal.patientNotes}</p>
+            <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
+              Patient note: {meal.patientNotes}
+            </p>
           )}
           <div className="mt-4 space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -224,7 +333,14 @@ function MealReview({ meal, patientId }: { meal: Meal; patientId: string }) {
             Re-analyze with current rubric
           </Button>
         </div>
-        <AnalysisView analysis={meal.analysis} mealId={meal.id} editable onSaved={invalidate} />
+        <AnalysisView
+          analysis={meal.analysis}
+          mealId={meal.id}
+          editable
+          onSaved={invalidate}
+          initialDetailLevel={detailLevel}
+          focusNutrients={focusNutrients}
+        />
       </Card>
     </div>
   );

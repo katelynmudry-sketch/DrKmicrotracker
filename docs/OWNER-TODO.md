@@ -113,6 +113,13 @@ container), so **none of it has been visually confirmed.** Walk through:
   for meal photos.
 - [ ] Preview mode (no env vars at all) still shows the full mock experience — worth
   reconfirming on a separate throwaway deployment or just locally with `.env` removed.
+- [ ] **Nutrient panel expansion** (docs/PLAN.md's Post-demo milestone #2, new this
+  session): log a real meal photo and confirm the reading covers the full ~27-nutrient
+  set sensibly (not just the original 9), selenium appears normally, and Detailed
+  mode's per-nutrient ranges stay wide/honest rather than falsely precise. Then check
+  actual token usage/latency in the Anthropic dashboard or response metadata and adjust
+  `max_tokens`/`ANALYSIS_TIMEOUT_MS` in `src/lib/meals.functions.ts` if needed — both
+  were raised/estimated without a live call to measure against.
 
 ## What's genuinely blocked vs. what to just try
 

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
 import { Route as AuthenticatedPantryRouteImport } from './routes/_authenticated/pantry'
 import { Route as AuthenticatedGroceryListRouteImport } from './routes/_authenticated/grocery-list'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
   id: '/patterns',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/grocery-list': typeof AuthenticatedGroceryListRoute
   '/pantry': typeof AuthenticatedPantryRoute
   '/patterns': typeof AuthenticatedPatternsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/doctor/': typeof AuthenticatedDoctorIndexRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/grocery-list': typeof AuthenticatedGroceryListRoute
   '/pantry': typeof AuthenticatedPantryRoute
   '/patterns': typeof AuthenticatedPatternsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/doctor': typeof AuthenticatedDoctorIndexRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/grocery-list': typeof AuthenticatedGroceryListRoute
   '/_authenticated/pantry': typeof AuthenticatedPantryRoute
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/doctor/rubrics': typeof AuthenticatedDoctorRubricsRoute
   '/_authenticated/meals/$mealId': typeof AuthenticatedMealsMealIdRoute
   '/_authenticated/doctor/': typeof AuthenticatedDoctorIndexRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/grocery-list'
     | '/pantry'
     | '/patterns'
+    | '/settings'
     | '/doctor/rubrics'
     | '/meals/$mealId'
     | '/doctor/'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/grocery-list'
     | '/pantry'
     | '/patterns'
+    | '/settings'
     | '/doctor/rubrics'
     | '/meals/$mealId'
     | '/doctor'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/grocery-list'
     | '/_authenticated/pantry'
     | '/_authenticated/patterns'
+    | '/_authenticated/settings'
     | '/_authenticated/doctor/rubrics'
     | '/_authenticated/meals/$mealId'
     | '/_authenticated/doctor/'
@@ -197,6 +209,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/patterns': {
       id: '/_authenticated/patterns'
@@ -286,6 +305,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGroceryListRoute: typeof AuthenticatedGroceryListRoute
   AuthenticatedPantryRoute: typeof AuthenticatedPantryRoute
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedMealsMealIdRoute: typeof AuthenticatedMealsMealIdRoute
 }
 
@@ -295,6 +315,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGroceryListRoute: AuthenticatedGroceryListRoute,
   AuthenticatedPantryRoute: AuthenticatedPantryRoute,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedMealsMealIdRoute: AuthenticatedMealsMealIdRoute,
 }
 

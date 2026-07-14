@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,14 +33,24 @@ import {
   LineChart,
   Loader2,
   NotebookPen,
+  Settings,
   ShoppingCart,
   Sparkles,
   Stethoscope,
+  Upload,
 } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { NUTRIENT_LABELS, TIER_LABELS, type Meal, type MealStatus } from "@/lib/analysis.schema";
 import { errorMessage } from "@/lib/error-message";
 import { prepareImage } from "@/lib/image-prep";
+import {
+  MEAL_TIMINGS,
+  MEAL_TIMING_LABELS,
+  inferMealTiming,
+  mealTimingLabel,
+  toDatetimeLocalValue,
+  type MealTiming,
+} from "@/lib/meal-timing";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Your meals — Dr. K's Kitchen" }] }),
@@ -55,14 +65,44 @@ const TextMealSchema = z.object({
 type TextMealValues = z.infer<typeof TextMealSchema>;
 
 function PatientDashboard() {
-  const { user, isDoctor } = useAuth();
+  const { user, isDoctor, detailLevel } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const analyzeFn = useServerFn(analyzeMeal);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Shared between both tabs — when a meal was eaten. Defaults to right now;
+  // the patient can move it, and the breakfast/lunch/dinner/snack guess
+  // re-derives from whatever time they land on, unless they've since tapped a
+  // label directly (timingTouched).
+  const [eatenAt, setEatenAt] = useState(() => new Date());
+  const [mealTiming, setMealTiming] = useState<MealTiming>(() => inferMealTiming(new Date()));
+  const [timingTouched, setTimingTouched] = useState(false);
+
+  const handleTimeChange = (value: string) => {
+    if (!value) return;
+    const next = new Date(value);
+    if (Number.isNaN(next.getTime())) return;
+    setEatenAt(next);
+    if (!timingTouched) setMealTiming(inferMealTiming(next));
+  };
+
+  const handleTimingChange = (timing: MealTiming) => {
+    setTimingTouched(true);
+    setMealTiming(timing);
+  };
+
+  const resetTiming = () => {
+    const now = new Date();
+    setEatenAt(now);
+    setMealTiming(inferMealTiming(now));
+    setTimingTouched(false);
+  };
 
   const textForm = useForm<TextMealValues>({
     resolver: zodResolver(TextMealSchema),
@@ -102,8 +142,13 @@ function PatientDashboard() {
       });
   };
 
+  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setPhotoFile(file);
+  };
+
   const upload = async () => {
-    const file = fileRef.current?.files?.[0];
+    const file = photoFile;
     if (!file || !user) return toast.error("Select a meal photo first");
     if (isMockMode) return toast.info("Preview mode — uploads aren't saved.");
     setUploading(true);
@@ -119,17 +164,21 @@ function PatientDashboard() {
         inputMethod: "photo",
         mealDescription: null,
         mealLabel: label || null,
+        mealTiming,
         patientNotes: notes || null,
         doctorNotes: null,
         status: "pending",
         analysis: null,
-        eatenAt: new Date().toISOString(),
+        eatenAt: eatenAt.toISOString(),
         createdAt: serverTimestamp(),
       });
       toast.success("Photo uploaded — reading it now…");
       setLabel("");
       setNotes("");
-      if (fileRef.current) fileRef.current.value = "";
+      setPhotoFile(null);
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      resetTiming();
       afterLog(mealRef.id);
     } catch (e) {
       toast.error(errorMessage(e, "Upload failed"));
@@ -149,15 +198,17 @@ function PatientDashboard() {
         inputMethod: "text",
         mealDescription: values.mealDescription,
         mealLabel: values.mealLabel || null,
+        mealTiming,
         patientNotes: values.patientNotes || null,
         doctorNotes: null,
         status: "pending",
         analysis: null,
-        eatenAt: new Date().toISOString(),
+        eatenAt: eatenAt.toISOString(),
         createdAt: serverTimestamp(),
       });
       toast.success("Meal logged — reading it now…");
       textForm.reset();
+      resetTiming();
       afterLog(mealRef.id);
     } catch (e) {
       toast.error(errorMessage(e, "Logging failed"));
@@ -182,6 +233,12 @@ function PatientDashboard() {
               Pantry
             </Link>
           </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/settings">
+              <Settings className="mr-1 h-4 w-4" />
+              Settings
+            </Link>
+          </Button>
           {isDoctor && (
             <Button size="sm" variant="outline" asChild>
               <Link to="/doctor">
@@ -199,6 +256,30 @@ function PatientDashboard() {
           <p className="mb-4 text-xs text-muted-foreground">
             Snap a photo or describe what you ate. We'll have a reading ready shortly.
           </p>
+          <div className="mb-4 space-y-2">
+            <Label className="mb-1.5">When did you eat this?</Label>
+            <Input
+              type="datetime-local"
+              value={toDatetimeLocalValue(eatenAt)}
+              onChange={(e) => handleTimeChange(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-1.5">
+              {MEAL_TIMINGS.map((timing) => (
+                <button
+                  key={timing}
+                  type="button"
+                  onClick={() => handleTimingChange(timing)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                    mealTiming === timing
+                      ? "bg-accent/15 text-accent-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {MEAL_TIMING_LABELS[timing]}
+                </button>
+              ))}
+            </div>
+          </div>
           <Tabs defaultValue="photo">
             <TabsList className="mb-3 grid w-full grid-cols-2">
               <TabsTrigger value="photo">Photo</TabsTrigger>
@@ -208,7 +289,50 @@ function PatientDashboard() {
               <div className="space-y-3">
                 <div>
                   <Label className="mb-1.5">Photo</Label>
-                  <Input ref={fileRef} type="file" accept="image/*" capture="environment" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <Camera className="h-4 w-4" />
+                      Take a photo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload a photo
+                    </Button>
+                  </div>
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                  {detailLevel === "detailed" && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      Tip: pop a spoon, coin, credit card, or your hand next to the plate — it helps
+                      us judge portion size more precisely.
+                    </p>
+                  )}
+                  {photoFile && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      Selected: {photoFile.name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="mb-1.5">Label (optional)</Label>
@@ -312,7 +436,7 @@ function PatientDashboard() {
                       <div>
                         <p className="text-sm font-semibold">{m.mealLabel ?? "Untitled meal"}</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(m.eatenAt).toLocaleString()}
+                          {mealTimingLabel(m)} · {new Date(m.eatenAt).toLocaleString()}
                         </p>
                       </div>
                       <StatusBadge status={m.status} />

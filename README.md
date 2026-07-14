@@ -12,9 +12,10 @@ Practitioner: Dr. Katelyn Mudry, ND — Kimberley & Cranbrook, BC.
   micronutrients, protein, fiber, colour, variety.
 - **No grades.** No 1–10 scores, no red/yellow/green verdicts. Protocol fit and
   nutrient levels are qualitative tiers only ("Aligned," "Strong source").
-- **Micronutrients are the plot**, not sugar or calories — iron (+ the vitamin C
-  pairing rule), B12, vitamin D, calcium, omega-3, iodine, zinc, choline,
-  magnesium, protein, fiber. Selenium is never flagged, by design.
+- **Micronutrients are the plot**, not sugar or calories — a full nutrition-label
+  -style set (minerals, fat-soluble vitamins, B-vitamins, vitamin C — including
+  selenium), plus protein and fiber. Doctor- and patient-set "focus nutrients"
+  determine what's emphasized on a reading, not what's evaluated.
 - **Absorption intelligence** — vitamin C with iron, coffee/tea timing, cooked
   brassicas, oxalates vs. calcium, phytates and soaking/sprouting — surfaced as
   specific tips on real meals.
@@ -33,9 +34,9 @@ and what's shipped so far, phase by phase).
 - **Anthropic API** directly (no separate nutrition database) — Claude is the
   entire reading engine, using tool-use with a strict JSON schema
   (`src/lib/analysis.schema.ts`) so a reading can't drift outside the ethos (the
-  schema has no calories field and a closed nutrient enum that excludes
-  selenium). The AI's clinical positions and voice live in
-  `src/lib/clinical-spine.ts` — edit wording there, never inline in the engine.
+  schema has no calories field, ever). The AI's clinical positions and voice
+  live in `src/lib/clinical-spine.ts` — edit wording there, never inline in
+  the engine.
 - **TanStack Start** (React 19 + TanStack Router/Query) deployed on **Vercel**
   via Nitro's `vercel` preset. Server functions (`src/lib/*.functions.ts`) use
   the Firebase Admin SDK and are the only thing that ever writes a meal's

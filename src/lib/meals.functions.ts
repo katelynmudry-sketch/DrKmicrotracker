@@ -12,12 +12,17 @@ import {
   RECORD_READING_TOOL,
   RECORD_READING_TOOL_NAME,
   buildSystemPrompt,
+  PATIENT_ADDITION_PREFIX,
 } from "@/lib/clinical-spine";
+import { resolveEffectiveFocusNutrients } from "@/lib/users.schema";
 
 // Sized against the Vercel function's 60s maxDuration (see vite.config.ts):
 // a failed first attempt plus the one corrective retry is at most 2x this,
 // leaving headroom for the photo download/upload and Firestore writes around
-// it. Do not raise this without also raising maxDuration.
+// it. Do not raise this without also raising maxDuration. NOTE: max_tokens
+// above was raised for the ~27-nutrient schema (was 9) — a larger structured
+// response takes longer to generate, so this budget may no longer leave
+// enough headroom. Re-measure real latency before trusting this number.
 const ANALYSIS_TIMEOUT_MS = 25_000;
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 
@@ -78,7 +83,13 @@ async function callAnalysisModel(
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 2048,
+    // Raised from 2048 now that TRACKED_NUTRIENTS has ~27 entries (was 9) —
+    // each micronutrients[] item is a full {nutrient, level, from,
+    // amount_estimate} object, so this part of the output roughly tripled.
+    // Re-measure real usage once live API access exists and tune this and
+    // ANALYSIS_TIMEOUT_MS/vite.config.ts's maxDuration together — this is an
+    // estimate, not a measured figure.
+    max_tokens: 4096,
     system: systemPrompt,
     messages,
     tools: [RECORD_READING_TOOL],
@@ -95,7 +106,7 @@ async function callAnalysisModel(
   return parsed.data;
 }
 
-async function runAnalysis(mealId: string, userId: string) {
+async function runAnalysis(mealId: string, userId: string, patientAddition?: string) {
   const { adminDb, adminStorage } = await import("@/integrations/firebase/admin.server");
 
   const mealRef = adminDb.collection("meals").doc(mealId);
@@ -104,6 +115,19 @@ async function runAnalysis(mealId: string, userId: string) {
   const meal = mealSnap.data()!;
 
   await assertCanAccessMeal(adminDb, userId, meal.patientId);
+
+  // The patient can't write patientNotes directly (firestore.rules only lets
+  // a doctor update doctorNotes on an existing meal) — folding a confirmed
+  // plate addition in here, server-side, is the only write path. Appended
+  // (not overwritten) so multiple additions over time all survive, and
+  // labeled so the prompt (see PATIENT_ADDITION_GUIDANCE in clinical-spine.ts)
+  // can tell a real addition apart from ordinary commentary.
+  let patientNotes: string | null = meal.patientNotes ?? null;
+  if (patientAddition) {
+    const line = `${PATIENT_ADDITION_PREFIX} ${patientAddition}`;
+    patientNotes = patientNotes ? `${patientNotes}\n\n${line}` : line;
+    await mealRef.update({ patientNotes });
+  }
 
   await mealRef.update({ status: "analyzing", statusError: null });
 
@@ -118,7 +142,11 @@ async function runAnalysis(mealId: string, userId: string) {
         return `### ${r.title}\n${r.description ?? ""}\n${r.extractedText ?? ""}`.trim();
       })
       .join("\n\n---\n\n");
-    const systemPrompt = buildSystemPrompt(rubricContext);
+
+    const patientSnap = await adminDb.collection("users").doc(meal.patientId).get();
+    const focusNutrients = resolveEffectiveFocusNutrients(patientSnap.data() ?? {});
+
+    const systemPrompt = buildSystemPrompt(rubricContext, focusNutrients);
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("AI service is not configured");
@@ -129,7 +157,7 @@ async function runAnalysis(mealId: string, userId: string) {
 
     let content: Anthropic.MessageParam["content"];
     if (inputMethod === "text") {
-      const userText = `Patient label: ${meal.mealLabel ?? "(none)"}\nPatient notes: ${meal.patientNotes ?? "(none)"}\nMeal description (no photo available): ${meal.mealDescription}\nAnalyze this described meal. Make reasonable estimates and note any ambiguity in \`uncertainty\`.`;
+      const userText = `Patient label: ${meal.mealLabel ?? "(none)"}\nPatient notes: ${patientNotes ?? "(none)"}\nMeal description (no photo available): ${meal.mealDescription}\nAnalyze this described meal. Make reasonable estimates and note any ambiguity in \`uncertainty\`.`;
       content = [{ type: "text", text: userText }];
     } else {
       const file = adminStorage.bucket().file(meal.storagePath);
@@ -137,7 +165,7 @@ async function runAnalysis(mealId: string, userId: string) {
       const [meta] = await file.getMetadata();
       const mime = meta.contentType || "image/jpeg";
       const base64 = buf.toString("base64");
-      const userText = `Patient label: ${meal.mealLabel ?? "(none)"}\nPatient notes: ${meal.patientNotes ?? "(none)"}\nPlease analyze the attached meal photo.`;
+      const userText = `Patient label: ${meal.mealLabel ?? "(none)"}\nPatient notes: ${patientNotes ?? "(none)"}\nPlease analyze the attached meal photo.`;
       content = [
         { type: "text", text: userText },
         {
@@ -190,17 +218,26 @@ async function runAnalysis(mealId: string, userId: string) {
   }
 }
 
-const AnalyzeInput = z.object({ mealId: z.string().min(1) });
+const AnalyzeInput = z.object({
+  mealId: z.string().min(1),
+  // Set only by AnalysisView's "I added: ___" confirm control (patient-only)
+  // — folded into patientNotes server-side before re-scoring. See
+  // PATIENT_ADDITION_PREFIX/PATIENT_ADDITION_GUIDANCE in clinical-spine.ts.
+  patientAddition: z.string().min(1).max(300).optional(),
+});
 
 // Runs the reading. Used for the initial automatic analysis right after a
 // meal is logged, the patient/doctor "Retry" action on a failed or stuck
-// meal, and the doctor's "Re-analyze with current rubric" action — all three
-// are the same operation (score this meal against the currently active
-// rubrics), just triggered from different places.
+// meal, the doctor's "Re-analyze with current rubric" action, and the
+// patient's "Update my reading" confirm-addition action — all four are the
+// same operation (score this meal against the currently active rubrics),
+// just triggered from different places.
 export const analyzeMeal = createServerFn({ method: "POST" })
   .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => AnalyzeInput.parse(input))
-  .handler(async ({ data, context }) => runAnalysis(data.mealId, context.userId));
+  .handler(async ({ data, context }) =>
+    runAnalysis(data.mealId, context.userId, data.patientAddition),
+  );
 
 const UpdateAnalysisInput = z.object({
   mealId: z.string().min(1),

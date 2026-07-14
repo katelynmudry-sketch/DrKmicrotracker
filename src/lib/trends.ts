@@ -2,7 +2,9 @@
 // takes the meals a caller already fetched and returns plain data for charts.
 // Everything here reports counts and qualitative coverage only (see
 // CLAUDE.md's hard rules) — there is deliberately no "percentage" or "0-100"
-// value exposed to the UI.
+// value exposed to the UI. (src/lib/nutrient-profile.ts is a separate,
+// narrowly scoped exception for the daily Nutrient Profile feature — that
+// file's percentage does not loosen this one's "counts only" invariant.)
 import {
   TRACKED_NUTRIENTS,
   NUTRIENT_LABELS,
@@ -32,19 +34,30 @@ const GAP_COVERAGE_RATIO = 0.4;
 // as a strong source. A nutrient that clears the bar in fewer than
 // GAP_COVERAGE_RATIO of readings is a gap — a candidate for "Try something
 // new" (see nutrient-reference.ts), never a warning.
-export function computeNutrientCoverage(meals: Meal[], days = 14): NutrientCoverage[] {
+//
+// `nutrients` defaults to every tracked nutrient, but callers scope this to a
+// patient's focus list (see PatternsPanel) — with the tracked set now ~27
+// long, showing coverage for all of them would undermine the same
+// "don't overwhelm" goal that motivates Simple mode elsewhere in the app.
+export function computeNutrientCoverage(
+  meals: Meal[],
+  days = 14,
+  nutrients: readonly TrackedNutrient[] = TRACKED_NUTRIENTS,
+): NutrientCoverage[] {
   const readings = analyzedInWindow(meals, days);
   const totalReadings = readings.length;
 
-  return TRACKED_NUTRIENTS.map((nutrient) => {
-    const strongCount = readings.filter((m) =>
-      m.analysis!.micronutrients.some((n) => n.nutrient === nutrient && n.level === "strong"),
-    ).length;
-    const isGap = totalReadings > 0 && strongCount / totalReadings < GAP_COVERAGE_RATIO;
-    return { nutrient, label: NUTRIENT_LABELS[nutrient], strongCount, totalReadings, isGap };
-  }).sort(
-    (a, b) => a.strongCount / (a.totalReadings || 1) - b.strongCount / (b.totalReadings || 1),
-  );
+  return nutrients
+    .map((nutrient) => {
+      const strongCount = readings.filter((m) =>
+        m.analysis!.micronutrients.some((n) => n.nutrient === nutrient && n.level === "strong"),
+      ).length;
+      const isGap = totalReadings > 0 && strongCount / totalReadings < GAP_COVERAGE_RATIO;
+      return { nutrient, label: NUTRIENT_LABELS[nutrient], strongCount, totalReadings, isGap };
+    })
+    .sort(
+      (a, b) => a.strongCount / (a.totalReadings || 1) - b.strongCount / (b.totalReadings || 1),
+    );
 }
 
 // Lightweight keyword heuristics, not a botanical or nutrition database — good

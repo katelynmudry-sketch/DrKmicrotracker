@@ -16,10 +16,23 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | Suggestions | **Worth trying** |
 | Doctor's notes | **Notes from Dr. K** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
-| Micronutrient levels | **Strong source / Present / A little light** (tiers, not milligrams) |
+| Micronutrient levels (Simple mode) | **Strong source / Present / A little light** (the headline tier — always shown first, tiers not milligrams) |
+| Micronutrient levels (Detailed mode) | **Strong source · ~3–5mg** (tier + an honest range, never a bare decimal) |
+| Detail toggle | **Simple / Detailed** |
+| Estimate grounding | "Grounded by your photo's reference object" / "A rough visual estimate" |
+| A food suggestion's real amount | a plain number with its unit, e.g. **"about 6.6mg"** — detail under the reason, never the headline |
+| A food suggestion's progress toward a target | **"about two-thirds of a typical day's target"** — never "% RDI" or clinical target-tracking language (distinct from the Nutrient Profile page's capped percentage below, which is a daily rollup, not a single food) |
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" |
+| Nutrient emphasis | **Focus nutrients** |
+| Daily rollup | **Nutrient Profile** |
+| Profile bands (Simple mode) | **A good focus for today / Building up / Well covered** (first draft — needs the same "tuned with Katelyn" pass the tier labels got) |
+| Profile amount (Detailed mode) | **~9mg · 50%** (amount + percentage, capped display at "100%+", never "exceeded") |
+| Profile caption | "A rough estimate against general adult reference values — not personalized to you; we don't collect age, sex, or weight." |
+| Reset patient override | "Reset to your doctor's picks" |
+| Region question | **Where you currently live** |
+| Heritage question | **Food heritage** |
 
 ## Microcopy bank (preserve verbatim)
 
@@ -32,6 +45,15 @@ See `docs/ETHOS.md` for the principles behind these choices.
 - "Considered, not clinical."
 - "Food is medicine — but only when you can actually see what it's doing for you."
   — Dr. Katelyn Mudry, ND
+- "Pop a spoon, coin, credit card, or your hand next to the plate — it helps us
+  judge portion size more precisely." (reference-object photo tip, Detailed mode
+  only, always optional — never a blocking step)
+- "Emphasized on every reading and in Simple mode. Every nutrient is still
+  evaluated regardless of what's checked here." (focus-nutrient picker caption,
+  doctor and patient screens — makes clear focus never limits what's assessed)
+- "This patient has customized their own focus list — your default won't
+  currently show for them." (doctor's focus-nutrient screen, shown only when a
+  patient override is active)
 
 ## Do / don't
 
@@ -39,11 +61,13 @@ See `docs/ETHOS.md` for the principles behind these choices.
 |---|---|
 | "You exceeded your sugar target." | "This one leaned sweet — worth pairing with protein next time." |
 | "Rubric score: 6/10" | "Protocol fit: Getting there" |
-| "320 kcal, 12g protein" | "A strong source of protein, present fiber" |
+| "320 kcal, a numeric protocol score" | "A strong source of protein, present fiber, or (Detailed mode) an approximate range like ~3–5mg" |
 | "Low iron — warning" | "Iron's a little light this week — pumpkin seeds or blackstrap molasses would help" |
-| "Selenium: low" | (never mention selenium) |
 | "You forgot your vegetables" | "Worth trying: adding a plant at this meal" |
 | Red/yellow/green badges | Plain qualitative tiers, no colour-as-verdict |
+| "Iron: low" (bare number, no context) | "Iron's a little light today — about 3mg, roughly a third of a typical day's target. Pumpkin seeds or blackstrap molasses would help close the gap." |
+| "You're at 33% of your RDI" | "About a third of the way to a typical day's target" |
+| "140% of your potassium — you exceeded it" | "~6100mg · 100%+" (capped display, no "exceeded" language, ever) |
 
 ## Style notes
 

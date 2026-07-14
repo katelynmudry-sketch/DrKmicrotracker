@@ -23,11 +23,12 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, Plus } from "lucide-react";
-import type { Meal } from "@/lib/analysis.schema";
+import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 import { GROCERY_REASON_LABELS } from "@/lib/pantry.schema";
 import { computeNutrientCoverage } from "@/lib/trends";
-import { splitFoodsForNutrient } from "@/lib/nutrient-reference";
+import { splitFoodsForNutrient, type NutrientFood } from "@/lib/nutrient-reference";
+import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
 import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/grocery-list")({
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/grocery-list")({
 });
 
 function GroceryListPage() {
-  const { user } = useAuth();
+  const { user, effectiveCuisines } = useAuth();
   const qc = useQueryClient();
   const [newItem, setNewItem] = useState("");
 
@@ -128,18 +129,23 @@ function GroceryListPage() {
     const listedNames = new Set((groceryItems.data ?? []).map((i) => i.name.toLowerCase()));
     const gaps = computeNutrientCoverage(meals.data).filter((c) => c.isGap);
     const seen = new Set<string>();
-    const suggested: { name: string; reason: string }[] = [];
+    const suggested: (NutrientFood & { nutrient: TrackedNutrient })[] = [];
     for (const gap of gaps) {
-      const { tryNew } = splitFoodsForNutrient(gap.nutrient, activePantryNames);
+      const { tryNew } = splitFoodsForNutrient(
+        gap.nutrient,
+        activePantryNames,
+        3,
+        effectiveCuisines,
+      );
       for (const food of tryNew) {
         const key = food.name.toLowerCase();
         if (seen.has(key) || listedNames.has(key)) continue;
         seen.add(key);
-        suggested.push(food);
+        suggested.push({ ...food, nutrient: gap.nutrient });
       }
     }
     return suggested;
-  }, [meals.data, pantryItems.data, groceryItems.data]);
+  }, [meals.data, pantryItems.data, groceryItems.data, effectiveCuisines]);
 
   return (
     <AppShell
@@ -217,6 +223,13 @@ function GroceryListPage() {
                   <div>
                     <span className="font-medium">{s.name}</span>
                     <span className="text-muted-foreground"> — {s.reason}</span>
+                    {s.amount != null && (
+                      <p className="text-xs text-muted-foreground">
+                        {s.servingSize ? `${s.servingSize} · ` : ""}
+                        about {formatAmount(s.nutrient, s.amount)} —{" "}
+                        {rdiProgressPhrase(s.nutrient, s.amount)}
+                      </p>
+                    )}
                   </div>
                   <Button
                     size="sm"
