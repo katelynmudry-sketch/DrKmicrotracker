@@ -131,7 +131,7 @@ function Landing() {
             <Feature
               icon={<BookOpenCheck className="h-5 w-5" />}
               title="Built around your protocol"
-              body="Every reading is scored against the dietary rubric your ND actually wrote — not a generic database."
+              body="Every reading is scored against Dr. K's clinical positions — not a generic nutrition database."
             />
             <Feature
               icon={<TrendingUp className="h-5 w-5" />}
@@ -141,7 +141,7 @@ function Landing() {
             <Feature
               icon={<Lock className="h-5 w-5" />}
               title="Private, always"
-              body="Your meals and notes stay between you and your care team. Full stop."
+              body="Your meals and notes stay private to your account. Full stop."
             />
             <Feature
               icon={<MessagesSquare className="h-5 w-5" />}
@@ -157,7 +157,7 @@ function Landing() {
               Let's see what your plate is telling us.
             </h2>
             <p className="mx-auto mt-4 max-w-md opacity-90">
-              Ask your naturopathic doctor for an invite, or sign in if you already have one.
+              Sign in or create an account to get started.
             </p>
             <Button size="lg" variant="secondary" className="mt-7" asChild>
               <Link to="/auth">Get started</Link>

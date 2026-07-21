@@ -141,8 +141,7 @@ function AuthPage() {
           </Button>
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          New accounts start as patient. Doctor access is granted to allowlisted emails
-          automatically, or by an existing doctor from the Patients page.
+          New accounts start as patient.
         </p>
       </div>
     </div>

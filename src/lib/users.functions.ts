@@ -4,6 +4,7 @@ import { z } from "zod";
 import { DETAIL_LEVELS } from "@/lib/users.schema";
 import { TRACKED_NUTRIENTS } from "@/lib/analysis.schema";
 import { CUISINE_OPTIONS } from "@/lib/cuisines";
+import { isDoctorFeatureEnabledServer } from "@/lib/doctor-feature.server";
 
 const SetDetailLevelInput = z.object({ detailLevel: z.enum(DETAIL_LEVELS) });
 
@@ -90,6 +91,7 @@ export const setFoodHeritage = createServerFn({ method: "POST" })
   });
 
 async function assertDoctor(userId: string) {
+  if (!isDoctorFeatureEnabledServer()) throw new Error("Forbidden: doctor only");
   const { adminDb } = await import("@/integrations/firebase/admin.server");
   const snap = await adminDb.collection("users").doc(userId).get();
   if (snap.data()?.role !== "doctor") throw new Error("Forbidden: doctor only");

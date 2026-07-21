@@ -6,6 +6,22 @@ real browser. This list pulls every one of those items into one place, in the or
 to do them — the phase-by-phase detail and "why" for each lives in `docs/PLAN.md` and
 `docs/SETUP.md` if you want it; this is just the checklist.
 
+## Doctor side is currently disabled (people-testing round)
+
+To test with real people before HIPAA compliance work is done, the entire doctor/
+admin side (doctor-role granting, patient list, review/annotation, rubric upload)
+is gated off by a code-level flag — nothing was deleted, and nobody (including you)
+can be granted the doctor role while it's off, regardless of `DOCTOR_EMAILS`.
+
+- [ ] **Leave `DOCTOR_FEATURE_ENABLED` and `VITE_DOCTOR_FEATURE_ENABLED` unset (or
+  `false`)** in every environment for this test round.
+- [ ] Do not set both to `"true"` again until HIPAA compliance work is actually done —
+  that flip re-enables real doctor review of patient data, which is exactly what
+  needs compliance first.
+- [ ] When that work is done and you're ready to re-enable it: set both env vars to
+  `"true"` in the deployment platform (e.g. Vercel project settings) and redeploy —
+  no code changes needed.
+
 ## 0. Just want to click through the UI? No accounts needed.
 
 The app has a built-in **preview/mock mode** (`src/lib/mock-mode.ts`) that activates
@@ -43,7 +59,9 @@ that, sections 1–4 below are the real setup.
 - [ ] Create an Anthropic API key at console.anthropic.com, set a spend cap (~$20/month
   to start), add it as `ANTHROPIC_API_KEY`. §4.
 - [ ] Set `DOCTOR_EMAILS` to your own email (comma-separated if more than one doctor)
-  so you land with doctor access on first sign-in. §5.
+  so you land with doctor access on first sign-in. §5. **Currently inert** — see
+  "Doctor side is currently disabled" above; it only takes effect once
+  `DOCTOR_FEATURE_ENABLED`/`VITE_DOCTOR_FEATURE_ENABLED` are set to `"true"`.
 
 ## 2. Publish the security rules (docs/SETUP.md §6, ~10 min)
 
@@ -68,7 +86,9 @@ page instead of "Preview mode," and signing up should land you as a doctor.
 - [ ] Import this repo into a new Vercel project.
 - [ ] Set every `.env` value as a Vercel environment variable — all of section 1 above,
   plus `DEMO_MODE=true` while you're demoing (see `docs/DEMO.md`; turn it off, or leave
-  it unset, once real patients are using the app).
+  it unset, once real patients are using the app). **Leave `DOCTOR_FEATURE_ENABLED` /
+  `VITE_DOCTOR_FEATURE_ENABLED` unset** for this test round (see "Doctor side is
+  currently disabled" above).
 - [ ] Deploy.
 - [ ] **Add the Vercel domain to Firebase → Authentication → Settings → Authorized
   domains.** Google sign-in silently fails on the deployed site until you do this —
@@ -91,6 +111,12 @@ container), so **none of it has been visually confirmed.** Walk through:
 - [ ] **Nothing anywhere shows a calorie or a numeric/lettered/colour-coded score.**
 - [ ] A patient account can't reach `/doctor/*`, can't see another patient's meals, and
   can't self-promote to doctor (should all be denied by the rules).
+- [ ] **Doctor side disabled by default:** while `DOCTOR_FEATURE_ENABLED` is unset,
+  `/doctor/*` shows the "Doctor access" denial card for everyone, including allowlisted
+  emails — that's expected for this test round, not a bug. The next two bullets
+  (allowlisted email landing as doctor, rubric upload/extraction) only apply once you've
+  deliberately set `DOCTOR_FEATURE_ENABLED`/`VITE_DOCTOR_FEATURE_ENABLED` to `"true"`
+  after HIPAA compliance work is done.
 - [ ] An allowlisted email lands as doctor automatically on first sign-in.
 - [ ] Upload a rubric PDF → **Extract from PDF** → review/edit → save → **Re-analyze
   with current rubric** on a meal reflects it.

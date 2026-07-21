@@ -3,8 +3,10 @@ import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
 import type Anthropic from "@anthropic-ai/sdk";
 import { DEFAULT_DETAIL_LEVEL } from "@/lib/users.schema";
+import { isDoctorFeatureEnabledServer } from "@/lib/doctor-feature.server";
 
 async function assertDoctor(userId: string) {
+  if (!isDoctorFeatureEnabledServer()) throw new Error("Forbidden: doctor only");
   const { adminDb } = await import("@/integrations/firebase/admin.server");
   const snap = await adminDb.collection("users").doc(userId).get();
   if (snap.data()?.role !== "doctor") throw new Error("Forbidden: doctor only");
@@ -107,6 +109,10 @@ export const promoteToDoctor = createServerFn({ method: "POST" })
  * Bootstrap a user's Firestore profile on first sign-in. Role is decided
  * server-side from the DOCTOR_EMAILS allowlist — never client-writable.
  * Additional doctors beyond the allowlist are added via promoteToDoctor.
+ *
+ * The doctor side is disabled for the current test round (see
+ * docs/OWNER-TODO.md) — while DOCTOR_FEATURE_ENABLED isn't "true", everyone
+ * is assigned "patient" regardless of DOCTOR_EMAILS.
  */
 export const ensureRole = createServerFn({ method: "POST" })
   .middleware([requireFirebaseAuth])
@@ -121,7 +127,10 @@ export const ensureRole = createServerFn({ method: "POST" })
       .split(",")
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean);
-    const role = email && doctorEmails.includes(email.toLowerCase()) ? "doctor" : "patient";
+    const role =
+      isDoctorFeatureEnabledServer() && email && doctorEmails.includes(email.toLowerCase())
+        ? "doctor"
+        : "patient";
 
     await ref.set({
       email,

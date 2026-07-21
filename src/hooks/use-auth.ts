@@ -24,6 +24,7 @@ import {
   onMockFoodHeritageChange,
 } from "@/lib/mock-mode";
 import { MOCK_PATIENT_ID } from "@/lib/mock-data";
+import { isDoctorFeatureEnabled } from "@/lib/doctor-feature";
 import { ensureRole } from "@/lib/rubrics.functions";
 import {
   setDetailLevel,
@@ -182,7 +183,10 @@ export function useAuth() {
   return {
     user,
     role,
-    isDoctor: role === "doctor",
+    // The doctor side is disabled for this test round (see
+    // docs/OWNER-TODO.md) — gating here cascades to every doctor-only route
+    // and UI element that keys off isDoctor, without touching them directly.
+    isDoctor: role === "doctor" && isDoctorFeatureEnabled,
     isPatient: role === "patient",
     detailLevel,
     setDetailLevelPreference,
