@@ -374,7 +374,7 @@ const HAND_CURATED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = {
     },
     { name: "Chia seeds", reason: "easy to add to oatmeal or a smoothie", storage: "dried" },
     { name: "Walnuts", reason: "a handful as a snack or salad topper", storage: "dried" },
-    { name: "Salmon or sardines", reason: "the most direct source", storage: "fresh" },
+    { name: "Salmon or sardines", reason: "the most direct source", storage: "dried" },
     { name: "Hemp seeds", reason: "a mild, easy sprinkle-on option", storage: "dried" },
     {
       name: "Flaxseed chutney (alsi)",
@@ -392,7 +392,7 @@ const HAND_CURATED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = {
       name: "Grilled mackerel or sardines",
       reason: "an easy, direct way to get the real thing",
       cuisines: ["Southeast Asian"],
-      storage: "fresh",
+      storage: "dried",
     },
     {
       name: "Muhammara (walnut and red pepper spread)",

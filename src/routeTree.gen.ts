@@ -9,12 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as InternalPreviewRouteImport } from './routes/internal-preview'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
 import { Route as AuthenticatedPantryRouteImport } from './routes/_authenticated/pantry'
+import { Route as AuthenticatedMealsHistoryRouteImport } from './routes/_authenticated/meals-history'
 import { Route as AuthenticatedGroceryListRouteImport } from './routes/_authenticated/grocery-list'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -23,6 +25,11 @@ import { Route as AuthenticatedMealsMealIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDoctorRubricsRouteImport } from './routes/_authenticated/doctor.rubrics'
 import { Route as AuthenticatedDoctorPatientPatientIdRouteImport } from './routes/_authenticated/doctor.patient.$patientId'
 
+const InternalPreviewRoute = InternalPreviewRouteImport.update({
+  id: '/internal-preview',
+  path: '/internal-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -52,6 +59,12 @@ const AuthenticatedPantryRoute = AuthenticatedPantryRouteImport.update({
   path: '/pantry',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMealsHistoryRoute =
+  AuthenticatedMealsHistoryRouteImport.update({
+    id: '/meals-history',
+    path: '/meals-history',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGroceryListRoute =
   AuthenticatedGroceryListRouteImport.update({
     id: '/grocery-list',
@@ -96,9 +109,11 @@ const AuthenticatedDoctorPatientPatientIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/internal-preview': typeof InternalPreviewRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/grocery-list': typeof AuthenticatedGroceryListRoute
+  '/meals-history': typeof AuthenticatedMealsHistoryRoute
   '/pantry': typeof AuthenticatedPantryRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -110,8 +125,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/internal-preview': typeof InternalPreviewRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grocery-list': typeof AuthenticatedGroceryListRoute
+  '/meals-history': typeof AuthenticatedMealsHistoryRoute
   '/pantry': typeof AuthenticatedPantryRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -125,9 +142,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/internal-preview': typeof InternalPreviewRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/_authenticated/grocery-list': typeof AuthenticatedGroceryListRoute
+  '/_authenticated/meals-history': typeof AuthenticatedMealsHistoryRoute
   '/_authenticated/pantry': typeof AuthenticatedPantryRoute
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -141,9 +160,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/internal-preview'
     | '/dashboard'
     | '/doctor'
     | '/grocery-list'
+    | '/meals-history'
     | '/pantry'
     | '/patterns'
     | '/settings'
@@ -155,8 +176,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/internal-preview'
     | '/dashboard'
     | '/grocery-list'
+    | '/meals-history'
     | '/pantry'
     | '/patterns'
     | '/settings'
@@ -169,9 +192,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/internal-preview'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctor'
     | '/_authenticated/grocery-list'
+    | '/_authenticated/meals-history'
     | '/_authenticated/pantry'
     | '/_authenticated/patterns'
     | '/_authenticated/settings'
@@ -185,10 +210,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InternalPreviewRoute: typeof InternalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/internal-preview': {
+      id: '/internal-preview'
+      path: '/internal-preview'
+      fullPath: '/internal-preview'
+      preLoaderRoute: typeof InternalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -229,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/pantry'
       fullPath: '/pantry'
       preLoaderRoute: typeof AuthenticatedPantryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meals-history': {
+      id: '/_authenticated/meals-history'
+      path: '/meals-history'
+      fullPath: '/meals-history'
+      preLoaderRoute: typeof AuthenticatedMealsHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/grocery-list': {
@@ -303,6 +343,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRouteWithChildren
   AuthenticatedGroceryListRoute: typeof AuthenticatedGroceryListRoute
+  AuthenticatedMealsHistoryRoute: typeof AuthenticatedMealsHistoryRoute
   AuthenticatedPantryRoute: typeof AuthenticatedPantryRoute
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -313,6 +354,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDoctorRoute: AuthenticatedDoctorRouteWithChildren,
   AuthenticatedGroceryListRoute: AuthenticatedGroceryListRoute,
+  AuthenticatedMealsHistoryRoute: AuthenticatedMealsHistoryRoute,
   AuthenticatedPantryRoute: AuthenticatedPantryRoute,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -326,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InternalPreviewRoute: InternalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
