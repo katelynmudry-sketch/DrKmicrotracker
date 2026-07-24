@@ -32,20 +32,21 @@ export default defineConfig({
     }),
     // Photo readings call Claude and can legitimately take a while; the
     // default Vercel function timeout is too short. See docs/PLAN.md Phase 5
-    // and meals.functions.ts's ANALYSIS_TIMEOUT_MS, which is sized to fit a
-    // failed-first-attempt-then-retry inside this budget.
-    nitro({ preset: "vercel", vercel: { functions: { maxDuration: 60 } } }),
+    // and analysis-engine.ts's ANALYSIS_TIMEOUT_MS (55s), which this must
+    // stay comfortably above. Requires a Vercel plan that supports
+    // maxDuration > 60s (Hobby caps at 60s) — see docs/OWNER-TODO.md.
+    nitro({ preset: "vercel", vercel: { functions: { maxDuration: 90 } } }),
     viteReact(),
     VitePWA({
       registerType: "autoUpdate",
       outDir: ".vercel/output/static",
       includeAssets: ["favicon.ico"],
       manifest: {
-        name: "Dr. K's Kitchen",
-        short_name: "Dr. K's Kitchen",
-        description: "Naturopathic meal readings for Dr. Katelyn Mudry's patients",
-        theme_color: "#d97a52",
-        background_color: "#fbf6ec",
+        name: "Vital Table",
+        short_name: "Vital Table",
+        description: "Meal readings for what's actually on your plate — no calories, no scores.",
+        theme_color: "#4a1a52",
+        background_color: "#faf7f0",
         display: "standalone",
         start_url: "/",
         icons: [

@@ -285,6 +285,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
         carb_quality: { type: "string", enum: CARB_QUALITIES },
       },
       required: ["protein_g", "fiber_g", "healthy_fat_sources", "carb_quality"],
+      additionalProperties: false,
     },
     micronutrients: {
       type: "array",
@@ -303,26 +304,30 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
               high: { type: "number" },
             },
             required: ["low", "high"],
+            additionalProperties: false,
           },
         },
         required: ["nutrient", "level", "from", "amount_estimate"],
+        additionalProperties: false,
       },
     },
     offered: {
       type: "array",
       items: { type: "string" },
-      description: "Nourishment highlights — what this meal offered.",
+      description:
+        "Nourishment highlights — what this meal offered. Up to 5, one short sentence each.",
     },
     worth_trying: {
       type: "array",
       items: { type: "string" },
-      description: "Food-first additions, framed as an opportunity, never a correction.",
+      description:
+        "Food-first additions, framed as an opportunity, never a correction. Up to 4, one short sentence each.",
     },
     absorption_notes: {
       type: "array",
       items: { type: "string" },
       description:
-        "Specific pairing/timing tips tied to this meal (vitamin C+iron, coffee/tea timing, etc).",
+        "Specific pairing/timing tips tied to this meal (vitamin C+iron, coffee/tea timing, etc). Up to 4, one short sentence each.",
     },
     protocol_fit: {
       type: "object",
@@ -331,6 +336,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
         note: { type: "string" },
       },
       required: ["tier", "note"],
+      additionalProperties: false,
     },
     uncertainty: {
       type: ["string", "null"],
@@ -338,8 +344,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
         "Plain statement of what couldn't be determined, or null if nothing was ambiguous.",
     },
     estimation_basis: {
-      type: ["string", "null"],
-      enum: [...ESTIMATION_BASES, null],
+      anyOf: [{ type: "string", enum: [...ESTIMATION_BASES] }, { type: "null" }],
       description:
         "'reference_object' if a familiar sized object (spoon, coin, card, hand) near the plate was used to calibrate amount_estimate ranges; 'unaided_estimate' otherwise (including text-only readings).",
     },
@@ -358,6 +363,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
     "uncertainty",
     "estimation_basis",
   ],
+  additionalProperties: false,
 } as const;
 
 // Firestore `meals/{mealId}` document shape. status/analysis/rubricIds are

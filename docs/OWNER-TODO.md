@@ -33,6 +33,64 @@ a real photo actually getting read by Claude, rubric PDF extraction, pantry phot
 scan/voice capture actually identifying items, data persisting across a refresh. For
 that, sections 1–4 below are the real setup.
 
+## 0b. The live meal-reading beta — a separate deployment, no accounts
+
+Section 0's Preview mode never calls Claude at all — it's fixture data only.
+For a beta test where people snap or describe a real meal and get back a
+**real** reading (no account, nothing saved to a database) before
+Firestore/Storage have gone through a PHI/PIPEDA review, that's a
+**different Vercel project** from both section 0 and your real Firebase
+deploy — one with only these environment variables set:
+
+- `ANTHROPIC_API_KEY` — your real key.
+- `PREVIEW_AI_ENABLED=true` — the deliberate on/off switch for this path.
+  Whenever Firebase isn't configured (see below), meal logging always
+  attempts a real reading — this flag (plus a real `ANTHROPIC_API_KEY`) is
+  the only thing that decides whether the attempt succeeds. Turn it on only
+  while you're actively demoing; leave it unset otherwise and the attempt
+  just fails with a readable error instead of a reading.
+- `VITE_PREVIEW_AI_DAILY_LIMIT` (optional) — readings per browser per day
+  before the app blocks further attempts on that device; defaults to 3.
+- **Leave every `VITE_FIREBASE_*` value unset on this deployment.** The
+  moment Firebase web config is present, Preview mode turns off and real
+  login/persistence take over — this whole no-account path stops running.
+  This has to be its own deploy, not a setting alongside your real one.
+- **Leave `VITE_PANTRY_ENABLED` unset too.** Pantry and the grocery list
+  aren't ready for beta testers — leaving this unset hides both from the
+  nav and redirects away from `/pantry`/`/grocery-list` if someone types the
+  URL directly. You still see them on your own machine by setting
+  `VITE_PANTRY_ENABLED=true` in a local `.env` while testing everything
+  ahead of full launch (see docs/PLAN.md).
+- [ ] **Confirm this Vercel project's plan supports a 90s function
+  `maxDuration`** (set in `vite.config.ts`). A real reading takes ~44s from
+  Claude; Vercel's Hobby plan caps functions at 60s, which isn't enough
+  headroom. If you're on Hobby, either upgrade this project to Pro (allows
+  up to 300s) before turning `PREVIEW_AI_ENABLED` on, or let me know and
+  I'll size `maxDuration`/`ANALYSIS_TIMEOUT_MS` back down to fit — readings
+  will just have less timeout headroom.
+
+What this gets you: a patient snaps a photo or describes a meal, gets a real
+Claude reading in the same reading UI, sees a "this isn't saved anywhere"
+banner, and can tap **Download as PDF** (the browser's own print-to-PDF, no
+extra software) to keep a copy — since there's nowhere else it's kept. The
+Patterns page and meal history stay empty in this mode; there's nothing
+persisted to chart.
+
+**Two things worth knowing, not just assuming:**
+
+- *"Nothing saved" is not "nothing sent."* The meal photo/description still
+  goes to Anthropic to get analyzed — same as your real deployment. What's
+  different is that it's never written to a database afterward. If the
+  demo audience needs the data to never leave the device at all, this
+  doesn't do that; only a purely on-device model would, and that's not
+  what this app uses.
+- *No login on this path means anyone with the URL can spend your Anthropic
+  credits* while `PREVIEW_AI_ENABLED` is on. The per-browser daily limit
+  (3/day by default) only slows down casual repeat use — it's not a
+  security control and is bypassable (incognito, clearing site data). Your
+  Anthropic account's own spend cap (section 1 below) is the real backstop
+  — keep it in place and keep this flag off outside a supervised demo.
+
 ## 1. Accounts + environment (docs/SETUP.md, ~45 min)
 
 - [ ] Create a Firebase project — Auth (email/password + Google), Firestore
