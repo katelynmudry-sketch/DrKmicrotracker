@@ -22,6 +22,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 6.6,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Fortified oats or cream of wheat",
@@ -30,6 +31,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 9.0,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Pumpkin seeds",
@@ -38,6 +40,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 oz / 28g",
+      storage: "dried",
     },
     {
       name: "Buckwheat (hrechka), cooked",
@@ -46,6 +49,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.9,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Beef liver pate",
@@ -54,6 +58,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 5.5,
       servingSize: "50g",
+      storage: "fresh",
     },
     {
       name: "Beet borscht with beans",
@@ -62,6 +67,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.5,
       servingSize: "1 bowl",
+      storage: "dried",
     },
     {
       name: "White beans (cannellini)",
@@ -70,6 +76,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.5,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Farro, cooked",
@@ -78,6 +85,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.6,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Cuttlefish/squid (seppia)",
@@ -86,6 +94,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.2,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Chickpeas (garbanzos)",
@@ -94,6 +103,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.7,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Clams (almejas)",
@@ -102,6 +112,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 3.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Spinach (espinacas a la catalana)",
@@ -110,6 +121,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.6,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Black beans, cooked",
@@ -118,6 +130,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.6,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Pepitas (pumpkin seeds)",
@@ -126,6 +139,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Nopales (cactus paddle)",
@@ -134,6 +148,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.2,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Black beans (frijoles negros)",
@@ -142,6 +157,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.6,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Callaloo (leafy green)",
@@ -150,6 +166,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.8,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Pigeon peas (gandules)",
@@ -158,6 +175,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.2,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Black-eyed peas",
@@ -166,6 +184,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.3,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Egusi (melon seed) stew base",
@@ -174,6 +193,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.5,
       servingSize: "1/2 cup seeds",
+      storage: "dried",
     },
     {
       name: "Millet, cooked",
@@ -182,6 +202,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.0,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Teff, cooked (injera base)",
@@ -190,6 +211,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 5.0,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Lentils (misir wot)",
@@ -198,6 +220,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 6.6,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Amaranth greens",
@@ -206,6 +229,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.3,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Masoor dal (red lentils), cooked",
@@ -214,6 +238,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 6.6,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Chana (chickpeas)",
@@ -222,6 +247,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.7,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Ragi (finger millet)",
@@ -230,6 +256,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Tofu, firm",
@@ -238,6 +265,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.4,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Water spinach (kangkong/rau muong)",
@@ -246,6 +274,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Mung beans",
@@ -254,6 +283,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.8,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Edamame",
@@ -262,6 +292,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.5,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Dried shiitake mushrooms",
@@ -270,6 +301,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.0,
       servingSize: "4 mushrooms",
+      storage: "dried",
     },
     {
       name: "Spinach (ohitashi)",
@@ -278,6 +310,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.6,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Lentils (mujadara)",
@@ -286,6 +319,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 6.6,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Hummus (chickpea base)",
@@ -294,6 +328,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.4,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Dried apricots",
@@ -302,6 +337,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.8,
       servingSize: "1/4 cup",
+      storage: "dried",
     },
     {
       name: "Kidney beans, cooked",
@@ -309,6 +345,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 5.2,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Dark chocolate (70%+)",
@@ -316,6 +353,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.3,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Spinach",
@@ -323,6 +361,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.6,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Soybeans / edamame, cooked",
@@ -331,6 +370,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 8.8,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Chickpeas, cooked",
@@ -339,6 +379,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.7,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Blackstrap molasses",
@@ -347,6 +388,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.5,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Spinach, cooked",
@@ -354,6 +396,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.2,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Tahini (sesame paste)",
@@ -362,6 +405,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.6,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
   ],
   b12: [
@@ -372,6 +416,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 16.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Eggs",
@@ -380,6 +425,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.2,
       servingSize: "2 whole",
+      storage: "fresh",
     },
     {
       name: "Fortified plant milk",
@@ -388,6 +434,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Herring",
@@ -396,6 +443,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 13.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Beef liver",
@@ -404,6 +452,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 35.0,
       servingSize: "50g",
+      storage: "fresh",
     },
     {
       name: "Kefir",
@@ -412,6 +461,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Clams (vongole)",
@@ -420,6 +470,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 98.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Parmesan cheese",
@@ -428,6 +479,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.3,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Anchovies",
@@ -436,6 +488,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.5,
       servingSize: "5 fillets",
+      storage: "dried",
     },
     {
       name: "Clams/mussels",
@@ -444,6 +497,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 59.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Octopus (pulpo)",
@@ -452,6 +506,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 20.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Manchego cheese",
@@ -460,6 +515,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.3,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Beef/tripe (menudo)",
@@ -468,6 +524,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.5,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Queso fresco",
@@ -476,6 +533,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.3,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Canned tuna",
@@ -484,6 +542,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.5,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Canned sardines",
@@ -492,6 +551,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 8.9,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Egg",
@@ -500,6 +560,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.6,
       servingSize: "1 whole",
+      storage: "fresh",
     },
     {
       name: "Queso blanco",
@@ -508,6 +569,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.3,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Dried/smoked fish",
@@ -516,6 +578,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.0,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Goat meat",
@@ -524,6 +587,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Nile perch/tilapia",
@@ -532,6 +596,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Yogurt (ergo)",
@@ -540,6 +605,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Yogurt/lassi",
@@ -548,6 +614,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Paneer",
@@ -556,6 +623,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.5,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Fish (rohu, hilsa)",
@@ -564,6 +632,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.5,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Fish sauce-based dishes / small fish",
@@ -572,6 +641,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.5,
       servingSize: "1 serving",
+      storage: "dried",
     },
     {
       name: "Shrimp",
@@ -580,6 +650,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.4,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Nori seaweed",
@@ -588,6 +659,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["East Asian"],
       vegan: true,
       servingSize: "1 sheet",
+      storage: "dried",
     },
     {
       name: "Fish (mackerel, salmon)",
@@ -596,6 +668,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 7.5,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Labneh/yogurt",
@@ -604,6 +677,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.75,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Lamb",
@@ -612,6 +686,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.6,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Kimchi, sauerkraut, kombucha, miso, tempeh (fermented foods)",
@@ -620,6 +695,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["Ukrainian / Eastern European"],
       vegan: true,
       servingSize: "daily serving",
+      storage: "fresh",
     },
   ],
   vitamin_d: [
@@ -630,6 +706,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Canned sockeye salmon",
@@ -638,6 +715,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 13.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Egg yolk",
@@ -646,6 +724,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.0,
       servingSize: "2 yolks",
+      storage: "fresh",
     },
     {
       name: "Herring (oseledets)",
@@ -654,6 +733,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 6.25,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Mushrooms, UV-exposed/sun-dried",
@@ -662,6 +742,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 6.88,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Sardines",
@@ -670,6 +751,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 7.5,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Porcini mushrooms, dried, sun-exposed",
@@ -678,6 +760,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.75,
       servingSize: "1/2 cup",
+      storage: "dried",
     },
     {
       name: "Sardines/anchovies (boquerones)",
@@ -686,6 +769,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 8.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Mackerel",
@@ -694,6 +778,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 8.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Canned tuna or sardines",
@@ -702,6 +787,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 6.25,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Egg",
@@ -710,6 +796,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "1 whole",
+      storage: "fresh",
     },
     {
       name: "Fortified milk",
@@ -718,6 +805,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.5,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Canned sardines/mackerel",
@@ -726,6 +814,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 7.5,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Sun-dried fish",
@@ -734,6 +823,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 3.75,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Dried/smoked fish",
@@ -742,6 +832,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 5.0,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Palm oil (red)",
@@ -749,6 +840,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["West African"],
       vegan: true,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Sardines/small dried fish (omena)",
@@ -757,6 +849,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 3.75,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Sun exposure emphasis",
@@ -764,6 +857,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["East African"],
       vegan: false,
       servingSize: "n/a",
+      storage: "fresh",
     },
     {
       name: "Fatty fish (rohu, hilsa)",
@@ -772,6 +866,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 7.5,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Mackerel/sardines",
@@ -780,6 +875,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 8.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Dried shrimp",
@@ -788,6 +884,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.25,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Salmon",
@@ -796,6 +893,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 13.75,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Dried shiitake, sun-exposed",
@@ -804,6 +902,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 6.88,
       servingSize: "4 mushrooms",
+      storage: "dried",
     },
     {
       name: "Sardines/mackerel",
@@ -812,6 +911,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 7.5,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Fortified labneh/yogurt",
@@ -820,6 +920,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.88,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Fatty fish (salmon, sardines, mackerel)",
@@ -827,6 +928,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 11.25,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Maitake mushrooms, raw, UV-exposed",
@@ -834,6 +936,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["East Asian"],
       vegan: true,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Portobello mushrooms, UV-exposed",
@@ -842,6 +945,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 17.5,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Shiitake mushrooms, sun-dried",
@@ -849,6 +953,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["East Asian"],
       vegan: true,
       servingSize: "4 pieces",
+      storage: "dried",
     },
     {
       name: "White button mushrooms, UV-labeled",
@@ -856,6 +961,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["Canadian / North American"],
       vegan: true,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Morel mushrooms",
@@ -863,6 +969,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["Canadian / North American"],
       vegan: true,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
   ],
   calcium: [
@@ -873,6 +980,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 375.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Cheddar cheese",
@@ -881,6 +989,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 300.0,
       servingSize: "1.5 oz",
+      storage: "fresh",
     },
     {
       name: "Canned salmon with bones",
@@ -889,6 +998,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 200.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Kefir",
@@ -897,6 +1007,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 300.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Farmer's cheese (tvorog)",
@@ -905,6 +1016,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 130.0,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Poppy seeds",
@@ -913,6 +1025,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 260.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Parmesan cheese",
@@ -921,6 +1034,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 330.0,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "White beans",
@@ -929,6 +1043,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 160.0,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Sardines with bones",
@@ -937,6 +1052,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 380.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Manchego cheese",
@@ -945,6 +1061,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 200.0,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Sardines (sardinas)",
@@ -953,6 +1070,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 380.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Almonds",
@@ -961,6 +1079,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 75.0,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Corn tortillas (nixtamalized)",
@@ -969,6 +1088,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 90.0,
       servingSize: "2 tortillas",
+      storage: "dried",
     },
     {
       name: "Queso fresco",
@@ -977,6 +1097,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 125.0,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Chia seeds",
@@ -985,6 +1106,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 180.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Queso blanco",
@@ -993,6 +1115,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 150.0,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Okra",
@@ -1001,6 +1124,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 100.0,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Canned sardines",
@@ -1009,6 +1133,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 380.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Egusi seeds",
@@ -1017,6 +1142,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 60.0,
       servingSize: "1/2 cup",
+      storage: "dried",
     },
     {
       name: "Moringa leaves, dried powder",
@@ -1025,6 +1151,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 125.0,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Smoked/dried fish with bones",
@@ -1033,6 +1160,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 200.0,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Teff",
@@ -1041,6 +1169,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 125.0,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Collard greens (gomen)",
@@ -1049,6 +1178,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 270.0,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Yogurt (ergo)",
@@ -1057,6 +1187,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 300.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Paneer",
@@ -1065,6 +1196,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 300.0,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Ragi (finger millet)",
@@ -1073,6 +1205,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 340.0,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Sesame seeds (til)",
@@ -1081,6 +1214,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 175.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Tofu, calcium-set",
@@ -1089,6 +1223,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 250.0,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Bok choy",
@@ -1097,6 +1232,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 160.0,
       servingSize: "1 cup cooked",
+      storage: "fresh",
     },
     {
       name: "Small dried shrimp/anchovies (whole, with shell)",
@@ -1105,6 +1241,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 300.0,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Sesame seeds/tahini",
@@ -1113,6 +1250,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 175.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Tahini (sesame paste)",
@@ -1121,6 +1259,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 130.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Yogurt (labneh)",
@@ -1129,6 +1268,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 150.0,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Dried figs",
@@ -1137,6 +1277,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 60.0,
       servingSize: "1/4 cup",
+      storage: "dried",
     },
     {
       name: "Fortified plant or dairy milk",
@@ -1144,6 +1285,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 300.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Canned fish with bones",
@@ -1151,6 +1293,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 290.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Sesame seeds, whole",
@@ -1159,6 +1302,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 280.0,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Collard greens, cooked",
@@ -1167,6 +1311,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 268.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Blackstrap molasses",
@@ -1175,6 +1320,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 200.0,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Bok choy, cooked",
@@ -1183,6 +1329,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 158.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "White / navy beans, cooked",
@@ -1190,6 +1337,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 126.0,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Kale, cooked",
@@ -1198,6 +1346,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 94.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
   ],
   omega_3: [
@@ -1208,6 +1357,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.2,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Canned salmon",
@@ -1216,6 +1366,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Walnuts",
@@ -1224,6 +1375,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Flaxseed / flax oil",
@@ -1232,6 +1384,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 7.3,
       servingSize: "1 tbsp oil",
+      storage: "dried",
     },
     {
       name: "Herring",
@@ -1240,6 +1393,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.7,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Sardines/anchovies",
@@ -1248,6 +1402,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.5,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Olive oil",
@@ -1256,6 +1411,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["Italian"],
       vegan: true,
       servingSize: "n/a",
+      storage: "dried",
     },
     {
       name: "Sardines/mackerel",
@@ -1264,6 +1420,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Flaxseed",
@@ -1272,6 +1429,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.2,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Chia seeds",
@@ -1280,6 +1438,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 5.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Sardines/canned fish",
@@ -1288,6 +1447,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.5,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Chia or flax (where available)",
@@ -1296,6 +1456,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Pumpkin seeds",
@@ -1304,6 +1465,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.1,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Egusi (melon seeds)",
@@ -1312,6 +1474,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.3,
       servingSize: "1/2 cup",
+      storage: "dried",
     },
     {
       name: "Dried/smoked fish",
@@ -1320,6 +1483,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.75,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Groundnut (modest ALA)",
@@ -1327,6 +1491,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["West African"],
       vegan: true,
       servingSize: "n/a",
+      storage: "dried",
     },
     {
       name: "Nile perch/tilapia",
@@ -1335,6 +1500,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 0.75,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Flaxseed (increasingly available)",
@@ -1343,6 +1509,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.2,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Chia (increasingly available)",
@@ -1351,6 +1518,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 5.0,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Flaxseed (alsi)",
@@ -1359,6 +1527,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.2,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Fatty fish (hilsa, rohu)",
@@ -1367,6 +1536,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.5,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Walnuts (akhrot)",
@@ -1375,6 +1545,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Mackerel/sardines",
@@ -1383,6 +1554,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Salmon/mackerel/sardines",
@@ -1391,6 +1563,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Perilla seed oil (deulkkae)",
@@ -1399,6 +1572,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 8.0,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Canned sardines/mackerel",
@@ -1406,6 +1580,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.75,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Flaxseed, ground",
@@ -1413,6 +1588,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.006,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Hemp seeds",
@@ -1421,6 +1597,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.002,
       servingSize: "3 tbsp",
+      storage: "dried",
     },
     {
       name: "Canola oil",
@@ -1429,6 +1606,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.001,
       servingSize: "1 tbsp",
+      storage: "dried",
     },
     {
       name: "Soybeans / edamame, cooked",
@@ -1437,6 +1615,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.001,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Spinach, cooked",
@@ -1444,6 +1623,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.166,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Brussels sprouts, cooked",
@@ -1452,6 +1632,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.135,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Tofu, firm",
@@ -1460,6 +1641,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 0.3,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
   ],
   iodine: [
@@ -1470,6 +1652,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 71.0,
       servingSize: "1/4 tsp",
+      storage: "dried",
     },
     {
       name: "Cod",
@@ -1478,6 +1661,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 125.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Fortified plant milk",
@@ -1486,6 +1670,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 75.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Iodized salt",
@@ -1494,6 +1679,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 71.0,
       servingSize: "1/4 tsp",
+      storage: "dried",
     },
     {
       name: "Herring",
@@ -1502,6 +1688,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 50.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Kefir/dairy",
@@ -1510,6 +1697,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 60.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Cod/anchovies",
@@ -1518,6 +1706,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 125.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Iodized salt (where used)",
@@ -1526,6 +1715,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 71.0,
       servingSize: "1/4 tsp",
+      storage: "dried",
     },
     {
       name: "Mussels/clams",
@@ -1534,6 +1724,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 125.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Cod (bacalao)",
@@ -1542,6 +1733,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 125.0,
       servingSize: "100g",
+      storage: "dried",
     },
     {
       name: "Shrimp",
@@ -1550,6 +1742,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 35.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Seaweed (increasingly available)",
@@ -1558,6 +1751,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 28.0,
       servingSize: "1 sheet nori",
+      storage: "dried",
     },
     {
       name: "Shrimp/fish",
@@ -1566,6 +1760,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 67.5,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Dairy",
@@ -1574,6 +1769,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 60.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Dried/smoked fish",
@@ -1582,6 +1778,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 62.5,
       servingSize: "50g",
+      storage: "dried",
     },
     {
       name: "Seaweed/algae (regionally variable)",
@@ -1589,6 +1786,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["West African"],
       vegan: true,
       servingSize: "n/a",
+      storage: "dried",
     },
     {
       name: "Nile perch/tilapia",
@@ -1597,6 +1795,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 75.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Dairy (ergo)",
@@ -1605,6 +1804,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 60.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Yogurt/dairy",
@@ -1613,6 +1813,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 60.0,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Fish (coastal regions)",
@@ -1621,6 +1822,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 100.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Fish sauce / small fish",
@@ -1629,6 +1831,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 30.0,
       servingSize: "1 serving",
+      storage: "dried",
     },
     {
       name: "Seaweed",
@@ -1637,6 +1840,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 28.0,
       servingSize: "1 sheet nori",
+      storage: "dried",
     },
     {
       name: "Seaweed (kombu, nori, wakame)",
@@ -1644,6 +1848,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["East Asian"],
       vegan: true,
       servingSize: "1 sheet/serving",
+      storage: "dried",
     },
     {
       name: "Fish/shellfish",
@@ -1652,6 +1857,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 100.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Yogurt/labneh",
@@ -1660,6 +1866,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 50.0,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Cod or other whitefish",
@@ -1667,6 +1874,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 125.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Nori, dried",
@@ -1674,6 +1882,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["East Asian"],
       vegan: true,
       servingSize: "5g sheet",
+      storage: "dried",
     },
     {
       name: "Wakame, dried",
@@ -1682,6 +1891,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 90.0,
       servingSize: "10g",
+      storage: "dried",
     },
     {
       name: "Dulse, dried",
@@ -1689,6 +1899,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       cuisines: ["Irish / Maritime Canadian"],
       vegan: true,
       servingSize: "10g",
+      storage: "dried",
     },
     {
       name: "Kombu, dried",
@@ -1697,6 +1908,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.0,
       servingSize: "1g",
+      storage: "dried",
     },
     {
       name: "Iodized salt or 150mcg potassium iodide supplement",
@@ -1705,6 +1917,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 71.0,
       servingSize: "1/4 tsp / as directed",
+      storage: "dried",
     },
   ],
   zinc: [
@@ -1715,6 +1928,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.2,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Beef",
@@ -1723,6 +1937,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.8,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Fortified cereal",
@@ -1731,6 +1946,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 4.0,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Sunflower seeds",
@@ -1739,6 +1955,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.5,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Beef (traditional stews)",
@@ -1747,6 +1964,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.8,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Buckwheat",
@@ -1755,6 +1973,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.0,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Chickpeas",
@@ -1763,6 +1982,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Parmesan cheese",
@@ -1771,6 +1991,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "1 oz",
+      storage: "fresh",
     },
     {
       name: "Clams/mussels",
@@ -1779,6 +2000,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 7.3,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Clams (almejas)",
@@ -1787,6 +2009,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 13.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Pepitas (pumpkin seeds)",
@@ -1795,6 +2018,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.2,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Black beans",
@@ -1803,6 +2027,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.9,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Beef (carne asada, in moderation)",
@@ -1811,6 +2036,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.8,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Pork (traditional, in moderation)",
@@ -1819,6 +2045,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 2.9,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Pumpkin (calabaza) seeds",
@@ -1827,6 +2054,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.2,
       servingSize: "1 oz",
+      storage: "dried",
     },
     {
       name: "Egusi (melon seeds)",
@@ -1835,6 +2063,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1/2 cup",
+      storage: "dried",
     },
     {
       name: "Black-eyed peas",
@@ -1843,6 +2072,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.2,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Goat meat",
@@ -1851,6 +2081,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Lentils (misir)",
@@ -1859,6 +2090,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Teff",
@@ -1867,6 +2099,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.0,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Goat/beef (in moderation)",
@@ -1875,6 +2108,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.4,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Chickpeas (chana)",
@@ -1883,6 +2117,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Paneer/dairy",
@@ -1891,6 +2126,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.0,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Shrimp",
@@ -1899,6 +2135,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 1.6,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Mung beans",
@@ -1907,6 +2144,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.7,
       servingSize: "1 cup cooked",
+      storage: "dried",
     },
     {
       name: "Tofu, firm",
@@ -1915,6 +2153,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.5,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Oysters",
@@ -1923,6 +2162,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 16.0,
       servingSize: "3-4 medium",
+      storage: "fresh",
     },
     {
       name: "Tofu",
@@ -1931,6 +2171,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.5,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Edamame",
@@ -1939,6 +2180,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup",
+      storage: "fresh",
     },
     {
       name: "Chickpeas (hummus)",
@@ -1947,6 +2189,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.3,
       servingSize: "1/2 cup",
+      storage: "dried",
     },
     {
       name: "Tahini",
@@ -1955,6 +2198,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.4,
       servingSize: "2 tbsp",
+      storage: "dried",
     },
     {
       name: "Lamb",
@@ -1963,6 +2207,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.0,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Beef (where culturally appropriate)",
@@ -1970,6 +2215,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: false,
       amount: 4.8,
       servingSize: "100g",
+      storage: "fresh",
     },
     {
       name: "Hemp seeds",
@@ -1978,6 +2224,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 3.0,
       servingSize: "3 tbsp",
+      storage: "dried",
     },
     {
       name: "Chickpeas, cooked",
@@ -1986,6 +2233,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Lentils, cooked",
@@ -1999,6 +2247,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.5,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Quinoa, cooked",
@@ -2007,6 +2256,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 2.0,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Black beans, cooked",
@@ -2015,6 +2265,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.9,
       servingSize: "1 cup",
+      storage: "dried",
     },
     {
       name: "Tempeh",
@@ -2024,6 +2275,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.9,
       servingSize: "1/2 cup",
+      storage: "fresh",
     },
     {
       name: "Cashews",
@@ -2031,6 +2283,7 @@ export const IMPORTED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = 
       vegan: true,
       amount: 1.6,
       servingSize: "1 oz",
+      storage: "dried",
     },
   ],
   choline: [
