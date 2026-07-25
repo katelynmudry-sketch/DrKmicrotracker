@@ -27,7 +27,7 @@ import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 import { GROCERY_REASON_LABELS } from "@/lib/pantry.schema";
 import { computeNutrientCoverage } from "@/lib/trends";
-import { splitFoodsForNutrient, type NutrientFood } from "@/lib/nutrient-reference";
+import { splitFoodsByStorage, type NutrientFood } from "@/lib/nutrient-reference";
 import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
 
 export const Route = createFileRoute("/_authenticated/grocery-list")({
@@ -118,8 +118,9 @@ function GroceryListPage() {
   const unchecked = items.filter((i) => !i.checkedAt);
   const checked = items.filter((i) => i.checkedAt);
 
-  // "Worth adding" — nutrient gaps from recent readings, minus anything
-  // already on the list or already sitting active in the pantry.
+  // Fresh/fridge nutrient-gap suggestions only — dried-goods gaps show on
+  // the Pantry page instead (pantry.tsx). Minus anything already on the
+  // list or already sitting active in the pantry.
   const suggestions = useMemo(() => {
     if (!meals.data) return [];
     const activePantryNames = (pantryItems.data ?? [])
@@ -130,8 +131,9 @@ function GroceryListPage() {
     const seen = new Set<string>();
     const suggested: (NutrientFood & { nutrient: TrackedNutrient })[] = [];
     for (const gap of gaps) {
-      const { tryNew } = splitFoodsForNutrient(
+      const { tryNew } = splitFoodsByStorage(
         gap.nutrient,
+        "fresh",
         activePantryNames,
         3,
         effectiveCuisines,
@@ -160,7 +162,7 @@ function GroceryListPage() {
       <div className="mx-auto max-w-xl">
         <h1 className="mb-1 text-xl font-semibold tracking-tight">Grocery list</h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          Items you've marked used up, plus a few food-first ideas worth adding.
+          Fresh and fridge things worth picking up on your next trip.
         </p>
 
         <Card className="mb-6 p-4">
@@ -212,9 +214,9 @@ function GroceryListPage() {
 
         {suggestions.length > 0 && (
           <Card className="p-4">
-            <p className="mb-1 text-sm font-semibold">Worth adding</p>
+            <p className="mb-1 text-sm font-semibold">Try something new</p>
             <p className="mb-3 text-xs text-muted-foreground">
-              Food-first ideas from your recent Patterns — see the Patterns page for why.
+              Fresh, food-first ideas for the nutrients that have been a little light lately.
             </p>
             <div className="space-y-2">
               {suggestions.map((s) => (
