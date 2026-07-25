@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -8,6 +8,7 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  orderBy,
   query,
   serverTimestamp,
   updateDoc,
@@ -17,7 +18,7 @@ import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isMockMode, isInternalPreviewUnlocked } from "@/lib/mock-mode";
 import { arePantryFeaturesEnabled } from "@/lib/feature-flags";
-import { mockPantryItems } from "@/lib/mock-data";
+import { mockPantryItems, mockMeals } from "@/lib/mock-data";
 import {
   getLocalPantryItems,
   addLocalPantryItem,
@@ -26,6 +27,10 @@ import {
   restockLocalPantryItem,
   removeLocalPantryItem,
 } from "@/lib/preview-pantry-store";
+import { getLocalPreviewMeals } from "@/lib/preview-meals-store";
+import { computeNutrientCoverage } from "@/lib/trends";
+import { splitFoodsByStorage, type NutrientFood } from "@/lib/nutrient-reference";
+import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
 import { AppShell } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -37,6 +42,7 @@ import { VoiceCapture } from "@/components/app/voice-capture";
 import { toast } from "sonner";
 import { Camera, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { PantryItem } from "@/lib/pantry.schema";
+import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import { fileToBase64 } from "@/lib/file-base64";
 import { scanPantryPhoto, parsePantryVoiceText } from "@/lib/pantry-scan.functions";
 import { scanPantryPhotoPreview, parsePantryVoiceTextPreview } from "@/lib/pantry-scan-preview.functions";
@@ -50,7 +56,7 @@ export const Route = createFileRoute("/_authenticated/pantry")({
 });
 
 function PantryPage() {
-  const { user } = useAuth();
+  const { user, effectiveCuisines } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
@@ -77,6 +83,50 @@ function PantryPage() {
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PantryItem);
     },
   });
+
+  const meals = useQuery({
+    queryKey: ["meals", user?.uid],
+    enabled: !!user,
+    queryFn: async () => {
+      if (isMockMode) return isInternalPreviewUnlocked() ? mockMeals : getLocalPreviewMeals();
+      const q = query(
+        collection(db, "meals"),
+        where("patientId", "==", user!.uid),
+        orderBy("eatenAt", "desc"),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Meal);
+    },
+  });
+
+  // Dried/shelf-stable nutrient-gap suggestions only — fresh/fridge gaps
+  // show on the Grocery page instead (grocery-list.tsx). Minus anything
+  // already sitting active in the pantry.
+  const suggestions = useMemo(() => {
+    if (!meals.data) return [];
+    const activePantryNames = (items.data ?? [])
+      .filter((p) => p.status === "active")
+      .map((p) => p.name);
+    const gaps = computeNutrientCoverage(meals.data).filter((c) => c.isGap);
+    const seen = new Set<string>();
+    const suggested: (NutrientFood & { nutrient: TrackedNutrient })[] = [];
+    for (const gap of gaps) {
+      const { tryNew } = splitFoodsByStorage(
+        gap.nutrient,
+        "dried",
+        activePantryNames,
+        3,
+        effectiveCuisines,
+      );
+      for (const food of tryNew) {
+        const key = food.name.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        suggested.push({ ...food, nutrient: gap.nutrient });
+      }
+    }
+    return suggested;
+  }, [meals.data, items.data, effectiveCuisines]);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["pantry-items", user?.uid] });
 
@@ -164,6 +214,29 @@ function PantryPage() {
     }
     await deleteDoc(doc(db, "pantry_items", item.id));
     invalidate();
+  };
+
+  const addSuggestion = async (itemName: string) => {
+    if (!user) return;
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — items aren't saved.");
+      addLocalPantryItem(itemName);
+      toast.success(`Added ${itemName} to your pantry`);
+      invalidate();
+      return;
+    }
+    try {
+      await addDoc(collection(db, "pantry_items"), {
+        patientId: user.uid,
+        name: itemName,
+        status: "active",
+        createdAt: serverTimestamp(),
+      });
+      toast.success(`Added ${itemName} to your pantry`);
+      invalidate();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't add item");
+    }
   };
 
   const scanPhoto = async () => {
@@ -264,8 +337,8 @@ function PantryPage() {
       <div className="mx-auto max-w-xl">
         <h1 className="mb-1 text-xl font-semibold tracking-tight">Your pantry</h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          Keep a running list of what's on hand — it helps "Try something new" suggestions on your
-          Patterns page tell what you already have from what's worth a grocery trip.
+          Dried and shelf-stable staples you keep stocked — what's on hand shapes what your
+          Patterns page and grocery list suggest.
         </p>
 
         <Card className="mb-6 p-4">
@@ -376,6 +449,36 @@ function PantryPage() {
               ))}
             </div>
           </>
+        )}
+
+        {suggestions.length > 0 && (
+          <Card className="mt-6 p-4">
+            <p className="mb-1 text-sm font-semibold">Try something new</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Shelf-stable ideas for the nutrients that have been a little light lately.
+            </p>
+            <div className="space-y-2">
+              {suggestions.map((s) => (
+                <div key={s.name} className="flex items-center justify-between text-sm">
+                  <div>
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-muted-foreground"> — {s.reason}</span>
+                    {s.amount != null && (
+                      <p className="text-xs text-muted-foreground">
+                        {s.servingSize ? `${s.servingSize} · ` : ""}
+                        about {formatAmount(s.nutrient, s.amount)} —{" "}
+                        {rdiProgressPhrase(s.nutrient, s.amount)}
+                      </p>
+                    )}
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => addSuggestion(s.name)}>
+                    <Plus className="mr-1 h-3 w-3" />
+                    Add
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
       </div>
     </AppShell>
