@@ -25,6 +25,7 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | Uncertainty | "We couldn't quite see…" |
 | Trends page | **Patterns** |
 | Gap suggestions | "In your pantry" / "Try something new" |
+| What belongs where | Grocery: "Fresh and fridge things worth picking up on your next trip." Pantry: "Dried and shelf-stable staples you keep stocked — what's on hand shapes what your Patterns page and grocery list suggest." |
 | Nutrient emphasis | **Focus nutrients** |
 | Daily rollup | **Nutrient Profile** |
 | Profile bands (Simple mode) | **A good focus for today / Building up / Well covered** (first draft — needs the same "tuned with Katelyn" pass the tier labels got) |
