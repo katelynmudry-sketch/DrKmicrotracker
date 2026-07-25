@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -15,8 +15,17 @@ import {
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { isMockMode } from "@/lib/mock-mode";
+import { isMockMode, isInternalPreviewUnlocked } from "@/lib/mock-mode";
+import { arePantryFeaturesEnabled } from "@/lib/feature-flags";
 import { mockPantryItems } from "@/lib/mock-data";
+import {
+  getLocalPantryItems,
+  addLocalPantryItem,
+  addLocalPantryItems,
+  markLocalPantryItemUsedUp,
+  restockLocalPantryItem,
+  removeLocalPantryItem,
+} from "@/lib/preview-pantry-store";
 import { AppShell } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,13 +35,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmPantryItems } from "@/components/app/confirm-pantry-items";
 import { VoiceCapture } from "@/components/app/voice-capture";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Loader2, Plus, RotateCcw, ShoppingCart, Trash2 } from "lucide-react";
+import { Camera, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { PantryItem } from "@/lib/pantry.schema";
 import { fileToBase64 } from "@/lib/file-base64";
 import { scanPantryPhoto, parsePantryVoiceText } from "@/lib/pantry-scan.functions";
+import { scanPantryPhotoPreview, parsePantryVoiceTextPreview } from "@/lib/pantry-scan-preview.functions";
 
 export const Route = createFileRoute("/_authenticated/pantry")({
-  head: () => ({ meta: [{ title: "Your pantry — Dr. K's Kitchen" }] }),
+  head: () => ({ meta: [{ title: "Your pantry — Vital Table" }] }),
+  beforeLoad: () => {
+    if (!arePantryFeaturesEnabled) throw redirect({ to: "/dashboard" });
+  },
   component: PantryPage,
 });
 
@@ -44,6 +57,8 @@ function PantryPage() {
 
   const scanFn = useServerFn(scanPantryPhoto);
   const parseVoiceFn = useServerFn(parsePantryVoiceText);
+  const scanPreviewFn = useServerFn(scanPantryPhotoPreview);
+  const parseVoicePreviewFn = useServerFn(parsePantryVoiceTextPreview);
   const fileRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [parsingVoice, setParsingVoice] = useState(false);
@@ -54,7 +69,7 @@ function PantryPage() {
     queryKey: ["pantry-items", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      if (isMockMode) return mockPantryItems;
+      if (isMockMode) return isInternalPreviewUnlocked() ? mockPantryItems : getLocalPantryItems();
       // Equality-only filter (no orderBy) — keeps this off the composite
       // index list; sorted client-side instead.
       const q = query(collection(db, "pantry_items"), where("patientId", "==", user!.uid));
@@ -67,7 +82,13 @@ function PantryPage() {
 
   const addItem = async () => {
     if (!name.trim() || !user) return;
-    if (isMockMode) return toast.info("Preview mode — items aren't saved.");
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — items aren't saved.");
+      addLocalPantryItem(name.trim());
+      setName("");
+      invalidate();
+      return;
+    }
     setAdding(true);
     try {
       await addDoc(collection(db, "pantry_items"), {
@@ -86,7 +107,13 @@ function PantryPage() {
   };
 
   const markUsedUp = async (item: PantryItem) => {
-    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — changes aren't saved.");
+      markLocalPantryItemUsedUp(item.id);
+      toast.success("Marked used up — added to your grocery list");
+      invalidate();
+      return;
+    }
     try {
       await updateDoc(doc(db, "pantry_items", item.id), { status: "used_up" });
       // Avoid piling up duplicate grocery entries if it's marked used up more
@@ -118,13 +145,23 @@ function PantryPage() {
   };
 
   const restock = async (item: PantryItem) => {
-    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — changes aren't saved.");
+      restockLocalPantryItem(item.id);
+      invalidate();
+      return;
+    }
     await updateDoc(doc(db, "pantry_items", item.id), { status: "active" });
     invalidate();
   };
 
   const remove = async (item: PantryItem) => {
-    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — changes aren't saved.");
+      removeLocalPantryItem(item.id);
+      invalidate();
+      return;
+    }
     await deleteDoc(doc(db, "pantry_items", item.id));
     invalidate();
   };
@@ -132,7 +169,9 @@ function PantryPage() {
   const scanPhoto = async () => {
     const file = fileRef.current?.files?.[0];
     if (!file) return toast.error("Select a pantry photo first");
-    if (isMockMode) return toast.info("Preview mode — scanning isn't available.");
+    if (isMockMode && isInternalPreviewUnlocked()) {
+      return toast.info("Preview mode — scanning isn't available.");
+    }
     setScanning(true);
     try {
       const base64 = await fileToBase64(file);
@@ -141,7 +180,9 @@ function PantryPage() {
         | "image/png"
         | "image/webp"
         | "image/gif";
-      const result = await scanFn({ data: { base64, mediaType } });
+      const result = isMockMode
+        ? await scanPreviewFn({ data: { base64, mediaType } })
+        : await scanFn({ data: { base64, mediaType } });
       if (result.items.length === 0) {
         toast.info("Couldn't make out any items — try a clearer photo, or add them below.");
       }
@@ -155,10 +196,14 @@ function PantryPage() {
   };
 
   const parseVoice = async (transcript: string) => {
-    if (isMockMode) return toast.info("Preview mode — voice capture isn't available.");
+    if (isMockMode && isInternalPreviewUnlocked()) {
+      return toast.info("Preview mode — voice capture isn't available.");
+    }
     setParsingVoice(true);
     try {
-      const result = await parseVoiceFn({ data: { transcript } });
+      const result = isMockMode
+        ? await parseVoicePreviewFn({ data: { transcript } })
+        : await parseVoiceFn({ data: { transcript } });
       if (result.items.length === 0) {
         toast.info("Couldn't make out any items — try again, or add them below.");
         return;
@@ -177,9 +222,16 @@ function PantryPage() {
       setPendingItems(null);
       return;
     }
-    if (isMockMode) {
+    if (isMockMode && isInternalPreviewUnlocked()) {
       toast.info("Preview mode — items aren't saved.");
       setPendingItems(null);
+      return;
+    }
+    if (isMockMode) {
+      addLocalPantryItems(confirmedItems);
+      toast.success(`Added ${confirmedItems.length} item(s) to your pantry`);
+      setPendingItems(null);
+      invalidate();
       return;
     }
     setConfirming(true);
@@ -208,24 +260,7 @@ function PantryPage() {
   const usedUp = (items.data ?? []).filter((i) => i.status === "used_up");
 
   return (
-    <AppShell
-      nav={
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/grocery-list">
-              <ShoppingCart className="mr-1 h-4 w-4" />
-              Grocery list
-            </Link>
-          </Button>
-          <Button size="sm" variant="ghost" asChild>
-            <Link to="/dashboard">
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Your meals
-            </Link>
-          </Button>
-        </div>
-      }
-    >
+    <AppShell>
       <div className="mx-auto max-w-xl">
         <h1 className="mb-1 text-xl font-semibold tracking-tight">Your pantry</h1>
         <p className="mb-6 text-sm text-muted-foreground">
