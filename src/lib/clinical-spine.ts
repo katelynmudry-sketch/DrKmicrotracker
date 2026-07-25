@@ -197,12 +197,20 @@ export const RECORD_CULTURAL_FOODS_TOOL: Anthropic.Tool = {
               description:
                 "One warm, specific sentence — why it helps with this nutrient, in Dr. K's voice. No calories.",
             },
+            storage: {
+              type: "string",
+              enum: ["fresh", "dried"],
+              description:
+                "How the patient buys/stores it, not how the reason describes serving it: \"fresh\" for produce, meat, poultry, fish (fresh/frozen, not canned), dairy, eggs, tofu, or tempeh; \"dried\" for grains, legumes/beans (dry or canned), nuts, seeds, spices, dried fruit, flours, shelf-stable pastes, canned fish or vegetables, or oils.",
+            },
           },
-          required: ["name", "reason"],
+          required: ["name", "reason", "storage"],
+          additionalProperties: false,
         },
       },
     },
     required: ["items"],
+    additionalProperties: false,
   },
   strict: true,
 };
@@ -225,6 +233,9 @@ nutrient — not a vague "eat more vegetables," and not something that only loos
 classic absorption pairing applies (vitamin C with iron, spacing coffee/tea from iron, soaking
 or sprouting for zinc), mention it naturally in the reason, the same way you would for any
 other food. If you aren't confident a food is a strong source of the nutrient, leave it out
-rather than guess — a shorter, accurate list is better than a padded one. Call the
+rather than guess — a shorter, accurate list is better than a padded one. For each food, also
+say how the patient buys or stores it: "fresh" (produce, meat, poultry, fish, dairy, eggs,
+tofu, tempeh) or "dried" (grains, legumes, nuts, seeds, spices, dried fruit, canned goods,
+oils) — go by how it's stored, not how the reason describes serving it. Call the
 ${RECORD_CULTURAL_FOODS_TOOL_NAME} tool exactly once.`;
 }

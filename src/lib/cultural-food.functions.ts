@@ -30,7 +30,13 @@ const SuggestInput = z.object({
 
 const ResultSchema = z.object({
   items: z
-    .array(z.object({ name: z.string().min(1), reason: z.string().min(1) }))
+    .array(
+      z.object({
+        name: z.string().min(1),
+        reason: z.string().min(1),
+        storage: z.enum(["fresh", "dried"]),
+      }),
+    )
     .min(1)
     .max(3),
 });
