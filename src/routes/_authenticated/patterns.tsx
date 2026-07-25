@@ -1,19 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { isMockMode } from "@/lib/mock-mode";
+import { isInternalPreviewUnlocked, isMockMode } from "@/lib/mock-mode";
 import { mockMeals, mockPantryItems } from "@/lib/mock-data";
+import { getLocalPreviewMeals } from "@/lib/preview-meals-store";
 import { AppShell } from "@/components/app/app-shell";
 import { PatternsPanel } from "@/components/app/patterns-panel";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import type { Meal } from "@/lib/analysis.schema";
 import type { PantryItem } from "@/lib/pantry.schema";
 
 export const Route = createFileRoute("/_authenticated/patterns")({
-  head: () => ({ meta: [{ title: "Patterns — Dr. K's Kitchen" }] }),
+  head: () => ({ meta: [{ title: "Patterns — Vital Table" }] }),
   component: PatternsPage,
 });
 
@@ -24,7 +23,7 @@ function PatternsPage() {
     queryKey: ["meals", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      if (isMockMode) return mockMeals;
+      if (isMockMode) return isInternalPreviewUnlocked() ? mockMeals : getLocalPreviewMeals();
       const q = query(
         collection(db, "meals"),
         where("patientId", "==", user!.uid),
@@ -51,18 +50,9 @@ function PatternsPage() {
     .map((p) => p.name);
 
   return (
-    <AppShell
-      nav={
-        <Button size="sm" variant="ghost" asChild>
-          <Link to="/dashboard">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Your meals
-          </Link>
-        </Button>
-      }
-    >
+    <AppShell>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Patterns</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Nutrient History</h1>
         <p className="text-sm text-muted-foreground">
           See trends over weeks, not just one snapshot — without judgment, just information.
         </p>

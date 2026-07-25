@@ -24,7 +24,7 @@ export function CulturalFoodSuggest({ nutrient }: { nutrient: TrackedNutrient })
     try {
       const { items } = await suggestFn({ data: { nutrient, cuisineOrRegion: query.trim() } });
       if (items.length === 0) {
-        toast.info("We couldn't quite find a match — worth asking Dr. K directly.");
+        toast.info("We couldn't quite find a match — worth asking your doctor directly.");
       }
       setResults(items);
     } catch (e) {

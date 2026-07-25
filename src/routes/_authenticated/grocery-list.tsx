@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,15 +14,23 @@ import {
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { isMockMode } from "@/lib/mock-mode";
+import { isMockMode, isInternalPreviewUnlocked } from "@/lib/mock-mode";
+import { arePantryFeaturesEnabled } from "@/lib/feature-flags";
 import { mockGroceryListItems, mockMeals, mockPantryItems } from "@/lib/mock-data";
+import { getLocalPreviewMeals } from "@/lib/preview-meals-store";
+import {
+  getLocalGroceryItems,
+  getLocalPantryItems,
+  addLocalGroceryItem,
+  toggleLocalGroceryItemChecked,
+} from "@/lib/preview-pantry-store";
 import { AppShell } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import type { GroceryListItem, PantryItem } from "@/lib/pantry.schema";
 import { GROCERY_REASON_LABELS } from "@/lib/pantry.schema";
@@ -31,7 +39,10 @@ import { splitFoodsByStorage, type NutrientFood } from "@/lib/nutrient-reference
 import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
 
 export const Route = createFileRoute("/_authenticated/grocery-list")({
-  head: () => ({ meta: [{ title: "Grocery list — Dr. K's Kitchen" }] }),
+  head: () => ({ meta: [{ title: "Grocery list — Vital Table" }] }),
+  beforeLoad: () => {
+    if (!arePantryFeaturesEnabled) throw redirect({ to: "/dashboard" });
+  },
   component: GroceryListPage,
 });
 
@@ -44,7 +55,9 @@ function GroceryListPage() {
     queryKey: ["grocery-list", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      if (isMockMode) return mockGroceryListItems;
+      if (isMockMode) {
+        return isInternalPreviewUnlocked() ? mockGroceryListItems : getLocalGroceryItems();
+      }
       const q = query(collection(db, "grocery_list_items"), where("patientId", "==", user!.uid));
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as GroceryListItem);
@@ -55,7 +68,7 @@ function GroceryListPage() {
     queryKey: ["pantry-items", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      if (isMockMode) return mockPantryItems;
+      if (isMockMode) return isInternalPreviewUnlocked() ? mockPantryItems : getLocalPantryItems();
       const q = query(collection(db, "pantry_items"), where("patientId", "==", user!.uid));
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PantryItem);
@@ -66,7 +79,7 @@ function GroceryListPage() {
     queryKey: ["meals", user?.uid],
     enabled: !!user,
     queryFn: async () => {
-      if (isMockMode) return mockMeals;
+      if (isMockMode) return isInternalPreviewUnlocked() ? mockMeals : getLocalPreviewMeals();
       const q = query(
         collection(db, "meals"),
         where("patientId", "==", user!.uid),
@@ -85,7 +98,12 @@ function GroceryListPage() {
     note?: string | null;
   }) => {
     if (!item.name.trim() || !user) return;
-    if (isMockMode) return toast.info("Preview mode — items aren't saved.");
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — items aren't saved.");
+      addLocalGroceryItem({ name: item.name.trim(), reason: item.reason, note: item.note });
+      invalidateList();
+      return;
+    }
     try {
       await addDoc(collection(db, "grocery_list_items"), {
         patientId: user.uid,
@@ -107,7 +125,12 @@ function GroceryListPage() {
   };
 
   const checkOff = async (item: GroceryListItem) => {
-    if (isMockMode) return toast.info("Preview mode — changes aren't saved.");
+    if (isMockMode) {
+      if (isInternalPreviewUnlocked()) return toast.info("Preview mode — changes aren't saved.");
+      toggleLocalGroceryItemChecked(item.id);
+      invalidateList();
+      return;
+    }
     await updateDoc(doc(db, "grocery_list_items", item.id), {
       checkedAt: item.checkedAt ? null : new Date().toISOString(),
     });
@@ -149,16 +172,7 @@ function GroceryListPage() {
   }, [meals.data, pantryItems.data, groceryItems.data, effectiveCuisines]);
 
   return (
-    <AppShell
-      nav={
-        <Button size="sm" variant="ghost" asChild>
-          <Link to="/pantry">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Pantry
-          </Link>
-        </Button>
-      }
-    >
+    <AppShell>
       <div className="mx-auto max-w-xl">
         <h1 className="mb-1 text-xl font-semibold tracking-tight">Grocery list</h1>
         <p className="mb-6 text-sm text-muted-foreground">

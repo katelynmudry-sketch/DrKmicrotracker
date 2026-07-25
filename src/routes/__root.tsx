@@ -74,20 +74,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Dr. K's Kitchen" },
+      { title: "Vital Table" },
       {
         name: "description",
         content:
-          "Snap a meal, get a little love note from your body — naturopathic meal readings for Dr. Katelyn Mudry's patients.",
+          "Snap a meal, get a little love note from your body — meal readings for what's actually on your plate.",
       },
-      { property: "og:title", content: "Dr. K's Kitchen" },
+      { property: "og:title", content: "Vital Table" },
       {
         property: "og:description",
         content: "Naturopathic meal readings, scored to your protocol — not a nutrition database.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "theme-color", content: "#d97a52" },
+      { name: "theme-color", content: "#4a1a52" },
     ],
     links: [
       {

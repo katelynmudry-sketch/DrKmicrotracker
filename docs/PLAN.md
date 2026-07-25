@@ -5,6 +5,14 @@
 Kitchen elements**; analysis wording is the **Blend** system below; nutrient-gap
 suggestions ship in the demo, the rest of the pantry suite right after.)*
 
+*(Garden Warmth itself was later superseded: the app's visual direction is now the
+**Dr. Katelyn Mudry brand system** — deep plum + warm gold + cream, Cormorant +
+EB Garamond — sourced from Katelyn's Claude Design project rather than
+`design-drafts/`. This is the KM-clinical half of that system only; the Solarium
+Herbs & Astrology sister-brand colors/fonts don't belong in this app. Part 2 below
+is kept as history of the prior direction; `src/styles.css` and `CLAUDE.md` reflect
+the current one.)*
+
 **Not a coder? Skip straight to [`docs/OWNER-TODO.md`](OWNER-TODO.md)** — every owner
 action item scattered through this plan's phases (account setup, publishing rules,
 deploying, verifying) is consolidated there as a single ordered checklist. Everything
@@ -398,6 +406,14 @@ Phase 4 before the live demo.
   Node `.listen('::')` fails), so the dev server can't start here; typecheck/lint/
   ethos-lint/build are all clean, but the camera/mic UI itself needs a real-browser pass
   (the user has said they'll test it directly).
+- [x] **Joined the no-account beta's local-only preview pattern**: pantry and grocery
+  now branch the same way meal preview does (`isMockMode` → `isInternalPreviewUnlocked()`
+  fixture data vs. real per-browser `localStorage` via `src/lib/preview-pantry-store.ts`,
+  else real Firestore). Photo scan/voice have unauthenticated `*Preview` counterparts
+  (`src/lib/pantry-scan-preview.functions.ts`) gated by `PREVIEW_AI_ENABLED`, mirroring
+  `analyzeMealPreview`. See `docs/OWNER-TODO.md` §0b and `CLAUDE.md`'s architecture rules
+  for why: avoiding PHI/PIPEDA exposure before Firestore/Storage clear review, same as
+  meal preview.
 
 ### Post-demo milestone #2 — Cultural food relevance *(1 session)* — **shipped**
 - [x] **Ethos codified**: `docs/ETHOS.md` principle 8 — a patient's own food should be

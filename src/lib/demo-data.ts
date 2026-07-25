@@ -39,6 +39,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Oats", "Banana", "Milk"],
     estimated_portion: "~300g",
     opening_note: "A steady, easy start to the day.",
+    meal_style: "carb_forward_lower_protein",
     building_blocks: {
       protein_g: 9,
       fiber_g: 5,
@@ -63,6 +64,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Spinach", "Chickpeas", "Olive oil dressing"],
     estimated_portion: "~350g",
     opening_note: "Lots of good plant material on this plate.",
+    meal_style: "fresh_veg_forward",
     building_blocks: {
       protein_g: 12,
       fiber_g: 9,
@@ -89,6 +91,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Chicken breast", "Rice", "Broccoli"],
     estimated_portion: "~450g",
     opening_note: "A well-balanced, easy dinner.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 34,
       fiber_g: 4,
@@ -110,6 +113,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Eggs", "Whole wheat toast"],
     estimated_portion: "~250g",
     opening_note: "A dependable, protein-forward breakfast.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 16,
       fiber_g: 3,
@@ -132,6 +136,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Lentils", "Carrot", "Celery", "Bread"],
     estimated_portion: "~400g",
     opening_note: "A cozy, fiber-rich bowl.",
+    meal_style: "simple_few_ingredients",
     building_blocks: {
       protein_g: 15,
       fiber_g: 10,
@@ -158,6 +163,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Beef", "Bell peppers", "Rice"],
     estimated_portion: "~400g",
     opening_note: "This one's doing real work for your iron today.",
+    meal_style: "protein_fat_forward",
     building_blocks: { protein_g: 30, fiber_g: 4, healthy_fat_sources: [], carb_quality: "mixed" },
     micronutrients: [{ nutrient: "iron", level: "strong", from: "Beef", amount_estimate: null }],
     offered: ["Strong iron source", "The peppers' vitamin C alongside it is a great pairing"],
@@ -174,6 +180,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Yogurt", "Mixed berries", "Pumpkin seeds"],
     estimated_portion: "~300g",
     opening_note: "A bright, easy morning bowl.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 14,
       fiber_g: 5,
@@ -199,6 +206,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Spinach", "Chickpeas", "Lemon dressing"],
     estimated_portion: "~350g",
     opening_note: "Same great bowl — with the pairing that makes it sing.",
+    meal_style: "fresh_veg_forward",
     building_blocks: {
       protein_g: 12,
       fiber_g: 9,
@@ -222,6 +230,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Tofu", "Broccoli", "Lime"],
     estimated_portion: "~400g",
     opening_note: "A plant-based dinner that's really come together.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 20,
       fiber_g: 6,
@@ -241,6 +250,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Oats", "Pumpkin seeds", "Orange"],
     estimated_portion: "~300g",
     opening_note: "This bowl is doing exactly what we hoped for your iron this week — nice work.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 11,
       fiber_g: 7,
@@ -263,6 +273,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Lentils", "Beets", "Orange segments"],
     estimated_portion: "~380g",
     opening_note: "A colourful, iron-forward bowl — the pattern's really holding.",
+    meal_style: "fresh_veg_forward",
     building_blocks: {
       protein_g: 16,
       fiber_g: 11,
@@ -285,6 +296,7 @@ const JORDAN: DemoMealSeed[] = [
     identified_items: ["Yogurt", "Pumpkin seeds", "Orange"],
     estimated_portion: "~280g",
     opening_note: "Same great habit this morning — the iron pairing's second nature now.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 13,
       fiber_g: 4,
@@ -311,6 +323,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Toast", "Butter"],
     estimated_portion: "~120g",
     opening_note: "A quick, simple start today.",
+    meal_style: "quick_convenient",
     building_blocks: {
       protein_g: 4,
       fiber_g: 2,
@@ -332,6 +345,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Chicken", "Bread", "Lettuce"],
     estimated_portion: "~300g",
     opening_note: "A reliable, easy lunch.",
+    meal_style: "quick_convenient",
     building_blocks: { protein_g: 22, fiber_g: 2, healthy_fat_sources: [], carb_quality: "mixed" },
     micronutrients: [
       { nutrient: "choline", level: "present", from: "Chicken", amount_estimate: null },
@@ -351,6 +365,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Pasta", "Tomato sauce"],
     estimated_portion: "~350g",
     opening_note: "A comforting, familiar dinner.",
+    meal_style: "carb_forward_lower_protein",
     building_blocks: {
       protein_g: 9,
       fiber_g: 4,
@@ -370,6 +385,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Toast", "Peanut butter", "Banana"],
     estimated_portion: "~200g",
     opening_note: "A nice little upgrade on the usual toast.",
+    meal_style: "quick_convenient",
     building_blocks: {
       protein_g: 9,
       fiber_g: 4,
@@ -391,6 +407,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Chicken", "Bread", "Lettuce", "Tomato", "Avocado"],
     estimated_portion: "~350g",
     opening_note: "Look at that plant list growing — nice work.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 24,
       fiber_g: 6,
@@ -412,6 +429,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Pasta", "Tomato sauce", "Spinach", "Mushrooms"],
     estimated_portion: "~380g",
     opening_note: "This is the same cozy dinner with a whole new range of colour.",
+    meal_style: "fresh_veg_forward",
     building_blocks: { protein_g: 13, fiber_g: 7, healthy_fat_sources: [], carb_quality: "mixed" },
     micronutrients: [
       { nutrient: "iron", level: "present", from: "Spinach", amount_estimate: null },
@@ -431,6 +449,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Spinach", "Banana", "Mixed berries", "Almond milk"],
     estimated_portion: "~400ml",
     opening_note: "Four plants before 9am — this week's really taking off.",
+    meal_style: "fresh_veg_forward",
     building_blocks: {
       protein_g: 6,
       fiber_g: 8,
@@ -453,6 +472,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Quinoa", "Chickpeas", "Cucumber", "Tomato", "Bell peppers", "Feta"],
     estimated_portion: "~450g",
     opening_note: "Six plants on one plate — this is exactly the range we love to see.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 18,
       fiber_g: 11,
@@ -474,6 +494,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Tofu", "Broccoli", "Carrots", "Snap peas", "Bell peppers"],
     estimated_portion: "~420g",
     opening_note: "This plate has more colours on it than most weeks used to have all week.",
+    meal_style: "fresh_veg_forward",
     building_blocks: {
       protein_g: 19,
       fiber_g: 9,
@@ -493,6 +514,7 @@ const MORGAN: DemoMealSeed[] = [
     identified_items: ["Spinach", "Mango", "Chia seeds"],
     estimated_portion: "~350ml",
     opening_note: "Another colourful morning — this has become the new normal.",
+    meal_style: "fresh_veg_forward",
     building_blocks: {
       protein_g: 7,
       fiber_g: 9,
@@ -519,6 +541,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Chia seeds", "Almond milk", "Blueberries"],
     estimated_portion: "~250g",
     opening_note: "A great omega-3 start to the day.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 8,
       fiber_g: 9,
@@ -540,6 +563,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Salmon", "Mixed greens", "Walnuts"],
     estimated_portion: "~350g",
     opening_note: "This bowl is doing exactly what we hoped for this week — nice work.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 30,
       fiber_g: 4,
@@ -562,6 +586,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Tofu", "Quinoa", "Roasted vegetables"],
     estimated_portion: "~400g",
     opening_note: "A well-rounded, protein-forward dinner.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 24,
       fiber_g: 8,
@@ -583,6 +608,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Eggs", "Avocado", "Sourdough"],
     estimated_portion: "~280g",
     opening_note: "A steady, satisfying start.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 15,
       fiber_g: 5,
@@ -602,6 +628,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Sardines", "White beans", "Lemon", "Mixed greens"],
     estimated_portion: "~320g",
     opening_note: "Small fish, big nutritional payoff.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 26,
       fiber_g: 9,
@@ -625,6 +652,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Cod", "Lentils", "Brussels sprouts"],
     estimated_portion: "~420g",
     opening_note: "A steady, protocol-aligned dinner.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 32,
       fiber_g: 10,
@@ -644,6 +672,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Oats", "Ground flaxseed", "Walnuts", "Berries"],
     estimated_portion: "~300g",
     opening_note: "A steady omega-3 habit, week after week.",
+    meal_style: "nutrient_dense",
     building_blocks: {
       protein_g: 10,
       fiber_g: 9,
@@ -665,6 +694,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Salmon", "Quinoa", "Roasted vegetables"],
     estimated_portion: "~400g",
     opening_note: "Right in line with the protocol again — a really consistent few weeks.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 33,
       fiber_g: 7,
@@ -690,6 +720,7 @@ const SAM: DemoMealSeed[] = [
     identified_items: ["Chia seeds", "Walnuts", "Berries"],
     estimated_portion: "~260g",
     opening_note: "Same steady omega-3 habit this morning.",
+    meal_style: "protein_fat_forward",
     building_blocks: {
       protein_g: 9,
       fiber_g: 8,

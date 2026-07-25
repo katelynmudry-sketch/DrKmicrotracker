@@ -14,7 +14,7 @@ See `docs/ETHOS.md` for the principles behind these choices.
 | The analysis | **a reading** |
 | What it contains | **What this meal offered** |
 | Suggestions | **Worth trying** |
-| Doctor's notes | **Notes from Dr. K** |
+| Doctor's notes | **Notes from your ND** |
 | Rubric fit | **Protocol fit: Aligned / Getting there / Worth a look** (qualitative — final tier labels tuned with Katelyn) |
 | Micronutrient levels (Simple mode) | **Strong source / Present / A little light** (the headline tier — always shown first, tiers not milligrams) |
 | Micronutrient levels (Detailed mode) | **Strong source · ~3–5mg** (tier + an honest range, never a bare decimal) |
@@ -45,7 +45,7 @@ See `docs/ETHOS.md` for the principles behind these choices.
 - "Three steps, zero stress."
 - "Considered, not clinical."
 - "Food is medicine — but only when you can actually see what it's doing for you."
-  — Dr. Katelyn Mudry, ND
+  — the naturopathic doctor behind Vital Table
 - "Pop a spoon, coin, credit card, or your hand next to the plate — it helps us
   judge portion size more precisely." (reference-object photo tip, Detailed mode
   only, always optional — never a blocking step)

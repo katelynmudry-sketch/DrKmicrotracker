@@ -3,6 +3,13 @@
 For showing Dr. K (or anyone else) the app end to end without waiting on real
 patient history or spending on live AI calls. See `docs/PLAN.md` Phase 4d.
 
+**This doc covers the DEMO_MODE seed-data walkthrough (real Firebase account,
+real doctor login).** For the no-account, no-persistence live meal-reading
+beta — meant for showing the reading engine itself before Firestore/Storage
+clear a PHI/PIPEDA review — see section "0b" in `docs/OWNER-TODO.md`. The two
+are separate deployments and don't mix: this walkthrough needs a real,
+configured Firebase project; the other one deliberately has none.
+
 ## Turning it on
 
 1. Set `DEMO_MODE=true` in the environment (Vercel project settings, or your

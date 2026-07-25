@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app/app-shell";
@@ -6,13 +6,12 @@ import { FocusNutrientPicker } from "@/components/app/focus-nutrient-picker";
 import { CheckboxOptionList } from "@/components/app/checkbox-option-list";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { TrackedNutrient } from "@/lib/analysis.schema";
 import { CUISINE_OPTIONS, type Cuisine } from "@/lib/cuisines";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — Dr. K's Kitchen" }] }),
+  head: () => ({ meta: [{ title: "Settings — Vital Table" }] }),
   component: SettingsPage,
 });
 
@@ -98,16 +97,7 @@ function SettingsPage() {
   };
 
   return (
-    <AppShell
-      nav={
-        <Button size="sm" variant="ghost" asChild>
-          <Link to="/dashboard">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Your meals
-          </Link>
-        </Button>
-      }
-    >
+    <AppShell>
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">

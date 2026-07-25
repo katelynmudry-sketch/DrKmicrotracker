@@ -2,22 +2,31 @@
 @source "../src";
 @import "tw-animate-css";
 
-/* Self-hosted Fraunces (display) + Nunito (body) — no Google Fonts CDN at
-   runtime, so the PWA works offline. See docs/PLAN.md Phase 3a. */
-@import "@fontsource/fraunces/500.css";
-@import "@fontsource/fraunces/600.css";
-@import "@fontsource/fraunces/500-italic.css";
-@import "@fontsource/nunito/400.css";
-@import "@fontsource/nunito/600.css";
-@import "@fontsource/nunito/700.css";
-@import "@fontsource/nunito/800.css";
+/* Self-hosted Cormorant (display) + EB Garamond (body) — no Google Fonts CDN
+   at runtime, so the PWA works offline. See docs/PLAN.md Phase 3a / the
+   Dr. Katelyn Mudry design system rebrand note. */
+@import "@fontsource/cormorant/500.css";
+@import "@fontsource/cormorant/600.css";
+@import "@fontsource/cormorant/600-italic.css";
+@import "@fontsource/eb-garamond/400.css";
+@import "@fontsource/eb-garamond/600.css";
+@import "@fontsource/eb-garamond/700.css";
+@import "@fontsource/eb-garamond/400-italic.css";
+/* Jost — scoped exception to the "no Solarium fonts" rule, for tracked-caps
+   eyebrow labels/tags only (nutrient tile labels, "Worth trying" pills, etc.)
+   per the nutrient-card design handoff. Self-hosted the same way as
+   Cormorant/EB Garamond above, not the KM display/body faces. */
+@import "@fontsource/jost/500.css";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition — Garden Warmth (see design-drafts/1-garden-warmth.html
- * and docs/PLAN.md Part 2). No "Sunny Kitchen" elements: no confetti, no
- * achievement badges, no gamified arcs, minimal emoji.
+ * Design system definition — Dr. Katelyn Mudry brand (deep plum + warm gold +
+ * cream), sourced from the Claude Design project "Dr. Katelyn Mudry Design
+ * System" (KM-clinical half only — no Solarium/astrology content in this
+ * app). Supersedes the earlier Garden Warmth system; see docs/PLAN.md Part 2.
+ * No "Sunny Kitchen" elements: no confetti, no achievement badges, no
+ * gamified arcs, minimal emoji.
  *
  * The @theme inline block maps CSS custom properties to Tailwind utility
  * classes (e.g. --color-primary -> bg-primary, text-primary).
@@ -31,8 +40,9 @@
  */
 
 @theme inline {
-  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "EB Garamond", ui-serif, Georgia, serif;
+  --font-serif: "Cormorant", ui-serif, Georgia, serif;
+  --font-label: "Jost", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -73,44 +83,54 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-gold-100: var(--gold-100);
+  --color-gold-300: var(--gold-300);
 }
 
 :root {
-  --radius: 0.875rem;
-  /* Garden Warmth palette — see design-drafts/1-garden-warmth.html and
-     docs/PLAN.md Part 2 for the source hex values these are converted from. */
-  --background: oklch(0.974 0.014 84.6); /* cream #fbf6ec */
-  --foreground: oklch(0.331 0.018 84.5); /* ink #3a352b */
+  --radius: 1.25rem;
+  /* Dr. Katelyn Mudry palette — see the Claude Design project "Dr. Katelyn
+     Mudry Design System" tokens/colors.css for the source hex values these
+     are converted from. */
+  --background: oklch(0.977 0.010 87.5); /* cream-50 #faf7f0 */
+  --foreground: oklch(0.211 0.028 323.7); /* ink-900 #1f1420 */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.331 0.018 84.5);
+  --card-foreground: oklch(0.211 0.028 323.7);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.331 0.018 84.5);
-  --primary: oklch(0.677 0.13 43); /* terracotta #d97a52 */
-  --primary-foreground: oklch(0.974 0.014 84.6); /* cream */
-  --secondary: oklch(0.936 0.03 85.6); /* cream-deep #f3e9d4 */
-  --secondary-foreground: oklch(0.331 0.018 84.5);
-  --muted: oklch(0.936 0.03 85.6); /* cream-deep */
-  --muted-foreground: oklch(0.508 0.023 87.6); /* ink-soft #6b6557 */
-  --accent: oklch(0.639 0.055 137.2); /* sage #7c9473 */
-  --accent-foreground: oklch(0.494 0.048 134.6); /* sage-deep #56684c */
-  --destructive: oklch(0.559 0.162 28); /* muted rust-red — stays in the warm family but reads as an error, not a nutrition verdict */
-  --destructive-foreground: oklch(0.974 0.014 84.6);
-  --border: oklch(0.885 0.032 84.6); /* hairline #e3d8c2 */
-  --input: oklch(0.885 0.032 84.6);
-  --ring: oklch(0.639 0.055 137.2); /* sage */
-  --chart-1: oklch(0.677 0.13 43); /* terracotta */
-  --chart-2: oklch(0.639 0.055 137.2); /* sage */
-  --chart-3: oklch(0.686 0.091 79.9); /* gold */
-  --chart-4: oklch(0.494 0.048 134.6); /* sage-deep */
-  --chart-5: oklch(0.584 0.126 42.4); /* terracotta-deep */
-  --sidebar: oklch(0.974 0.014 84.6);
-  --sidebar-foreground: oklch(0.331 0.018 84.5);
-  --sidebar-primary: oklch(0.677 0.13 43);
-  --sidebar-primary-foreground: oklch(0.974 0.014 84.6);
-  --sidebar-accent: oklch(0.936 0.03 85.6);
-  --sidebar-accent-foreground: oklch(0.331 0.018 84.5);
-  --sidebar-border: oklch(0.885 0.032 84.6);
-  --sidebar-ring: oklch(0.639 0.055 137.2);
+  --popover-foreground: oklch(0.211 0.028 323.7);
+  --primary: oklch(0.317 0.108 321.7); /* plum-700 #4a1a52 — the dominant brand color */
+  --primary-foreground: oklch(0.977 0.010 87.5); /* cream-50 */
+  --secondary: oklch(0.938 0.020 325.7); /* plum-100 #f2e6f2 — was gold-100; plum leads, gold pulled back */
+  --secondary-foreground: oklch(0.211 0.028 323.7);
+  --muted: oklch(0.938 0.020 325.7); /* plum-100 */
+  --muted-foreground: oklch(0.443 0.021 340.6); /* ink-600 #5c4f57 */
+  --accent: oklch(0.832 0.039 323.2); /* soft plum tint (blend of plum-100/plum-500) — was gold-500; used for hover/focus surfaces across most components, so gold there read as too dominant */
+  --accent-foreground: oklch(0.317 0.108 321.7); /* plum-700 */
+  --destructive: oklch(0.362 0.067 30.0); /* maroon-700 #5c2f28 — stays in the warm family but reads as an error, not a nutrition verdict */
+  --destructive-foreground: oklch(0.977 0.010 87.5);
+  --border: oklch(0.903 0.015 316.0); /* line-200 #e3dce6 */
+  --input: oklch(0.903 0.015 316.0);
+  --ring: oklch(0.436 0.118 321.2); /* plum-500 #6e3878 */
+  --chart-1: oklch(0.317 0.108 321.7); /* plum-700 */
+  --chart-2: oklch(0.436 0.118 321.2); /* plum-500 */
+  --chart-3: oklch(0.362 0.067 30.0); /* maroon-700 */
+  --chart-4: oklch(0.773 0.154 84.0); /* gold-500 — gold's only remaining role, one hue among five for chart legibility */
+  --chart-5: oklch(0.689 0.140 79.0); /* gold-600 #c98f0f */
+  /* Gold-100/gold-300 — added for the nutrient-card design handoff (Option
+     2a): gold-100 is the flat wash behind non-target-tracked metric tiles
+     (protein/fiber/carbs); gold-300 is the warm accent used for labels on
+     solid-plum "hit" tiles. Distinct from chart-4/5 (gold-500/600), which are
+     darker and reserved for chart legibility. */
+  --gold-100: oklch(0.955 0.041 91.7); /* gold-100 #faf0d2 */
+  --gold-300: oklch(0.868 0.135 92.8); /* gold-300 #f2d162 */
+  --sidebar: oklch(0.977 0.010 87.5);
+  --sidebar-foreground: oklch(0.211 0.028 323.7);
+  --sidebar-primary: oklch(0.317 0.108 321.7);
+  --sidebar-primary-foreground: oklch(0.977 0.010 87.5);
+  --sidebar-accent: oklch(0.938 0.020 325.7);
+  --sidebar-accent-foreground: oklch(0.211 0.028 323.7);
+  --sidebar-border: oklch(0.903 0.015 316.0);
+  --sidebar-ring: oklch(0.436 0.118 321.2);
 }
 
 .dark {
@@ -138,6 +158,8 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --gold-100: oklch(0.279 0.03 91.7); /* darker wash so it still reads as a subtle fill on a dark surface */
+  --gold-300: oklch(0.868 0.135 92.8);
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -165,5 +187,25 @@
     font-family: var(--font-serif);
     font-weight: 600;
     letter-spacing: -0.01em;
+  }
+}
+
+/* "Download as PDF" (src/components/app/download-reading-pdf.tsx) — browser
+   print-to-PDF for a preview-mode reading that isn't persisted anywhere else.
+   Wrap the reading in .printable-reading; everything outside it (nav,
+   banners, the button itself) is hidden when the print dialog fires. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-reading,
+  .printable-reading * {
+    visibility: visible;
+  }
+  .printable-reading {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 1rem;
   }
 }

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { analyzeMeal, updateMealAnalysis } from "@/lib/meals.functions";
 import { isMockMode } from "@/lib/mock-mode";
 import {
@@ -14,20 +14,44 @@ import {
   NUTRIENT_LEVELS,
   LEVEL_LABELS,
   NUTRIENT_UNITS,
+  NUTRIENT_DAILY_VALUES,
   ESTIMATION_BASIS_LABELS,
   CARB_QUALITIES,
   CARB_QUALITY_LABELS,
-  TIER_LABELS,
   type MealAnalysis,
   type Micronutrient,
+  type NutrientLevel,
   type TrackedNutrient,
 } from "@/lib/analysis.schema";
 import type { DetailLevel } from "@/lib/users.schema";
 
-// Functional rendering of the new reading shape — the Botanical Clinic-style
-// visual pass (reading rows, dashed dividers) is Phase 3's job (docs/PLAN.md).
-// This pass just needs to show every field correctly and keep inline editing
-// working, in the vocabulary from docs/VOICE.md.
+// The nutrient-card visual pass (docs/PLAN.md Phase 3 / the "2a" design
+// handoff): hit/miss reads via tile fill first, numbers second (see
+// tileVariant below). Protocol Fit is deliberately not shown on this card —
+// it still renders as a tier chip on the meals-history list; see the design
+// handoff and CLAUDE.md's hard rules for why the tier itself never becomes a
+// number here.
+
+// Fill = hit, tint = present/partial, dashed = not seen — collapses the
+// schema's 4 levels to the design's 3 visual buckets ("present" and "light"
+// share the same tint treatment; see docs/ETHOS.md principle 3, TIER_LABELS
+// still carries the distinct wording).
+function tileVariant(level: NutrientLevel): "strong" | "partial" | "notseen" {
+  if (level === "strong") return "strong";
+  if (level === "not_seen") return "notseen";
+  return "partial";
+}
+
+// Detailed-mode-only supporting number under the status word (never the
+// primary signal — see docs/ETHOS.md principle 2). Population-average
+// reference value, same as nutrient-profile.ts — not personalized.
+function pctOfDailyValue(m: Micronutrient): number | null {
+  if (!m.amount_estimate) return null;
+  const dv = NUTRIENT_DAILY_VALUES[m.nutrient];
+  if (!dv) return null;
+  const mid = (m.amount_estimate.low + m.amount_estimate.high) / 2;
+  return Math.round((mid / dv) * 100);
+}
 
 type EditValues = {
   meal_name: string;
@@ -240,74 +264,6 @@ export function AnalysisView({
         )}
       </div>
 
-      <p className="text-base italic text-foreground">{a.opening_note}</p>
-
-      {(a.worth_trying.length > 0 || a.absorption_notes.length > 0) && (
-        <Card className="border-primary/30 bg-primary/5 p-5">
-          <div className="mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Worth trying
-            </p>
-          </div>
-          {a.worth_trying.length > 0 && (
-            <ul className="list-disc space-y-1 pl-5 text-sm">
-              {a.worth_trying.map((t, i) => (
-                <li key={i}>{t}</li>
-              ))}
-            </ul>
-          )}
-          {a.absorption_notes.length > 0 && (
-            <div className={a.worth_trying.length > 0 ? "mt-3" : undefined}>
-              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Pairing &amp; timing
-              </p>
-              <ul className="list-disc space-y-1 pl-5 text-sm">
-                {a.absorption_notes.map((t, i) => (
-                  <li key={i}>{t}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {allowAddConfirmation && mealId && (
-            <div className="mt-3 border-t border-border/60 pt-3">
-              <div className="flex gap-2">
-                <Input
-                  value={addingText}
-                  onChange={(e) => setAddingText(e.target.value)}
-                  placeholder="I added…"
-                  maxLength={300}
-                  disabled={addingBusy || editing}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") confirmAddition();
-                  }}
-                />
-                <Button
-                  size="sm"
-                  onClick={confirmAddition}
-                  disabled={addingBusy || editing || !addingText.trim()}
-                >
-                  {addingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update my reading"}
-                </Button>
-              </div>
-              {addingBusy && (
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Updating your reading with what you added…
-                </p>
-              )}
-            </div>
-          )}
-        </Card>
-      )}
-
-      {a.offered.length > 0 && (
-        <Section title="What this meal offered" items={a.offered} tone="accent" />
-      )}
-
-      <p className="pt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        The full picture
-      </p>
-
       {editing ? (
         <Input
           {...form.register("identified_items")}
@@ -328,79 +284,18 @@ export function AnalysisView({
         )
       )}
 
-      <Card className="p-4">
-        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Building blocks
-        </p>
-        {editing ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            <div>
-              <label className="text-xs text-muted-foreground">Protein (g)</label>
-              <Input
-                type="number"
-                step="any"
-                {...form.register("building_blocks.protein_g", { valueAsNumber: true })}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Fiber (g)</label>
-              <Input
-                type="number"
-                step="any"
-                {...form.register("building_blocks.fiber_g", { valueAsNumber: true })}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Carb quality</label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                {...form.register("building_blocks.carb_quality")}
-              >
-                {CARB_QUALITIES.map((q) => (
-                  <option key={q} value={q}>
-                    {CARB_QUALITY_LABELS[q]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-span-2 md:col-span-3">
-              <label className="text-xs text-muted-foreground">
-                Healthy fat sources, comma separated
-              </label>
-              <Input {...form.register("building_blocks.healthy_fat_sources")} />
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              <div className="rounded-lg bg-secondary p-3">
-                <p className="text-xs text-muted-foreground">Protein</p>
-                <p className="text-lg font-semibold">{Math.round(a.building_blocks.protein_g)}g</p>
-              </div>
-              <div className="rounded-lg bg-secondary p-3">
-                <p className="text-xs text-muted-foreground">Fiber</p>
-                <p className="text-lg font-semibold">{Math.round(a.building_blocks.fiber_g)}g</p>
-              </div>
-              <div className="rounded-lg bg-secondary p-3">
-                <p className="text-xs text-muted-foreground">Carbs</p>
-                <p className="text-lg font-semibold">
-                  {CARB_QUALITY_LABELS[a.building_blocks.carb_quality]}
-                </p>
-              </div>
-            </div>
-            {a.building_blocks.healthy_fat_sources.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Healthy fats: {a.building_blocks.healthy_fat_sources.join(", ")}
-              </p>
-            )}
-          </div>
-        )}
-      </Card>
+      {/* The reading's hero — statement first (docs/PLAN.md Phase 3 / the "2a"
+          nutrient-card handoff): the plain-language line is the single
+          largest, boldest text on the card, and hit/miss on key nutrients
+          reads via tile fill before any number does. */}
+      <Card className="rounded-lg p-6">
+        <h3 className="mb-5 font-serif text-2xl leading-tight font-semibold tracking-tight text-balance">
+          {a.opening_note}
+        </h3>
 
-      <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Micronutrients
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="font-label text-xs tracking-widest text-muted-foreground uppercase">
+            Your key nutrients
           </p>
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-full bg-secondary p-0.5 text-xs">
@@ -507,26 +402,59 @@ export function AnalysisView({
             ))}
           </div>
         ) : displayedMicronutrients.length > 0 ? (
-          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {displayedMicronutrients.map((m, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
-              >
-                <span>{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
-                <span className="text-muted-foreground">
-                  {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
-                  {mode === "detailed" && m.amount_estimate && (
-                    <>
-                      {" "}
-                      · ~{m.amount_estimate.low}–{m.amount_estimate.high}
-                      {NUTRIENT_UNITS[m.nutrient]}
-                    </>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {displayedMicronutrients.map((m, i) => {
+              const variant = tileVariant(m.level);
+              const pct = mode === "detailed" ? pctOfDailyValue(m) : null;
+              return (
+                <div
+                  key={i}
+                  className={`flex flex-col gap-0.5 rounded-xl p-3 ${
+                    variant === "strong"
+                      ? "border border-primary bg-primary"
+                      : variant === "partial"
+                        ? "border border-border bg-secondary"
+                        : "border border-dashed border-border"
+                  }`}
+                >
+                  <span
+                    className={`font-label text-[11px] tracking-wide uppercase ${
+                      variant === "strong"
+                        ? "text-gold-300"
+                        : variant === "partial"
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/80"
+                    }`}
+                  >
+                    {NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}
+                  </span>
+                  <span
+                    className={`font-serif text-[1.05rem] leading-tight ${
+                      variant === "strong"
+                        ? "font-semibold text-primary-foreground"
+                        : variant === "partial"
+                          ? "font-semibold text-primary"
+                          : "font-normal text-muted-foreground"
+                    }`}
+                  >
+                    {LEVEL_LABELS[m.level] ?? m.level}
+                  </span>
+                  {mode === "detailed" && m.amount_estimate && pct !== null && (
+                    <span
+                      className={`text-[11px] tabular-nums ${
+                        variant === "strong"
+                          ? "text-primary-foreground/70"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      ~{m.amount_estimate.low}–{m.amount_estimate.high}
+                      {NUTRIENT_UNITS[m.nutrient]} · {pct}%
+                    </span>
                   )}
-                </span>
-              </li>
-            ))}
-          </ul>
+                </div>
+              );
+            })}
+          </div>
         ) : a.micronutrients.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing tracked for this reading.</p>
         ) : (
@@ -534,7 +462,163 @@ export function AnalysisView({
             No focus nutrients chosen yet — pick a few in Settings to see them here.
           </p>
         )}
+
+        {a.offered.length > 0 && (
+          <div className="mt-5 border-t border-border pt-4">
+            <p className="mb-2 font-label text-[11px] tracking-widest text-muted-foreground uppercase">
+              Also worth noting
+            </p>
+            <ul className="list-disc space-y-1 pl-5 text-sm">
+              {a.offered.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {(a.worth_trying.length > 0 || a.absorption_notes.length > 0) && (
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="mb-2.5 font-label text-xs tracking-widest text-primary uppercase">
+              Worth trying for these
+            </p>
+            {a.worth_trying.length > 0 && (
+              <ul className="list-disc space-y-1.5 pl-5 text-sm">
+                {a.worth_trying.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            )}
+            {a.absorption_notes.length > 0 && (
+              <div className={a.worth_trying.length > 0 ? "mt-3" : undefined}>
+                <p className="mb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                  Pairing &amp; timing
+                </p>
+                <ul className="list-disc space-y-1 pl-5 text-sm">
+                  {a.absorption_notes.map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {allowAddConfirmation && mealId && (
+              <div className="mt-3 border-t border-border/60 pt-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={addingText}
+                    onChange={(e) => setAddingText(e.target.value)}
+                    placeholder="I added…"
+                    maxLength={300}
+                    disabled={addingBusy || editing}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") confirmAddition();
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={confirmAddition}
+                    disabled={addingBusy || editing || !addingText.trim()}
+                  >
+                    {addingBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Update my reading"
+                    )}
+                  </Button>
+                </div>
+                {addingBusy && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Updating your reading with what you added…
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </Card>
+
+      {/* Deliberately gold, not plum — informational, not target-tracked, so
+          it reads as a different, lower-priority system from the tile grid
+          above (design handoff hierarchy rule 4). */}
+      <div>
+        <p className="mb-2 font-label text-[11px] tracking-widest text-muted-foreground uppercase">
+          Unchanged below
+        </p>
+        <Card className="p-4">
+          {editing ? (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Protein (g)</label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...form.register("building_blocks.protein_g", { valueAsNumber: true })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Fiber (g)</label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...form.register("building_blocks.fiber_g", { valueAsNumber: true })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Carb quality</label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                  {...form.register("building_blocks.carb_quality")}
+                >
+                  {CARB_QUALITIES.map((q) => (
+                    <option key={q} value={q}>
+                      {CARB_QUALITY_LABELS[q]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-2 md:col-span-3">
+                <label className="text-xs text-muted-foreground">
+                  Healthy fat sources, comma separated
+                </label>
+                <Input {...form.register("building_blocks.healthy_fat_sources")} />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-border bg-gold-100 p-3">
+                  <p className="font-label text-[11px] tracking-wide text-chart-5 uppercase">
+                    Protein
+                  </p>
+                  <p className="text-lg font-semibold text-muted-foreground">
+                    {Math.round(a.building_blocks.protein_g)}g
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-gold-100 p-3">
+                  <p className="font-label text-[11px] tracking-wide text-chart-5 uppercase">
+                    Fiber
+                  </p>
+                  <p className="text-lg font-semibold text-muted-foreground">
+                    {Math.round(a.building_blocks.fiber_g)}g
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-gold-100 p-3">
+                  <p className="font-label text-[11px] tracking-wide text-chart-5 uppercase">
+                    Carbs
+                  </p>
+                  <p className="text-lg font-semibold text-muted-foreground">
+                    {CARB_QUALITY_LABELS[a.building_blocks.carb_quality]}
+                  </p>
+                </div>
+              </div>
+              {a.building_blocks.healthy_fat_sources.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Healthy fats: {a.building_blocks.healthy_fat_sources.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+      </div>
 
       {editing && (
         <div className="flex gap-2">
@@ -548,37 +632,9 @@ export function AnalysisView({
         </div>
       )}
 
-      <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Protocol fit
-          </p>
-          <p className="mt-1 text-sm">{a.protocol_fit.note}</p>
-        </div>
-        <span className="whitespace-nowrap rounded-full bg-accent/10 px-3 py-1 text-sm font-medium text-accent-foreground">
-          {TIER_LABELS[a.protocol_fit.tier] ?? a.protocol_fit.tier}
-        </span>
-      </Card>
-
       {a.uncertainty && (
         <p className="text-sm text-muted-foreground">We couldn't quite see: {a.uncertainty}</p>
       )}
-    </div>
-  );
-}
-
-function Section({ title, items, tone }: { title: string; items: string[]; tone?: "accent" }) {
-  const toneCls = tone === "accent" ? "border-accent/40 bg-accent/5" : "border-border bg-card";
-  return (
-    <div className={`rounded-xl border p-4 ${toneCls}`}>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {title}
-      </p>
-      <ul className="list-disc space-y-1 pl-5 text-sm">
-        {items.map((t, i) => (
-          <li key={i}>{t}</li>
-        ))}
-      </ul>
     </div>
   );
 }

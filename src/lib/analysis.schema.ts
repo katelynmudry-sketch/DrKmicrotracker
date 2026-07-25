@@ -191,6 +191,22 @@ export const CARB_QUALITY_LABELS: Record<CarbQuality, string> = {
 export const PROTOCOL_FIT_TIERS = ["aligned", "getting_there", "worth_a_look"] as const;
 export type ProtocolFitTier = (typeof PROTOCOL_FIT_TIERS)[number];
 
+// The AI classifies which of Dr. K's approved opening-line categories a meal
+// fits — it never writes opening_note prose itself. See
+// src/lib/meal-style-lines.ts for the approved copy and the picker that turns
+// this classification into the final opening_note.
+export const MEAL_STYLE_CATEGORIES = [
+  "nutrient_dense",
+  "protein_fat_forward",
+  "simple_few_ingredients",
+  "fresh_veg_forward",
+  "assembled_plate",
+  "rich_celebratory",
+  "quick_convenient",
+  "carb_forward_lower_protein",
+] as const;
+export type MealStyleCategory = (typeof MEAL_STYLE_CATEGORIES)[number];
+
 export const TIER_LABELS: Record<ProtocolFitTier, string> = {
   aligned: "Aligned",
   getting_there: "Getting there",
@@ -235,7 +251,10 @@ export const MealAnalysisSchema = z.object({
   meal_name: z.string().min(1),
   identified_items: z.array(z.string().min(1)).min(1),
   estimated_portion: z.string().min(1),
+  // Final rendered line — filled in from the approved copy list after the AI
+  // classifies meal_style below, not written by the AI directly.
   opening_note: z.string().min(1),
+  meal_style: z.enum(MEAL_STYLE_CATEGORIES),
   building_blocks: BuildingBlocksSchema,
   micronutrients: z.array(MicronutrientSchema),
   offered: z.array(z.string().min(1)),
@@ -246,6 +265,13 @@ export const MealAnalysisSchema = z.object({
   estimation_basis: z.enum(ESTIMATION_BASES).nullable(),
 });
 export type MealAnalysis = z.infer<typeof MealAnalysisSchema>;
+
+// What the AI itself must return from the tool call — same shape minus
+// opening_note, which doesn't exist yet at that point (see
+// src/lib/meal-style-lines.ts's pickOpeningNote, called right after this
+// parses in analysis-engine.ts).
+export const MealAnalysisDraftSchema = MealAnalysisSchema.omit({ opening_note: true });
+export type MealAnalysisDraft = z.infer<typeof MealAnalysisDraftSchema>;
 
 // The patient/doctor may correct factual, quantifiable fields after the fact
 // (portion size, identified items, macro estimates, a nutrient level) without
@@ -272,9 +298,11 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
     meal_name: { type: "string" },
     identified_items: { type: "array", items: { type: "string" } },
     estimated_portion: { type: "string" },
-    opening_note: {
+    meal_style: {
       type: "string",
-      description: "One warm sentence in Dr. K's voice — the 'love note from your body' line.",
+      enum: MEAL_STYLE_CATEGORIES,
+      description:
+        "Which of Dr. K's approved opening-line categories this meal fits best — see the classification guidance in the system prompt. Selects the opening line verbatim; do not write opening prose yourself.",
     },
     building_blocks: {
       type: "object",
@@ -353,7 +381,7 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
     "meal_name",
     "identified_items",
     "estimated_portion",
-    "opening_note",
+    "meal_style",
     "building_blocks",
     "micronutrients",
     "offered",

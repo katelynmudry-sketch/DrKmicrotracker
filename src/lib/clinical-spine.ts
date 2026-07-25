@@ -111,12 +111,36 @@ whether to show them):
 
 const VOICE_RULE = `
 Voice: warm, clinically grounded, zero judgment — like a note from your ND.
-opening_note is one warm sentence (the "love note from your body" moment) —
-not a cheerful paragraph. The rest of the fields are quiet, clear detail.
-Emoji: none. Prefer first-person-plural ("we," "let's") over second-person
-imperatives. If something is genuinely unclear (blurry photo, ambiguous
-description), say so plainly in \`uncertainty\` — never guess silently or
-overstate confidence.
+The fields you write in your own words (offered, worth_trying,
+absorption_notes, protocol_fit.note, uncertainty) are quiet, clear detail —
+not cheerful paragraphs. Emoji: none. Prefer first-person-plural ("we,"
+"let's") over second-person imperatives. If something is genuinely unclear
+(blurry photo, ambiguous description), say so plainly in \`uncertainty\` —
+never guess silently or overstate confidence.
+`.trim();
+
+const MEAL_STYLE_GUIDANCE = `
+Classify this meal's overall style as \`meal_style\` — this selects an
+opening line Dr. K has already written and approved verbatim, so classify
+honestly rather than writing your own opening prose:
+- "nutrient_dense": broad coverage — protein, minerals and fibre all showing
+  up, nothing dominating.
+- "protein_fat_forward": protein and healthy fat carry the plate, built for
+  slow, steady energy.
+- "simple_few_ingredients": a short ingredient list doing real nutritional
+  work — plain, not elaborate.
+- "fresh_veg_forward": produce-led, bright and mineral-rich, light on
+  digestion.
+- "assembled_plate": leftovers, snack dinners, or odds-and-ends that still
+  add up to real nutrition.
+- "rich_celebratory": a special-occasion or indulgent meal — rich, generous,
+  meant to be enjoyed.
+- "quick_convenient": fast, low-effort food chosen for convenience over
+  composition.
+- "carb_forward_lower_protein": carbohydrate-led with comparatively little
+  protein or fat.
+Pick exactly one, the closest fit — never a blend, never invented outside
+this list.
 `.trim();
 
 // Focus nutrients change what the reading emphasizes, never what it evaluates
@@ -142,7 +166,7 @@ export function buildSystemPrompt(
   rubricContext: string,
   focusNutrients: TrackedNutrient[],
 ): string {
-  return `You are the reading engine behind Dr. K's Kitchen, a meal-logging app for a
+  return `You are the reading engine behind Vital Table, a meal-logging app for a
 naturopathic doctor's patients. This is explicitly not a calorie counter — you are
 producing a warm, qualitative "reading" of a meal, in the doctor's own clinical voice.
 
@@ -155,6 +179,8 @@ ${HARD_EXCLUSIONS}
 ${ESTIMATION_GUIDANCE}
 
 ${buildFocusGuidance(focusNutrients)}
+
+${MEAL_STYLE_GUIDANCE}
 
 ${VOICE_RULE}
 
@@ -216,7 +242,7 @@ export const RECORD_CULTURAL_FOODS_TOOL: Anthropic.Tool = {
 };
 
 export function buildCulturalFoodSuggestionPrompt(): string {
-  return `You help patients using Dr. K's Kitchen, a meal-logging app for a naturopathic
+  return `You help patients using Vital Table, a meal-logging app for a naturopathic
 doctor's practice, find food-first suggestions for a nutrient that's come up light lately —
 foods that are genuinely part of their own cuisine or region, not a Western substitute
 standing in for it. Being able to see food close to where you're from or how you grew up,

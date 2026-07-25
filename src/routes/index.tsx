@@ -1,14 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { isMockMode } from "@/lib/mock-mode";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Leaf, Sparkles, MessagesSquare, Lock, TrendingUp, BookOpenCheck } from "lucide-react";
 
+// On the beta deployment (isMockMode — no Firebase configured), there's no
+// real sign-in and no reason to show it: one clear CTA straight into the
+// live meal-reading demo. The header/hero/footer real-auth buttons below
+// stay untouched for the eventual real launch.
+const PRIMARY_CTA_LABEL = isMockMode ? "Try a reading" : "Get started";
+const PRIMARY_CTA_TARGET = isMockMode ? "/dashboard" : "/auth";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dr. K's Kitchen — naturopathic meal readings for patients" },
+      { title: "Vital Table — naturopathic meal readings for patients" },
       {
         name: "description",
         content:
@@ -28,10 +36,14 @@ function Landing() {
           <span className="grid h-8 w-8 -rotate-6 place-items-center rounded-lg bg-accent text-accent-foreground">
             <Leaf className="h-4 w-4" />
           </span>
-          <span className="font-serif text-base font-semibold tracking-tight">Dr. K's Kitchen</span>
+          <span className="font-serif text-base font-semibold tracking-tight">Vital Table</span>
         </div>
         <nav className="flex items-center gap-2">
-          {!loading && user ? (
+          {isMockMode ? (
+            <Button asChild>
+              <Link to="/dashboard">{PRIMARY_CTA_LABEL}</Link>
+            </Button>
+          ) : !loading && user ? (
             <Button asChild>
               <Link to={isDoctor ? "/doctor" : "/dashboard"}>Open portal</Link>
             </Button>
@@ -54,17 +66,17 @@ function Landing() {
               your body.
             </h1>
             <p className="mt-5 max-w-lg text-base text-muted-foreground">
-              Photograph what you eat from your phone — Dr. K's Kitchen turns it into a warm reading
+              Photograph what you eat from your phone — Vital Table turns it into a warm reading
               of what it offered and how it fits your personal protocol. No counting, no comparing —
               just gentle clarity.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" asChild>
-                <Link to="/auth">Get started</Link>
+                <Link to={PRIMARY_CTA_TARGET}>{PRIMARY_CTA_LABEL}</Link>
               </Button>
             </div>
             <div className="mt-9 flex flex-wrap gap-5 text-sm font-semibold text-muted-foreground">
-              <span>Built with a real ND</span>
+              <span>No calories, no scores — ever</span>
               <span>Kimberley &amp; Cranbrook, BC</span>
             </div>
           </div>
@@ -115,7 +127,7 @@ function Landing() {
               <p className="font-serif text-xl font-medium leading-snug md:text-2xl">
                 Food is medicine — but only when you can actually see what it's doing for you.
               </p>
-              <p className="mt-4 text-sm font-bold opacity-90">— Dr. Katelyn Mudry, ND</p>
+              <p className="mt-4 text-sm font-bold opacity-90">— the naturopathic doctor behind Vital Table</p>
             </div>
           </Card>
         </section>
@@ -131,7 +143,7 @@ function Landing() {
             <Feature
               icon={<BookOpenCheck className="h-5 w-5" />}
               title="Built around your protocol"
-              body="Every reading is scored against the dietary rubric your ND actually wrote — not a generic database."
+              body="Every reading is scored against a real clinical protocol — not a generic database."
             />
             <Feature
               icon={<TrendingUp className="h-5 w-5" />}
@@ -160,14 +172,14 @@ function Landing() {
               Ask your naturopathic doctor for an invite, or sign in if you already have one.
             </p>
             <Button size="lg" variant="secondary" className="mt-7" asChild>
-              <Link to="/auth">Get started</Link>
+              <Link to={PRIMARY_CTA_TARGET}>{PRIMARY_CTA_LABEL}</Link>
             </Button>
           </Card>
         </section>
       </main>
 
       <footer className="mx-auto max-w-6xl px-6 pb-10 text-center text-sm text-muted-foreground">
-        Dr. K's Kitchen — naturopathic meal readings, built with care.
+        Vital Table — naturopathic meal readings, built with care.
       </footer>
     </div>
   );

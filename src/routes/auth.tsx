@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   GoogleAuthProvider,
@@ -8,7 +8,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
-import { isMockMode, setMockRole } from "@/lib/mock-mode";
+import { isMockMode } from "@/lib/mock-mode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,45 +16,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Leaf } from "lucide-react";
 
+// In mock mode there's no real sign-in to show, and the old patient/doctor
+// preview picker now lives at the unlisted /internal-preview route (not
+// linked from here or the landing page) — so a visitor who lands on /auth
+// goes straight into the live meal-reading demo instead.
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Dr. K's Kitchen" }] }),
-  component: isMockMode ? MockAuthPage : AuthPage,
+  head: () => ({ meta: [{ title: "Sign in — Vital Table" }] }),
+  beforeLoad: () => {
+    if (isMockMode) throw redirect({ to: "/dashboard" });
+  },
+  component: AuthPage,
 });
-
-function MockAuthPage() {
-  const navigate = useNavigate();
-  const enter = (role: "patient" | "doctor") => {
-    setMockRole(role);
-    navigate({ to: role === "doctor" ? "/doctor" : "/dashboard" });
-  };
-  return (
-    <div className="grid min-h-screen place-items-center bg-background px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex items-center gap-2">
-          <span className="grid h-8 w-8 -rotate-6 place-items-center rounded-lg bg-accent text-accent-foreground">
-            <Leaf className="h-4 w-4" />
-          </span>
-          <span className="font-serif text-base font-semibold tracking-tight">Dr. K's Kitchen</span>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <p className="mb-1 text-sm font-semibold">Preview mode</p>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Firebase isn't configured yet, so sign-in is skipped — pick a view to browse the UI with
-            sample data.
-          </p>
-          <div className="space-y-2">
-            <Button className="w-full" onClick={() => enter("patient")}>
-              Continue as patient
-            </Button>
-            <Button variant="outline" className="w-full" onClick={() => enter("doctor")}>
-              Continue as doctor
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -108,7 +80,7 @@ function AuthPage() {
           <span className="grid h-8 w-8 -rotate-6 place-items-center rounded-lg bg-accent text-accent-foreground">
             <Leaf className="h-4 w-4" />
           </span>
-          <span className="font-serif text-base font-semibold tracking-tight">Dr. K's Kitchen</span>
+          <span className="font-serif text-base font-semibold tracking-tight">Vital Table</span>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <Tabs defaultValue="signin">

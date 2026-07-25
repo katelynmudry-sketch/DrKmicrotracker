@@ -55,12 +55,18 @@ deploy — one with only these environment variables set:
   moment Firebase web config is present, Preview mode turns off and real
   login/persistence take over — this whole no-account path stops running.
   This has to be its own deploy, not a setting alongside your real one.
-- **Leave `VITE_PANTRY_ENABLED` unset too.** Pantry and the grocery list
-  aren't ready for beta testers — leaving this unset hides both from the
-  nav and redirects away from `/pantry`/`/grocery-list` if someone types the
-  URL directly. You still see them on your own machine by setting
-  `VITE_PANTRY_ENABLED=true` in a local `.env` while testing everything
-  ahead of full launch (see docs/PLAN.md).
+- **`VITE_PANTRY_ENABLED=true` is safe to set on this deployment too.**
+  Pantry and the grocery list now follow the same local-only pattern as
+  meal preview above — items live in that browser's `localStorage`
+  (`src/lib/preview-pantry-store.ts`), never written to Firestore, so they
+  carry the same "nothing saved anywhere but this device" posture as meal
+  readings. Pantry photo scan and voice capture also have unauthenticated
+  preview counterparts (`scanPantryPhotoPreview`/`parsePantryVoiceTextPreview`
+  in `src/lib/pantry-scan-preview.functions.ts`) gated by the same
+  `PREVIEW_AI_ENABLED` flag — same no-auth cost-exposure tradeoff as the
+  meal-reading preview above, so keep it off outside a supervised demo for
+  the same reason. Leave `VITE_PANTRY_ENABLED` unset only if you don't want
+  pantry/grocery visible on this deployment at all.
 - [ ] **Confirm this Vercel project's plan supports a 90s function
   `maxDuration`** (set in `vite.config.ts`). A real reading takes ~44s from
   Claude; Vercel's Hobby plan caps functions at 60s, which isn't enough

@@ -52,10 +52,30 @@ Before touching product code, read:
 - `firestore.rules` / `storage.rules` in this repo are the source of truth for
   access control — update them in the same change as any new client query.
 - Run `npm run typecheck && npm run lint && npm run build` before pushing.
+- **The current no-account beta deploy is local-storage-only, on purpose** (see
+  `docs/OWNER-TODO.md` §0b). Meal logging, pantry, and the grocery list all
+  keep their data in that one browser's `localStorage` — never written to
+  Firestore — because Firestore/Storage haven't gone through a PHI/PIPEDA
+  review yet. This is why: a logged-in, server-persisted beta could tie a
+  real meal/pantry description to whatever identifying info leaks in a
+  breach; a local-only, no-account beta can't, because nothing survives past
+  that device. Applies whenever `isMockMode` is true (`src/lib/mock-mode.ts`)
+  and `isInternalPreviewUnlocked()` is false — see `src/lib/preview-meals-store.ts`,
+  `src/lib/preview-pantry-store.ts`, `src/lib/meals-preview.functions.ts`,
+  `src/lib/pantry-scan-preview.functions.ts`. Any new feature added to this
+  path must not write to Firestore/Storage or collect new identifying info —
+  this whole local-only branch is meant to go away once real accounts launch.
 
 ## Design rules
 
 - Use semantic tokens in `src/styles.css` — never raw hex values in components.
-- Fonts: Fraunces (display) + Nunito (body), self-hosted.
+- Fonts: Cormorant (display) + EB Garamond (body), self-hosted — the
+  Dr. Katelyn Mudry brand system (KM-clinical half only; no Solarium/
+  astrology fonts or colors belong in this app). **Scoped exception:** Jost
+  (`--font-label`), self-hosted the same way, is allowed for tracked-caps
+  eyebrow labels and small tags only (e.g. nutrient tile labels, "Worth
+  trying" pills on the nutrient reading card) — never for headings, body
+  copy, or anywhere Cormorant/EB Garamond already apply. Directed by Dr. K
+  for the nutrient-card redesign; don't extend it to other Solarium elements.
 - No "Sunny Kitchen" elements: no confetti, no achievement badges, no gamified
   arcs, minimal emoji.

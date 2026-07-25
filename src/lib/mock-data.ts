@@ -30,6 +30,7 @@ export const mockMeals: Meal[] = [
       estimated_portion: "~450g",
       opening_note:
         "This bowl is doing exactly what we hoped for your energy this week — nice work!",
+      meal_style: "protein_fat_forward",
       building_blocks: {
         protein_g: 38,
         fiber_g: 8,
@@ -103,6 +104,7 @@ export const mockMeals: Meal[] = [
       identified_items: ["Oats", "Blueberries", "Strawberries", "Chia seeds"],
       estimated_portion: "~300g",
       opening_note: "A gentle, steady start — this one's built for lasting energy.",
+      meal_style: "nutrient_dense",
       building_blocks: {
         protein_g: 10,
         fiber_g: 11,
@@ -188,6 +190,7 @@ export const mockMeals: Meal[] = [
       identified_items: ["Almonds", "Apple"],
       estimated_portion: "~30g almonds, 1 medium apple",
       opening_note: "A steady little snack — good fiber-to-sweetness balance.",
+      meal_style: "simple_few_ingredients",
       building_blocks: {
         protein_g: 7,
         fiber_g: 6,

@@ -3,93 +3,15 @@ import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { z } from "zod";
 import type Anthropic from "@anthropic-ai/sdk";
 import type { Firestore } from "firebase-admin/firestore";
-import {
-  MealAnalysisSchema,
-  EditableMealAnalysisSchema,
-  type MealAnalysis,
-} from "@/lib/analysis.schema";
-import {
-  RECORD_READING_TOOL,
-  RECORD_READING_TOOL_NAME,
-  buildSystemPrompt,
-  PATIENT_ADDITION_PREFIX,
-} from "@/lib/clinical-spine";
+import { EditableMealAnalysisSchema } from "@/lib/analysis.schema";
+import { buildSystemPrompt, PATIENT_ADDITION_PREFIX } from "@/lib/clinical-spine";
 import { resolveEffectiveFocusNutrients } from "@/lib/users.schema";
-
-// Sized against the Vercel function's 60s maxDuration (see vite.config.ts):
-// a failed first attempt plus the one corrective retry is at most 2x this,
-// leaving headroom for the photo download/upload and Firestore writes around
-// it. Do not raise this without also raising maxDuration. NOTE: max_tokens
-// above was raised for the ~27-nutrient schema (was 9) — a larger structured
-// response takes longer to generate, so this budget may no longer leave
-// enough headroom. Re-measure real latency before trusting this number.
-const ANALYSIS_TIMEOUT_MS = 25_000;
-const DEFAULT_MODEL = "claude-sonnet-4-6";
-
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(message)), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (err) => {
-        clearTimeout(timer);
-        reject(err);
-      },
-    );
-  });
-}
+import { DEFAULT_MODEL, runAnalysisModel } from "@/lib/analysis-engine";
 
 async function assertCanAccessMeal(adminDb: Firestore, userId: string, patientId: string) {
   if (patientId === userId) return;
   const userSnap = await adminDb.collection("users").doc(userId).get();
   if (userSnap.data()?.role !== "doctor") throw new Error("Forbidden");
-}
-
-// One call to the model that must return a single validated tool_use block.
-// Thrown errors (network, timeout, schema mismatch) are caught by the caller,
-// which retries once with the bad output fed back for correction.
-async function callAnalysisModel(
-  anthropic: Anthropic,
-  model: string,
-  systemPrompt: string,
-  content: Anthropic.MessageParam["content"],
-  correction?: { badInput: unknown; issue: string },
-): Promise<MealAnalysis> {
-  const messages: Anthropic.MessageParam[] = [{ role: "user", content }];
-  if (correction) {
-    messages.push(
-      { role: "assistant", content: JSON.stringify(correction.badInput) },
-      {
-        role: "user",
-        content: `That reading didn't match the required shape: ${correction.issue}. Call ${RECORD_READING_TOOL_NAME} again with a corrected reading.`,
-      },
-    );
-  }
-
-  const response = await anthropic.messages.create({
-    model,
-    // Raised from 2048 now that TRACKED_NUTRIENTS has ~27 entries (was 9) —
-    // each micronutrients[] item is a full {nutrient, level, from,
-    // amount_estimate} object, so this part of the output roughly tripled.
-    // Re-measure real usage once live API access exists and tune this and
-    // ANALYSIS_TIMEOUT_MS/vite.config.ts's maxDuration together — this is an
-    // estimate, not a measured figure.
-    max_tokens: 4096,
-    system: systemPrompt,
-    messages,
-    tools: [RECORD_READING_TOOL],
-    tool_choice: { type: "tool", name: RECORD_READING_TOOL_NAME },
-  });
-
-  const toolUse = response.content.find(
-    (b): b is Anthropic.ToolUseBlock =>
-      b.type === "tool_use" && b.name === RECORD_READING_TOOL_NAME,
-  );
-  if (!toolUse) throw new Error("The model didn't return a structured reading");
-  return MealAnalysisSchema.parse(toolUse.input);
 }
 
 async function runAnalysis(mealId: string, userId: string, patientAddition?: string) {
@@ -165,24 +87,7 @@ async function runAnalysis(mealId: string, userId: string, patientAddition?: str
       ];
     }
 
-    let analysis: MealAnalysis;
-    try {
-      analysis = await withTimeout(
-        callAnalysisModel(anthropic, model, systemPrompt, content),
-        ANALYSIS_TIMEOUT_MS,
-        "Analysis timed out",
-      );
-    } catch (firstErr) {
-      // One corrective retry: most failures here are a schema mismatch on the
-      // model's first attempt, not a systemic outage — worth one more try
-      // before giving up and marking the meal failed.
-      const issue = firstErr instanceof Error ? firstErr.message : "invalid output";
-      analysis = await withTimeout(
-        callAnalysisModel(anthropic, model, systemPrompt, content, { badInput: {}, issue }),
-        ANALYSIS_TIMEOUT_MS,
-        "Analysis timed out",
-      );
-    }
+    const analysis = await runAnalysisModel(anthropic, model, systemPrompt, content);
 
     await mealRef.update({
       analysis,

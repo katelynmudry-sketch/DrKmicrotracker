@@ -9,6 +9,75 @@ import type { TrackedNutrient } from "@/lib/analysis.schema";
 
 export const isMockMode = !import.meta.env.VITE_FIREBASE_API_KEY;
 
+// Whenever Firebase isn't configured, meal logging always attempts a real,
+// unpersisted Claude reading (see src/lib/meals-preview.functions.ts) — no
+// separate client toggle. The server's PREVIEW_AI_ENABLED env var is the
+// actual on/off switch (and ANTHROPIC_API_KEY must be set); if either is
+// missing, the attempt just fails with a readable error toast instead of
+// succeeding. See docs/OWNER-TODO.md.
+
+// Client-side, per-browser daily cap on preview AI runs — a spend-bounding
+// guard, not a security control (bypassable via incognito/clearing storage).
+// The Anthropic account's own spend cap (docs/OWNER-TODO.md) is the real
+// ceiling; this just stops casual repeat/accidental runs on one device.
+export const PREVIEW_AI_DAILY_LIMIT = Number(import.meta.env.VITE_PREVIEW_AI_DAILY_LIMIT) || 3;
+
+const PREVIEW_AI_RUNS_KEY = "previewAiRuns";
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function readPreviewAiRunsRecord(): { date: string; count: number } {
+  if (typeof window === "undefined") return { date: todayKey(), count: 0 };
+  const raw = localStorage.getItem(PREVIEW_AI_RUNS_KEY);
+  if (!raw) return { date: todayKey(), count: 0 };
+  try {
+    const parsed = JSON.parse(raw) as { date: string; count: number };
+    if (parsed.date !== todayKey()) return { date: todayKey(), count: 0 };
+    return parsed;
+  } catch {
+    return { date: todayKey(), count: 0 };
+  }
+}
+
+export function getPreviewAiRunsToday(): number {
+  return readPreviewAiRunsRecord().count;
+}
+
+export function previewAiRunsRemaining(): number {
+  return Math.max(0, PREVIEW_AI_DAILY_LIMIT - getPreviewAiRunsToday());
+}
+
+// Called before attempting a preview reading, not after success — a burst of
+// failed calls still spends tokens, so the cap has to bound attempts, not
+// just successes.
+export function recordPreviewAiRun(): void {
+  if (typeof window === "undefined") return;
+  const current = readPreviewAiRunsRecord();
+  localStorage.setItem(
+    PREVIEW_AI_RUNS_KEY,
+    JSON.stringify({ date: todayKey(), count: current.count + 1 }),
+  );
+}
+
+// Unlocked only via the unlisted /internal-preview route — Katelyn's own
+// entry point for browsing fixture data as either a patient or a doctor.
+// Public beta testers land straight on /dashboard (see src/routes/index.tsx)
+// and never see this flag flip, so they never see the "Preview mode" banner
+// or the Patient view/Doctor view switcher (app-shell.tsx) — just the live
+// meal-reading demo, patient role only, by default.
+const INTERNAL_PREVIEW_KEY = "internalPreviewUnlocked";
+
+export function isInternalPreviewUnlocked(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(INTERNAL_PREVIEW_KEY) === "true";
+}
+
+export function unlockInternalPreview(): void {
+  localStorage.setItem(INTERNAL_PREVIEW_KEY, "true");
+}
+
 export type MockRole = "doctor" | "patient";
 
 const STORAGE_KEY = "mockRole";

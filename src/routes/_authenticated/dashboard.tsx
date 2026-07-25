@@ -1,57 +1,40 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { isMockMode } from "@/lib/mock-mode";
-import { mockMeals } from "@/lib/mock-data";
+import { isMockMode, previewAiRunsRemaining, recordPreviewAiRun, PREVIEW_AI_DAILY_LIMIT } from "@/lib/mock-mode";
 import { AppShell } from "@/components/app/app-shell";
-import { MealPhoto } from "@/components/app/meal-photo";
+import { AnalysisView } from "@/components/app/analysis-view";
+import { DownloadReadingPdf } from "@/components/app/download-reading-pdf";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import {
-  Camera,
-  LineChart,
-  Loader2,
-  NotebookPen,
-  Settings,
-  ShoppingCart,
-  Sparkles,
-  Stethoscope,
-  Upload,
-} from "lucide-react";
+import { Camera, Loader2, NotebookPen, Upload } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
-import { NUTRIENT_LABELS, TIER_LABELS, type Meal, type MealStatus } from "@/lib/analysis.schema";
+import { analyzeMealPreview } from "@/lib/meals-preview.functions";
+import { addLocalPreviewMeal } from "@/lib/preview-meals-store";
+import { fileToBase64 } from "@/lib/file-base64";
+import type { MealAnalysis } from "@/lib/analysis.schema";
 import {
   MEAL_TIMINGS,
   MEAL_TIMING_LABELS,
   inferMealTiming,
-  mealTimingLabel,
   toDatetimeLocalValue,
   type MealTiming,
 } from "@/lib/meal-timing";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Your meals — Dr. K's Kitchen" }] }),
+  head: () => ({ meta: [{ title: "Your meals — Vital Table" }] }),
   component: PatientDashboard,
 });
 
@@ -63,16 +46,23 @@ const TextMealSchema = z.object({
 type TextMealValues = z.infer<typeof TextMealSchema>;
 
 function PatientDashboard() {
-  const { user, isDoctor, detailLevel } = useAuth();
+  const { user, detailLevel, effectiveFocusNutrients } = useAuth();
   const qc = useQueryClient();
-  const navigate = useNavigate();
   const analyzeFn = useServerFn(analyzeMeal);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mode, setMode] = useState<"photo" | "text">("photo");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
+  // Preview mode's real-AI demo path: never Firestore (no account to write
+  // it against), but it is mirrored into localStorage for the rest of today
+  // (see preview-meals-store.ts) so Nutrient History/Meals History can show
+  // it. That local copy resets at midnight — download/screenshot for
+  // anything longer-lived.
+  const [previewAnalysis, setPreviewAnalysis] = useState<MealAnalysis | null>(null);
+  const analyzePreviewFn = useServerFn(analyzeMealPreview);
 
   // Shared between both tabs — when a meal was eaten. Defaults to right now;
   // the patient can move it, and the breakfast/lunch/dinner/snack guess
@@ -108,20 +98,7 @@ function PatientDashboard() {
   });
   const [logging, setLogging] = useState(false);
 
-  const meals = useQuery({
-    queryKey: ["meals", user?.uid],
-    enabled: !!user,
-    queryFn: async () => {
-      if (isMockMode) return mockMeals;
-      const q = query(
-        collection(db, "meals"),
-        where("patientId", "==", user!.uid),
-        orderBy("eatenAt", "desc"),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Meal);
-    },
-  });
+  const previewAiCapReached = isMockMode && previewAiRunsRemaining() <= 0;
 
   const afterLog = (mealId: string) => {
     qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
@@ -145,10 +122,65 @@ function PatientDashboard() {
     if (file) setPhotoFile(file);
   };
 
+  const runPreviewReading = async (
+    input:
+      | { inputMethod: "text"; mealDescription: string; mealLabel?: string; patientNotes?: string }
+      | {
+          inputMethod: "photo";
+          base64: string;
+          mime: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+          mealLabel?: string;
+          patientNotes?: string;
+        },
+  ) => {
+    if (previewAiRunsRemaining() <= 0) {
+      toast.info(`You've reached today's ${PREVIEW_AI_DAILY_LIMIT} readings on this device — come back tomorrow.`);
+      return;
+    }
+    // Incremented before the call, not after success — a failed reading
+    // still spends tokens, so the cap has to bound attempts.
+    recordPreviewAiRun();
+    setUploading(true);
+    setPreviewAnalysis(null);
+    try {
+      const result = await analyzePreviewFn({ data: input });
+      setPreviewAnalysis(result.analysis);
+      addLocalPreviewMeal(result.analysis, {
+        inputMethod: input.inputMethod,
+        mealLabel: input.mealLabel,
+        mealDescription: input.inputMethod === "text" ? input.mealDescription : undefined,
+        patientNotes: input.patientNotes,
+        eatenAt,
+        mealTiming,
+      });
+      qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
+      setLabel("");
+      setNotes("");
+      setPhotoFile(null);
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      textForm.reset();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Reading failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const upload = async () => {
     const file = photoFile;
     if (!file || !user) return toast.error("Select a meal photo first");
-    if (isMockMode) return toast.info("Preview mode — uploads aren't saved.");
+    if (isMockMode) {
+      const base64 = await fileToBase64(file);
+      const mime = (file.type || "image/jpeg") as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+      return runPreviewReading({
+        inputMethod: "photo",
+        base64,
+        mime,
+        mealLabel: label || undefined,
+        patientNotes: notes || undefined,
+      });
+    }
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
@@ -185,7 +217,14 @@ function PatientDashboard() {
 
   const logTextMeal = async (values: TextMealValues) => {
     if (!user) return;
-    if (isMockMode) return toast.info("Preview mode — uploads aren't saved.");
+    if (isMockMode) {
+      return runPreviewReading({
+        inputMethod: "text",
+        mealDescription: values.mealDescription,
+        mealLabel: values.mealLabel || undefined,
+        patientNotes: values.patientNotes || undefined,
+      });
+    }
     setLogging(true);
     try {
       const mealRef = await addDoc(collection(db, "meals"), {
@@ -214,45 +253,10 @@ function PatientDashboard() {
   };
 
   return (
-    <AppShell
-      nav={
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/patterns">
-              <LineChart className="mr-1 h-4 w-4" />
-              Patterns
-            </Link>
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/pantry">
-              <ShoppingCart className="mr-1 h-4 w-4" />
-              Pantry
-            </Link>
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/settings">
-              <Settings className="mr-1 h-4 w-4" />
-              Settings
-            </Link>
-          </Button>
-          {isDoctor && (
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/doctor">
-                <Stethoscope className="mr-1 h-4 w-4" />
-                Doctor view
-              </Link>
-            </Button>
-          )}
-        </div>
-      }
-    >
-      <div className="grid gap-8 md:grid-cols-[1fr_2fr]">
-        <Card className="h-fit p-5">
-          <h2 className="mb-1 text-base font-semibold">Log a meal</h2>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Snap a photo or describe what you ate. We'll have a reading ready shortly.
-          </p>
-          <div className="mb-4 space-y-2">
+    <AppShell>
+      <div className="mx-auto max-w-md">
+        <Card className="p-5">
+          <div className="mb-5 space-y-2">
             <Label className="mb-1.5">When did you eat this?</Label>
             <Input
               type="datetime-local"
@@ -276,221 +280,172 @@ function PatientDashboard() {
               ))}
             </div>
           </div>
-          <Tabs defaultValue="photo">
-            <TabsList className="mb-3 grid w-full grid-cols-2">
-              <TabsTrigger value="photo">Photo</TabsTrigger>
-              <TabsTrigger value="text">Describe instead</TabsTrigger>
-            </TabsList>
-            <TabsContent value="photo">
-              <div className="space-y-3">
-                <div>
-                  <Label className="mb-1.5">Photo</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => cameraInputRef.current?.click()}
-                    >
-                      <Camera className="h-4 w-4" />
-                      Take a photo
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="h-4 w-4" />
-                      Upload a photo
-                    </Button>
-                  </div>
-                  <input
-                    ref={cameraInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                  {detailLevel === "detailed" && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      Tip: pop a spoon, coin, credit card, or your hand next to the plate — it helps
-                      us judge portion size more precisely.
-                    </p>
-                  )}
-                  {photoFile && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      Selected: {photoFile.name}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label className="mb-1.5">Label (optional)</Label>
-                  <Input
-                    placeholder="Lunch — Tuesday"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="mb-1.5">Notes</Label>
-                  <Textarea
-                    placeholder="How you felt, hunger, time of day…"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-                <Button className="w-full" onClick={upload} disabled={uploading}>
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                  Upload meal
+
+          {mode === "photo" ? (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="grid h-40 w-40 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg transition hover:brightness-110"
+              >
+                <Camera className="mb-1.5 h-9 w-9" />
+                <span className="px-6 text-center text-sm font-semibold leading-tight">
+                  Snap your bowl, plate, or the stove
+                </span>
+              </button>
+              <p className="max-w-[240px] text-center text-xs text-muted-foreground">
+                We'll read what's there and help you round it out — same reading, just a look at it
+                before you eat.
+              </p>
+              {detailLevel === "detailed" && (
+                <p className="max-w-[260px] text-center text-xs text-muted-foreground">
+                  Tip: pop a spoon, coin, credit card, or your hand next to the plate — it helps us
+                  judge portion size more precisely.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="mr-1 h-3.5 w-3.5" />
+                  Upload a photo instead
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setMode("text")}>
+                  Describe instead
                 </Button>
               </div>
-            </TabsContent>
-            <TabsContent value="text">
-              <form className="space-y-3" onSubmit={textForm.handleSubmit(logTextMeal)}>
-                <div>
-                  <Label className="mb-1.5">What did you eat?</Label>
-                  <Textarea
-                    placeholder="2 eggs, 2 slices whole wheat toast, avocado, black coffee, about 1 plate"
-                    rows={3}
-                    {...textForm.register("mealDescription")}
-                  />
-                  {textForm.formState.errors.mealDescription && (
-                    <p className="mt-1 text-xs text-destructive">
-                      {textForm.formState.errors.mealDescription.message}
-                    </p>
-                  )}
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+
+              {photoFile && (
+                <div className="w-full space-y-3 border-t border-border pt-4">
+                  <p className="text-xs text-muted-foreground">Selected: {photoFile.name}</p>
+                  <div>
+                    <Label className="mb-1.5">Label (optional)</Label>
+                    <Input
+                      placeholder="…"
+                      className="placeholder:text-muted-foreground/40"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1.5">Notes</Label>
+                    <Textarea
+                      placeholder="How you felt, hunger, time of day…"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={upload}
+                    disabled={uploading || previewAiCapReached}
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                    Upload meal
+                  </Button>
                 </div>
-                <div>
-                  <Label className="mb-1.5">Label (optional)</Label>
-                  <Input placeholder="Lunch — Tuesday" {...textForm.register("mealLabel")} />
-                </div>
-                <div>
-                  <Label className="mb-1.5">Notes</Label>
-                  <Textarea
-                    placeholder="How you felt, hunger, time of day…"
-                    rows={3}
-                    {...textForm.register("patientNotes")}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={logging}>
-                  {logging ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <NotebookPen className="h-4 w-4" />
-                  )}
-                  Log meal
+              )}
+            </div>
+          ) : (
+            <form className="space-y-3" onSubmit={textForm.handleSubmit(logTextMeal)}>
+              <div className="flex items-center justify-between">
+                <Label className="mb-1.5">What did you eat?</Label>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setMode("photo")}>
+                  <Camera className="mr-1 h-3.5 w-3.5" />
+                  Take a photo instead
                 </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+              </div>
+              <Textarea
+                placeholder="…"
+                className="placeholder:text-muted-foreground/40"
+                rows={3}
+                {...textForm.register("mealDescription")}
+              />
+              {textForm.formState.errors.mealDescription && (
+                <p className="mt-1 text-xs text-destructive">
+                  {textForm.formState.errors.mealDescription.message}
+                </p>
+              )}
+              <div>
+                <Label className="mb-1.5">Label (optional)</Label>
+                <Input
+                  placeholder="…"
+                  className="placeholder:text-muted-foreground/40"
+                  {...textForm.register("mealLabel")}
+                />
+              </div>
+              <div>
+                <Label className="mb-1.5">Notes</Label>
+                <Textarea
+                  placeholder="How you felt, hunger, time of day…"
+                  rows={3}
+                  {...textForm.register("patientNotes")}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={logging || uploading || previewAiCapReached}
+              >
+                {logging || uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <NotebookPen className="h-4 w-4" />
+                )}
+                Analysis
+              </Button>
+            </form>
+          )}
+          {isMockMode && (
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              {previewAiCapReached
+                ? `You've used today's ${PREVIEW_AI_DAILY_LIMIT} readings on this device — come back tomorrow`
+                : `${previewAiRunsRemaining()} of ${PREVIEW_AI_DAILY_LIMIT} readings left today on this device`}
+            </p>
+          )}
         </Card>
 
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Your meal history</h2>
-            <span className="text-xs text-muted-foreground">{meals.data?.length ?? 0} meals</span>
-          </div>
-          {meals.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : !meals.data || meals.data.length === 0 ? (
-            <Card className="grid place-items-center p-12 text-center">
-              <Sparkles className="mb-3 h-6 w-6 text-muted-foreground" />
-              <p className="text-sm font-medium">No meals yet</p>
-              <p className="text-xs text-muted-foreground">
-                Upload your first meal photo to see its reading here.
+        {isMockMode && previewAnalysis && (
+          <Card className="printable-reading mt-4 p-5">
+            <div className="mb-4 space-y-3 print:hidden">
+              <p className="rounded-lg bg-secondary p-3 text-xs text-muted-foreground">
+                This reading is saved on this device for today only — download a copy or take a
+                screenshot to keep it longer.
               </p>
-            </Card>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {meals.data.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => navigate({ to: "/meals/$mealId", params: { mealId: m.id } })}
-                  className="group overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-accent/50"
-                >
-                  {m.storagePath ? (
-                    <MealPhoto path={m.storagePath} className="h-40 w-full object-cover" />
-                  ) : (
-                    <div className="grid h-40 w-full place-items-center bg-secondary">
-                      <NotebookPen className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold">{m.mealLabel ?? "Untitled meal"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {mealTimingLabel(m)} · {new Date(m.eatenAt).toLocaleString()}
-                        </p>
-                      </div>
-                      <StatusBadge status={m.status} />
-                    </div>
-                    {m.analysis && (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {attributePills(m).map((pill) => (
-                          <span
-                            key={pill}
-                            className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground"
-                          >
-                            {pill}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
+              <DownloadReadingPdf />
             </div>
-          )}
-        </div>
+            <AnalysisView
+              analysis={previewAnalysis}
+              editable={false}
+              initialDetailLevel={detailLevel}
+              focusNutrients={effectiveFocusNutrients}
+            />
+          </Card>
+        )}
       </div>
     </AppShell>
-  );
-}
-
-// Attribute pills on meal cards — a quick, qualitative read at a glance.
-// Leads with protocol fit, then the strongest micronutrient sources.
-function attributePills(m: Meal): string[] {
-  if (!m.analysis) return [];
-  const pills = [TIER_LABELS[m.analysis.protocol_fit.tier]];
-  m.analysis.micronutrients
-    .filter((n) => n.level === "strong")
-    .slice(0, 2)
-    .forEach((n) => pills.push(`${NUTRIENT_LABELS[n.nutrient]}-rich`));
-  return pills;
-}
-
-const STATUS_LABELS: Record<MealStatus, string> = {
-  pending: "Logged",
-  analyzing: "Reading…",
-  analyzed: "Ready",
-  failed: "Needs a retry",
-};
-
-function StatusBadge({ status }: { status: MealStatus }) {
-  const map: Record<MealStatus, string> = {
-    analyzed: "bg-accent/15 text-accent-foreground",
-    analyzing: "bg-secondary text-secondary-foreground",
-    pending: "bg-secondary text-muted-foreground",
-    failed: "bg-destructive/15 text-destructive",
-  };
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${map[status] ?? "bg-secondary"}`}
-    >
-      {STATUS_LABELS[status] ?? status}
-    </span>
   );
 }

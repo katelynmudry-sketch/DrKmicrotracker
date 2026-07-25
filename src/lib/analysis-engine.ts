@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { MealAnalysisSchema, type MealAnalysis } from "@/lib/analysis.schema";
+import { MealAnalysisDraftSchema, type MealAnalysis } from "@/lib/analysis.schema";
 import { RECORD_READING_TOOL, RECORD_READING_TOOL_NAME } from "@/lib/clinical-spine";
+import { pickOpeningNote } from "@/lib/meal-style-lines";
 
 // Shared Anthropic call/retry/timeout logic for both the persisted reading
 // flow (meals.functions.ts) and the non-persisting preview flow
@@ -64,7 +65,8 @@ export async function callAnalysisModel(
       b.type === "tool_use" && b.name === RECORD_READING_TOOL_NAME,
   );
   if (!toolUse) throw new Error("The model didn't return a structured reading");
-  return MealAnalysisSchema.parse(toolUse.input);
+  const draft = MealAnalysisDraftSchema.parse(toolUse.input);
+  return { ...draft, opening_note: pickOpeningNote(draft.meal_style) };
 }
 
 // Runs the call bounded by ANALYSIS_TIMEOUT_MS. Shared by the persisted and
