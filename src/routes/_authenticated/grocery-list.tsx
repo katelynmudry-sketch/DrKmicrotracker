@@ -37,6 +37,7 @@ import { GROCERY_REASON_LABELS } from "@/lib/pantry.schema";
 import { computeNutrientCoverage } from "@/lib/trends";
 import { splitFoodsByStorage, type NutrientFood } from "@/lib/nutrient-reference";
 import { formatAmount, rdiProgressPhrase } from "@/lib/rdi-reference";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/grocery-list")({
   head: () => ({ meta: [{ title: "Grocery list — Vital Table" }] }),
@@ -114,8 +115,8 @@ function GroceryListPage() {
         createdAt: serverTimestamp(),
       });
       invalidateList();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't add item");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't add item"));
     }
   };
 

@@ -29,6 +29,7 @@ import { ArrowLeft, FileText, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { extractRubricPdf } from "@/lib/rubrics.functions";
 import { fileToBase64 } from "@/lib/file-base64";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/doctor/rubrics")({
   head: () => ({ meta: [{ title: "Rubrics — Dr. K's Kitchen" }] }),
@@ -89,8 +90,8 @@ function Rubrics() {
       setExtracted("");
       setFile(null);
       qc.invalidateQueries({ queryKey: ["rubrics"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Upload failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -105,8 +106,8 @@ function Rubrics() {
       const result = await extractFn({ data: { base64 } });
       setExtracted(result.text);
       toast.success("Pulled a summary from the PDF — review it before saving.");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't extract text from that PDF");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't extract text from that PDF"));
     } finally {
       setExtracting(false);
     }

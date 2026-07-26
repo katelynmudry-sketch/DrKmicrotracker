@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Leaf } from "lucide-react";
+import { errorMessage } from "@/lib/error-message";
 
 // In mock mode there's no real sign-in to show, and the old patient/doctor
 // preview picker now lives at the unlisted /internal-preview route (not
@@ -44,8 +45,8 @@ function AuthPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate({ to: "/dashboard" });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Sign in failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Sign in failed"));
     } finally {
       setBusy(false);
     }
@@ -57,8 +58,8 @@ function AuthPage() {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (fullName) await updateProfile(cred.user, { displayName: fullName });
       navigate({ to: "/dashboard" });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Sign up failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Sign up failed"));
     } finally {
       setBusy(false);
     }
@@ -68,8 +69,8 @@ function AuthPage() {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
       navigate({ to: "/dashboard" });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Sign in failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Sign in failed"));
     }
   };
 

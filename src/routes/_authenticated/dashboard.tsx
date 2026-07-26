@@ -24,7 +24,15 @@ import { analyzeMeal } from "@/lib/meals.functions";
 import { analyzeMealPreview } from "@/lib/meals-preview.functions";
 import { addLocalPreviewMeal } from "@/lib/preview-meals-store";
 import { fileToBase64 } from "@/lib/file-base64";
-import type { MealAnalysis } from "@/lib/analysis.schema";
+import {
+  NUTRIENT_LABELS,
+  TIER_LABELS,
+  type Meal,
+  type MealStatus,
+  type MealAnalysis,
+} from "@/lib/analysis.schema";
+import { errorMessage } from "@/lib/error-message";
+import { prepareImage } from "@/lib/image-prep";
 import {
   MEAL_TIMINGS,
   MEAL_TIMING_LABELS,
@@ -112,7 +120,7 @@ function PatientDashboard() {
         // (status is server-owned — the client never writes it) — just
         // refetch so the badge reflects that, and let the patient retry
         // from the meal detail page.
-        toast.error(e?.message ?? "Reading failed");
+        toast.error(errorMessage(e, "Reading failed"));
         qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
       });
   };
@@ -183,9 +191,11 @@ function PatientDashboard() {
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `meal-photos/${user.uid}/${Date.now()}.${ext}`;
-      await uploadBytes(ref(storage, path), file, { contentType: file.type });
+      // Re-encode as downscaled JPEG — iPhone pickers hand us HEIC, which the
+      // reading model can't accept.
+      const photo = await prepareImage(file);
+      const path = `meal-photos/${user.uid}/${Date.now()}.jpg`;
+      await uploadBytes(ref(storage, path), photo, { contentType: "image/jpeg" });
       const mealRef = await addDoc(collection(db, "meals"), {
         patientId: user.uid,
         storagePath: path,
@@ -208,8 +218,8 @@ function PatientDashboard() {
       if (fileInputRef.current) fileInputRef.current.value = "";
       resetTiming();
       afterLog(mealRef.id);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Upload failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -245,8 +255,8 @@ function PatientDashboard() {
       textForm.reset();
       resetTiming();
       afterLog(mealRef.id);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Logging failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Logging failed"));
     } finally {
       setLogging(false);
     }

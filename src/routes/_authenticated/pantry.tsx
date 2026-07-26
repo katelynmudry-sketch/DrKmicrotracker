@@ -46,6 +46,8 @@ import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import { fileToBase64 } from "@/lib/file-base64";
 import { scanPantryPhoto, parsePantryVoiceText } from "@/lib/pantry-scan.functions";
 import { scanPantryPhotoPreview, parsePantryVoiceTextPreview } from "@/lib/pantry-scan-preview.functions";
+import { errorMessage } from "@/lib/error-message";
+import { prepareImage } from "@/lib/image-prep";
 
 export const Route = createFileRoute("/_authenticated/pantry")({
   head: () => ({ meta: [{ title: "Your pantry — Vital Table" }] }),
@@ -149,8 +151,8 @@ function PantryPage() {
       });
       setName("");
       invalidate();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't add item");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't add item"));
     } finally {
       setAdding(false);
     }
@@ -189,8 +191,8 @@ function PantryPage() {
       }
       toast.success("Marked used up — added to your grocery list");
       invalidate();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't update that item");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't update that item"));
     }
   };
 
@@ -234,8 +236,8 @@ function PantryPage() {
       });
       toast.success(`Added ${itemName} to your pantry`);
       invalidate();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't add item");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't add item"));
     }
   };
 
@@ -247,22 +249,21 @@ function PantryPage() {
     }
     setScanning(true);
     try {
-      const base64 = await fileToBase64(file);
-      const mediaType = (file.type || "image/jpeg") as
-        | "image/jpeg"
-        | "image/png"
-        | "image/webp"
-        | "image/gif";
+      // Re-encode as downscaled JPEG — handles iPhone HEIC and keeps the
+      // base64 request body small.
+      const photo = await prepareImage(file);
+      const base64 = await fileToBase64(photo);
       const result = isMockMode
-        ? await scanPreviewFn({ data: { base64, mediaType } })
-        : await scanFn({ data: { base64, mediaType } });
+        ? await scanPreviewFn({ data: { base64, mediaType: "image/jpeg" } })
+        : await scanFn({ data: { base64, mediaType: "image/jpeg" } });
+      if (fileRef.current) fileRef.current.value = "";
       if (result.items.length === 0) {
         toast.info("Couldn't make out any items — try a clearer photo, or add them below.");
+        return;
       }
       setPendingItems(result.items);
-      if (fileRef.current) fileRef.current.value = "";
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't scan that photo");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't scan that photo"));
     } finally {
       setScanning(false);
     }
@@ -282,8 +283,8 @@ function PantryPage() {
         return;
       }
       setPendingItems(result.items);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't parse that");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't parse that"));
     } finally {
       setParsingVoice(false);
     }
@@ -322,8 +323,8 @@ function PantryPage() {
       toast.success(`Added ${confirmedItems.length} item(s) to your pantry`);
       setPendingItems(null);
       invalidate();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't save those items");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't save those items"));
     } finally {
       setConfirming(false);
     }

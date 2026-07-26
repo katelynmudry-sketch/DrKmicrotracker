@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import type { TrackedNutrient } from "@/lib/analysis.schema";
 import { CUISINE_OPTIONS, type Cuisine } from "@/lib/cuisines";
+import { errorMessage } from "@/lib/error-message";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Vital Table" }] }),
@@ -53,8 +54,8 @@ function SettingsPage() {
     try {
       await setPatientFocusNutrientsPreference(selected);
       toast.success("Focus nutrients updated");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save focus nutrients");
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to save focus nutrients"));
     } finally {
       setSaving(false);
     }
@@ -65,8 +66,8 @@ function SettingsPage() {
     try {
       await setPatientFocusNutrientsPreference(null);
       toast.success("Reset to your doctor's picks");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to reset");
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to reset"));
     } finally {
       setSaving(false);
     }
@@ -77,8 +78,8 @@ function SettingsPage() {
     try {
       await setCurrentRegionsPreference(selectedRegions);
       toast.success("Saved");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't save");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't save"));
     } finally {
       setSavingRegions(false);
     }
@@ -89,8 +90,8 @@ function SettingsPage() {
     try {
       await setFoodHeritagePreference(selectedHeritage);
       toast.success("Saved");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't save");
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't save"));
     } finally {
       setSavingHeritage(false);
     }

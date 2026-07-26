@@ -27,6 +27,7 @@ import { ArrowLeft, Loader2, RotateCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { analyzeMeal } from "@/lib/meals.functions";
+import { errorMessage } from "@/lib/error-message";
 import { setDoctorFocusNutrients } from "@/lib/users.functions";
 import type { Meal, TrackedNutrient } from "@/lib/analysis.schema";
 import { mealTimingLabel } from "@/lib/meal-timing";
@@ -37,6 +38,7 @@ import {
   resolveEffectiveCuisines,
   type UserDoc,
 } from "@/lib/users.schema";
+import { CARE_PROFILES, CARE_PROFILE_LABELS, CARE_PROFILE_NUTRIENTS } from "@/lib/care-profiles";
 
 export const Route = createFileRoute("/_authenticated/doctor/patient/$patientId")({
   head: () => ({ meta: [{ title: "Patient — Dr. K's Kitchen" }] }),
@@ -203,8 +205,8 @@ function DoctorFocusNutrientsCard({
       }
       toast.success("Focus nutrients updated");
       onSaved();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save focus nutrients");
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to save focus nutrients"));
     } finally {
       setSaving(false);
     }
@@ -223,6 +225,25 @@ function DoctorFocusNutrientsCard({
           them.
         </p>
       )}
+      <div className="mb-3">
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Start from a care profile
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {CARE_PROFILES.map((p) => (
+            <Button
+              key={p}
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-auto py-1 text-xs"
+              onClick={() => setSelected(CARE_PROFILE_NUTRIENTS[p])}
+            >
+              {CARE_PROFILE_LABELS[p]}
+            </Button>
+          ))}
+        </div>
+      </div>
       <FocusNutrientPicker value={selected} onChange={setSelected} />
       <Button size="sm" className="mt-4" onClick={save} disabled={saving}>
         Save
@@ -255,8 +276,8 @@ function MealReview({
     try {
       await analyzeFn({ data: { mealId: meal.id } });
       toast.success("Re-analyzed against the current rubric");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Re-analysis failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Re-analysis failed"));
     } finally {
       setReanalyzing(false);
       invalidate();
@@ -269,8 +290,8 @@ function MealReview({
     try {
       await updateDoc(doc(db, "meals", meal.id), { doctorNotes: notes });
       toast.success("Notes saved");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save notes");
+    } catch (e) {
+      toast.error(errorMessage(e, "Failed to save notes"));
     } finally {
       setSaving(false);
     }
@@ -339,6 +360,7 @@ function MealReview({
           onSaved={invalidate}
           initialDetailLevel={detailLevel}
           focusNutrients={focusNutrients}
+          isDoctor
         />
       </Card>
     </div>

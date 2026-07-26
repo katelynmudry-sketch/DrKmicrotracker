@@ -72,15 +72,15 @@ export function VoiceCapture({
   onTranscript: (transcript: string) => void;
   parsing?: boolean;
 }) {
-  const [supported, setSupported] = useState(true);
+  // Lazy initializer so iOS never flashes the mic UI before the fallback
+  // (this component only renders client-side — the route is ssr: false).
+  const [supported, setSupported] = useState(
+    () => typeof window !== "undefined" && getSpeechRecognitionCtor() !== null && !isIOS(),
+  );
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    setSupported(getSpeechRecognitionCtor() !== null && !isIOS());
-  }, []);
 
   useEffect(() => {
     if (!supported) fallbackTextareaRef.current?.focus();
