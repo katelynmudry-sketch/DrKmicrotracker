@@ -4,7 +4,18 @@ import { useAuth } from "@/hooks/use-auth";
 import { isMockMode } from "@/lib/mock-mode";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Leaf, Sparkles, MessagesSquare, Lock, TrendingUp, BookOpenCheck } from "lucide-react";
+import {
+  Leaf,
+  Sparkles,
+  MessagesSquare,
+  Lock,
+  TrendingUp,
+  BookOpenCheck,
+  ListChecks,
+  ScanLine,
+  Gauge,
+  ShieldCheck,
+} from "lucide-react";
 
 // On the beta deployment (isMockMode — no Firebase configured), there's no
 // real sign-in and no reason to show it: one clear CTA straight into the
@@ -66,8 +77,8 @@ function Landing() {
               your body.
             </h1>
             <p className="mt-5 max-w-lg text-base text-muted-foreground">
-              Photograph what you eat from your phone — Vital Table turns it into a warm reading
-              of what it offered and how it fits your personal protocol. No counting, no comparing —
+              Photograph what you eat from your phone — Vital Table turns it into a warm reading of
+              what it offered and how it fits your personal protocol. No counting, no comparing —
               just gentle clarity.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -120,6 +131,45 @@ function Landing() {
           </div>
         </section>
 
+        {isMockMode && (
+          <section className="mt-28">
+            <div className="mx-auto mb-12 max-w-xl text-center">
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">
+                Before you start
+              </p>
+              <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight">
+                A quick note about this beta
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                Here's what's different about this early version — most of it by design, for your
+                privacy.
+              </p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Feature
+                icon={<ListChecks className="h-5 w-5" />}
+                title="You choose what to focus on"
+                body="Pick the nutrients you want to watch — on your own, or based on something you've heard elsewhere. No referral or account needed."
+              />
+              <Feature
+                icon={<ScanLine className="h-5 w-5" />}
+                title="Read by AI, grounded in real numbers"
+                body="Snap a photo or describe your meal — the reading comes from AI, checked against Canadian recommended intakes, and any 'worth trying' ideas are curated by our team."
+              />
+              <Feature
+                icon={<Gauge className="h-5 w-5" />}
+                title="3 readings a day"
+                body="Plenty to get a feel for it on this browser — the count resets tomorrow."
+              />
+              <Feature
+                icon={<ShieldCheck className="h-5 w-5" />}
+                title="Lives on this device only, on purpose"
+                body="There's no account, so nothing you share is tied to your identity, and nothing is written to a database — your readings, pantry, and settings stay right here in this browser. Download a copy or take a screenshot of anything you want to keep, since none of it carries over if you switch devices or clear your browser data."
+              />
+            </div>
+          </section>
+        )}
+
         <section className="mt-28">
           <Card className="grid gap-8 bg-accent p-10 text-background md:grid-cols-[auto_1fr] md:items-center md:p-14">
             <p className="font-serif text-6xl leading-none opacity-50">&ldquo;</p>
@@ -127,7 +177,9 @@ function Landing() {
               <p className="font-serif text-xl font-medium leading-snug md:text-2xl">
                 Food is medicine — but only when you can actually see what it's doing for you.
               </p>
-              <p className="mt-4 text-sm font-bold opacity-90">— the naturopathic doctor behind Vital Table</p>
+              <p className="mt-4 text-sm font-bold opacity-90">
+                — the naturopathic doctor behind Vital Table
+              </p>
             </div>
           </Card>
         </section>
@@ -143,7 +195,11 @@ function Landing() {
             <Feature
               icon={<BookOpenCheck className="h-5 w-5" />}
               title="Built around your protocol"
-              body="Every reading is scored against a real clinical protocol — not a generic database."
+              body={
+                isMockMode
+                  ? "Every reading is grounded in Canadian recommended intakes — not a generic calorie database."
+                  : "Every reading is scored against a real clinical protocol — not a generic database."
+              }
             />
             <Feature
               icon={<TrendingUp className="h-5 w-5" />}
@@ -153,7 +209,11 @@ function Landing() {
             <Feature
               icon={<Lock className="h-5 w-5" />}
               title="Private, always"
-              body="Your meals and notes stay between you and your care team. Full stop."
+              body={
+                isMockMode
+                  ? "Nothing leaves this device — there's no database, no account, and nothing is saved anywhere but your own browser."
+                  : "Your meals and notes stay between you and your care team. Full stop."
+              }
             />
             <Feature
               icon={<MessagesSquare className="h-5 w-5" />}
@@ -169,7 +229,9 @@ function Landing() {
               Let's see what your plate is telling us.
             </h2>
             <p className="mx-auto mt-4 max-w-md opacity-90">
-              Ask your naturopathic doctor for an invite, or sign in if you already have one.
+              {isMockMode
+                ? "No invite, no account — just tap in and try a reading."
+                : "Ask your naturopathic doctor for an invite, or sign in if you already have one."}
             </p>
             <Button size="lg" variant="secondary" className="mt-7" asChild>
               <Link to={PRIMARY_CTA_TARGET}>{PRIMARY_CTA_LABEL}</Link>
