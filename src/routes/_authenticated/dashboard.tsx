@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Camera, Loader2, NotebookPen, Upload } from "lucide-react";
+import { Camera, Loader2, NotebookPen, Upload, X } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { analyzeMealPreview } from "@/lib/meals-preview.functions";
 import { addLocalPreviewMeal } from "@/lib/preview-meals-store";
@@ -61,6 +61,7 @@ function PatientDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"photo" | "text">("photo");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -71,6 +72,25 @@ function PatientDashboard() {
   // anything longer-lived.
   const [previewAnalysis, setPreviewAnalysis] = useState<MealAnalysis | null>(null);
   const analyzePreviewFn = useServerFn(analyzeMealPreview);
+
+  // Give the patient a visual confirmation that their photo was picked up —
+  // without this the only feedback was a line of text below a large button,
+  // easy to miss and read as "nothing happened".
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Shared between both tabs — when a meal was eaten. Defaults to right now;
   // the patient can move it, and the breakfast/lunch/dinner/snack guess
@@ -164,9 +184,7 @@ function PatientDashboard() {
       qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
       setLabel("");
       setNotes("");
-      setPhotoFile(null);
-      if (cameraInputRef.current) cameraInputRef.current.value = "";
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      clearPhoto();
       textForm.reset();
     } catch (e: any) {
       toast.error(e?.message ?? "Reading failed");
@@ -213,9 +231,7 @@ function PatientDashboard() {
       toast.success("Photo uploaded — reading it now…");
       setLabel("");
       setNotes("");
-      setPhotoFile(null);
-      if (cameraInputRef.current) cameraInputRef.current.value = "";
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      clearPhoto();
       resetTiming();
       afterLog(mealRef.id);
     } catch (e) {
@@ -345,7 +361,23 @@ function PatientDashboard() {
 
               {photoFile && (
                 <div className="w-full space-y-3 border-t border-border pt-4">
-                  <p className="text-xs text-muted-foreground">Selected: {photoFile.name}</p>
+                  <div className="relative overflow-hidden rounded-lg border border-border">
+                    {photoPreviewUrl && (
+                      <img
+                        src={photoPreviewUrl}
+                        alt="Selected meal"
+                        className="max-h-64 w-full object-contain bg-secondary"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={clearPhoto}
+                      aria-label="Remove photo"
+                      className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/90 text-foreground shadow"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                   <div>
                     <Label className="mb-1.5">Label (optional)</Label>
                     <Input
