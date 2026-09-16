@@ -179,12 +179,15 @@ function PatientDashboard() {
     const file = photoFile;
     if (!file || !user) return toast.error("Select a meal photo first");
     if (isMockMode) {
-      const base64 = await fileToBase64(file);
-      const mime = (file.type || "image/jpeg") as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+      // Downscale + re-encode first — same as the real-account path below —
+      // so a full-res phone photo's base64 doesn't blow past the server
+      // function's request body size limit (also handles iPhone HEIC).
+      const photo = await prepareImage(file);
+      const base64 = await fileToBase64(photo);
       return runPreviewReading({
         inputMethod: "photo",
         base64,
-        mime,
+        mime: "image/jpeg",
         mealLabel: label || undefined,
         patientNotes: notes || undefined,
       });
