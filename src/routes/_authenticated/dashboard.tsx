@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Camera, Loader2, NotebookPen, Upload } from "lucide-react";
+import { Camera, Loader2, NotebookPen, Upload, X } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
 import { analyzeMealPreview } from "@/lib/meals-preview.functions";
 import { addLocalPreviewMeal } from "@/lib/preview-meals-store";
@@ -61,6 +61,7 @@ function PatientDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"photo" | "text">("photo");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -71,6 +72,48 @@ function PatientDashboard() {
   // anything longer-lived.
   const [previewAnalysis, setPreviewAnalysis] = useState<MealAnalysis | null>(null);
   const analyzePreviewFn = useServerFn(analyzeMealPreview);
+
+  // previewAiRunsRemaining() reads a date-keyed localStorage counter (see
+  // mock-mode.ts) — calling it once during render only reflects "now" at the
+  // moment this component happens to re-render. If a patient leaves this tab
+  // open (no other state change firing a re-render) across the day boundary,
+  // the number on screen would otherwise freeze at whatever it was when the
+  // tab last rendered instead of the fresh count for the new day. Track it in
+  // state and recompute on mount, when the tab regains focus/visibility, and
+  // right after every reading attempt so the displayed count always matches
+  // the live counter.
+  const [previewRunsRemaining, setPreviewRunsRemaining] = useState(() => previewAiRunsRemaining());
+
+  useEffect(() => {
+    if (!isMockMode) return;
+    const refresh = () => setPreviewRunsRemaining(previewAiRunsRemaining());
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+
+  // Give the patient a visual confirmation that their photo was picked up —
+  // without this the only feedback was a line of text below a large button,
+  // easy to miss and read as "nothing happened".
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Shared between both tabs — when a meal was eaten. Defaults to right now;
   // the patient can move it, and the breakfast/lunch/dinner/snack guess
@@ -106,7 +149,7 @@ function PatientDashboard() {
   });
   const [logging, setLogging] = useState(false);
 
-  const previewAiCapReached = isMockMode && previewAiRunsRemaining() <= 0;
+  const previewAiCapReached = isMockMode && previewRunsRemaining <= 0;
 
   const afterLog = (mealId: string) => {
     qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
@@ -148,6 +191,7 @@ function PatientDashboard() {
     // Incremented before the call, not after success — a failed reading
     // still spends tokens, so the cap has to bound attempts.
     recordPreviewAiRun();
+    setPreviewRunsRemaining(previewAiRunsRemaining());
     setUploading(true);
     setPreviewAnalysis(null);
     try {
@@ -164,9 +208,7 @@ function PatientDashboard() {
       qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
       setLabel("");
       setNotes("");
-      setPhotoFile(null);
-      if (cameraInputRef.current) cameraInputRef.current.value = "";
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      clearPhoto();
       textForm.reset();
     } catch (e: any) {
       toast.error(e?.message ?? "Reading failed");
@@ -216,9 +258,7 @@ function PatientDashboard() {
       toast.success("Photo uploaded — reading it now…");
       setLabel("");
       setNotes("");
-      setPhotoFile(null);
-      if (cameraInputRef.current) cameraInputRef.current.value = "";
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      clearPhoto();
       resetTiming();
       afterLog(mealRef.id);
     } catch (e) {
@@ -296,25 +336,29 @@ function PatientDashboard() {
 
           {mode === "photo" ? (
             <div className="flex flex-col items-center gap-4 py-2">
-              <button
-                type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                className="grid h-40 w-40 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg transition hover:brightness-110"
-              >
-                <Camera className="mb-1.5 h-9 w-9" />
-                <span className="px-6 text-center text-sm font-semibold leading-tight">
-                  Snap your bowl, plate, or the stove
-                </span>
-              </button>
-              <p className="max-w-[240px] text-center text-xs text-muted-foreground">
-                We'll read what's there and help you round it out — same reading, just a look at it
-                before you eat.
-              </p>
-              {detailLevel === "detailed" && (
-                <p className="max-w-[260px] text-center text-xs text-muted-foreground">
-                  Tip: pop a spoon, coin, credit card, or your hand next to the plate — it helps us
-                  judge portion size more precisely.
-                </p>
+              {!photoFile && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="grid h-40 w-40 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg transition hover:brightness-110"
+                  >
+                    <Camera className="mb-1.5 h-9 w-9" />
+                    <span className="px-6 text-center text-sm font-semibold leading-tight">
+                      Snap your bowl, plate, or the stove
+                    </span>
+                  </button>
+                  <p className="max-w-[240px] text-center text-xs text-muted-foreground">
+                    We'll read what's there and help you round it out — same reading, just a look at
+                    it before you eat.
+                  </p>
+                  {detailLevel === "detailed" && (
+                    <p className="max-w-[260px] text-center text-xs text-muted-foreground">
+                      Tip: pop a spoon, coin, credit card, or your hand next to the plate — it helps
+                      us judge portion size more precisely.
+                    </p>
+                  )}
+                </>
               )}
               <div className="flex gap-2">
                 <Button
@@ -348,7 +392,23 @@ function PatientDashboard() {
 
               {photoFile && (
                 <div className="w-full space-y-3 border-t border-border pt-4">
-                  <p className="text-xs text-muted-foreground">Selected: {photoFile.name}</p>
+                  <div className="relative overflow-hidden rounded-lg border border-border">
+                    {photoPreviewUrl && (
+                      <img
+                        src={photoPreviewUrl}
+                        alt="Selected meal"
+                        className="max-h-64 w-full object-contain bg-secondary"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={clearPhoto}
+                      aria-label="Remove photo"
+                      className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-background/90 text-foreground shadow"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                   <div>
                     <Label className="mb-1.5">Label (optional)</Label>
                     <Input
@@ -356,6 +416,9 @@ function PatientDashboard() {
                       className="placeholder:text-muted-foreground/40"
                       value={label}
                       onChange={(e) => setLabel(e.target.value)}
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
                     />
                   </div>
                   <div>
@@ -407,6 +470,9 @@ function PatientDashboard() {
                 <Input
                   placeholder="…"
                   className="placeholder:text-muted-foreground/40"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
                   {...textForm.register("mealLabel")}
                 />
               </div>
@@ -436,7 +502,7 @@ function PatientDashboard() {
             <p className="mt-3 text-center text-xs text-muted-foreground">
               {previewAiCapReached
                 ? `You've used today's ${PREVIEW_AI_DAILY_LIMIT} readings on this device — come back tomorrow`
-                : `${previewAiRunsRemaining()} of ${PREVIEW_AI_DAILY_LIMIT} readings left today on this device`}
+                : `${previewRunsRemaining} of ${PREVIEW_AI_DAILY_LIMIT} readings left today on this device`}
             </p>
           )}
         </Card>
