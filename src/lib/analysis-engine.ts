@@ -1,6 +1,16 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { MealAnalysisDraftSchema, type MealAnalysis } from "@/lib/analysis.schema";
-import { RECORD_READING_TOOL, RECORD_READING_TOOL_NAME } from "@/lib/clinical-spine";
+import {
+  MealAnalysisDraftSchema,
+  PhotoDescriptionSchema,
+  type MealAnalysis,
+  type PhotoDescription,
+} from "@/lib/analysis.schema";
+import {
+  DESCRIBE_PHOTO_TOOL,
+  DESCRIBE_PHOTO_TOOL_NAME,
+  RECORD_READING_TOOL,
+  RECORD_READING_TOOL_NAME,
+} from "@/lib/clinical-spine";
 import { pickOpeningNote } from "@/lib/meal-style-lines";
 
 // Shared Anthropic call/retry/timeout logic for both the persisted reading
@@ -14,6 +24,10 @@ import { pickOpeningNote } from "@/lib/meal-style-lines";
 // leaves room for photo download/upload and Firestore writes around it. Do
 // not raise this without also raising maxDuration.
 export const ANALYSIS_TIMEOUT_MS = 55_000;
+// The photo-description step returns three plain fields, not a full
+// reading — comfortably faster than a full analysis, so a much shorter
+// timeout is enough headroom.
+export const DESCRIBE_PHOTO_TIMEOUT_MS = 20_000;
 export const DEFAULT_MODEL = "claude-sonnet-4-6";
 
 export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
@@ -81,5 +95,44 @@ export async function runAnalysisModel(
     callAnalysisModel(anthropic, model, systemPrompt, content),
     ANALYSIS_TIMEOUT_MS,
     "Analysis timed out",
+  );
+}
+
+// The two-step photo flow's first call (see clinical-spine.ts) — a quick
+// look at the photo only, no nutrients or protocol_fit. Same
+// call/validate shape as callAnalysisModel above, against the smaller tool.
+export async function callDescribePhotoModel(
+  anthropic: Anthropic,
+  model: string,
+  systemPrompt: string,
+  content: Anthropic.MessageParam["content"],
+): Promise<PhotoDescription> {
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 512,
+    system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content }],
+    tools: [DESCRIBE_PHOTO_TOOL],
+    tool_choice: { type: "tool", name: DESCRIBE_PHOTO_TOOL_NAME },
+  });
+
+  const toolUse = response.content.find(
+    (b): b is Anthropic.ToolUseBlock =>
+      b.type === "tool_use" && b.name === DESCRIBE_PHOTO_TOOL_NAME,
+  );
+  if (!toolUse) throw new Error("The model didn't return a photo description");
+  return PhotoDescriptionSchema.parse(toolUse.input);
+}
+
+export async function runDescribePhotoModel(
+  anthropic: Anthropic,
+  model: string,
+  systemPrompt: string,
+  content: Anthropic.MessageParam["content"],
+): Promise<PhotoDescription> {
+  return withTimeout(
+    callDescribePhotoModel(anthropic, model, systemPrompt, content),
+    DESCRIBE_PHOTO_TIMEOUT_MS,
+    "Photo look timed out",
   );
 }

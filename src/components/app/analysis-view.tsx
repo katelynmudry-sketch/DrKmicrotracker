@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { ChevronDown, Loader2, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
@@ -79,7 +78,6 @@ export function AnalysisView({
   allowAddConfirmation,
   onAddingChange,
   isDoctor,
-  spotlightLabel = "On your protocol",
 }: {
   analysis: MealAnalysis | null;
   mealId?: string;
@@ -98,7 +96,6 @@ export function AnalysisView({
   // Doctor's Micronutrients card collapses by default (she reviews many
   // meals per patient); the patient's stays expanded, unchanged from before.
   isDoctor?: boolean;
-  spotlightLabel?: string;
 }) {
   const updateFn = useServerFn(updateMealAnalysis);
   const analyzeFn = useServerFn(analyzeMeal);
@@ -436,11 +433,6 @@ export function AnalysisView({
                       <span className="font-medium">
                         {NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}
                       </span>
-                      {mode === "detailed" && isFocus(m.nutrient) && (
-                        <Badge variant="secondary" className="shrink-0 text-[10px] font-medium">
-                          {spotlightLabel}
-                        </Badge>
-                      )}
                     </span>
                     <span className="text-muted-foreground">
                       {LEVEL_LABELS[m.level] ?? m.level} · {m.from}

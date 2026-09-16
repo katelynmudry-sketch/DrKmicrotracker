@@ -684,15 +684,39 @@ merge (`git merge origin/preview`, resolved by hand file by file, not auto-resol
   `setDoctorFocusNutrients`. The doctor can hand-adjust checkboxes after applying a
   preset. Distinct from the milestone #6 note above about a "therapeutic-diet-type
   picker" being scoped out — these are clinical-focus presets, not diet types.
-- [x] **Focus badge on individual rows**: a small "On your protocol" badge now appears
+- [x] ~~**Focus badge on individual rows**: a small "On your protocol" badge now appears
   next to a micronutrient row in Detailed mode when that nutrient is in the patient's
-  effective focus list (reuses the file's existing `isFocus()` sort helper) — Simple mode
-  already implies focus by only showing those nutrients, so the badge is Detailed-mode
-  only to avoid redundant clutter.
+  effective focus list~~ — **removed in Post-demo milestone #8** below, at Katelyn's
+  request.
 - **Flagged for Dr. K's review, not yet clinically validated**: the six profiles' exact
   nutrient sets (compiled from a PubMed/web research pass this session, documented with
   citations in the session's plan file) — see the review comment at the top of
   `care-profiles.ts`.
+- **Not visually verified** — same sandbox constraint as every milestone above.
+
+### Post-demo milestone #8 — Two-step photo flow + protocol-fit badge removal *(1 session)* — **shipped, preview mode only**
+- [x] **Two-step photo flow (preview/mock-mode dashboard only)**: picking a photo no
+  longer goes straight to the full reading. A new lightweight tool/prompt
+  (`DESCRIBE_PHOTO_TOOL` in `clinical-spine.ts`, `PhotoDescriptionSchema` in
+  `analysis.schema.ts`) does a quick first look — meal name, identified items, portion
+  guess only, no nutrients — via the new `describeMealPhotoPreview` server fn. The
+  patient sees that description as editable fields under the still-visible photo
+  thumbnail, corrects anything wrong, then confirms. The confirmed fields are sent back
+  in as ground-truth context (`CONFIRMED_DESCRIPTION_PREFIX` guidance) alongside the same
+  photo for the real reading, so portion-size grounding from a visible reference object
+  is preserved. The daily preview-AI cap counts once per meal (at the describe step),
+  not once per Claude call.
+- [x] **Photo stays visible after the reading**: the result card now shows the meal's
+  photo above the reading (`resultPhotoUrl` in `dashboard.tsx`) instead of discarding it
+  the moment the reading starts, via its own in-memory object URL — still never written
+  to `localStorage` or Firestore, so this doesn't touch the local-only architecture rule.
+- [x] **Removed the "On your protocol" badge** added in milestone #7 (`analysis-view.tsx`)
+  — Katelyn asked for it gone; `protocol_fit` itself is untouched.
+- **Scope note — real-account path not yet updated**: `dashboard.tsx`'s real-account
+  branch (Firebase Storage + Firestore, gated by `!isMockMode`) still uploads straight to
+  a full reading with no describe/confirm step, since that path isn't live yet (the
+  current beta is the no-account preview path only — see `docs/OWNER-TODO.md` §0b). Give
+  it the same two-step treatment before accounts launch.
 - **Not visually verified** — same sandbox constraint as every milestone above.
 
 ---

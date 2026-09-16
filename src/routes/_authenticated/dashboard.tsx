@@ -9,7 +9,12 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { isMockMode, previewAiRunsRemaining, recordPreviewAiRun, PREVIEW_AI_DAILY_LIMIT } from "@/lib/mock-mode";
+import {
+  isMockMode,
+  previewAiRunsRemaining,
+  recordPreviewAiRun,
+  PREVIEW_AI_DAILY_LIMIT,
+} from "@/lib/mock-mode";
 import { AppShell } from "@/components/app/app-shell";
 import { AnalysisView } from "@/components/app/analysis-view";
 import { DownloadReadingPdf } from "@/components/app/download-reading-pdf";
@@ -21,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera, Loader2, NotebookPen, Upload, X } from "lucide-react";
 import { analyzeMeal } from "@/lib/meals.functions";
-import { analyzeMealPreview } from "@/lib/meals-preview.functions";
+import { analyzeMealPreview, describeMealPhotoPreview } from "@/lib/meals-preview.functions";
 import { addLocalPreviewMeal } from "@/lib/preview-meals-store";
 import { fileToBase64 } from "@/lib/file-base64";
 import {
@@ -30,6 +35,7 @@ import {
   type Meal,
   type MealStatus,
   type MealAnalysis,
+  type PhotoDescription,
 } from "@/lib/analysis.schema";
 import { errorMessage } from "@/lib/error-message";
 import { prepareImage } from "@/lib/image-prep";
@@ -62,6 +68,15 @@ function PatientDashboard() {
   const [mode, setMode] = useState<"photo" | "text">("photo");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  // The two-step photo flow's first result (see describePhoto below) — the
+  // AI's quick "what we see" read, shown editable so the patient can correct
+  // it before it feeds the real reading. Null means either no photo yet, or
+  // the photo hasn't been looked at yet.
+  const [photoDescription, setPhotoDescription] = useState<PhotoDescription | null>(null);
+  const [describing, setDescribing] = useState(false);
+  const [descMealName, setDescMealName] = useState("");
+  const [descItems, setDescItems] = useState("");
+  const [descPortion, setDescPortion] = useState("");
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -71,7 +86,14 @@ function PatientDashboard() {
   // it. That local copy resets at midnight — download/screenshot for
   // anything longer-lived.
   const [previewAnalysis, setPreviewAnalysis] = useState<MealAnalysis | null>(null);
+  // The photo behind the reading above, kept visible after the top form
+  // resets for the next log — its own object URL (not photoPreviewUrl, which
+  // gets revoked when the top form clears) so it survives clearPhoto(). Never
+  // persisted anywhere — same in-memory-only rule as the rest of preview mode
+  // (see CLAUDE.md's local-storage-only architecture rule).
+  const [resultPhotoUrl, setResultPhotoUrl] = useState<string | null>(null);
   const analyzePreviewFn = useServerFn(analyzeMealPreview);
+  const describePhotoFn = useServerFn(describeMealPhotoPreview);
 
   // previewAiRunsRemaining() reads a date-keyed localStorage counter (see
   // mock-mode.ts) — calling it once during render only reflects "now" at the
@@ -111,9 +133,22 @@ function PatientDashboard() {
 
   const clearPhoto = () => {
     setPhotoFile(null);
+    setPhotoDescription(null);
+    setDescMealName("");
+    setDescItems("");
+    setDescPortion("");
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  // Revokes the previous result photo's object URL whenever it's replaced by
+  // a newer one, and on unmount — resultPhotoUrl has its own lifecycle,
+  // separate from photoPreviewUrl's (see its declaration above).
+  useEffect(() => {
+    return () => {
+      if (resultPhotoUrl) URL.revokeObjectURL(resultPhotoUrl);
+    };
+  }, [resultPhotoUrl]);
 
   // Shared between both tabs — when a meal was eaten. Defaults to right now;
   // the patient can move it, and the breakfast/lunch/dinner/snack guess
@@ -182,20 +217,49 @@ function PatientDashboard() {
           mime: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
           mealLabel?: string;
           patientNotes?: string;
+          confirmedDescription?: {
+            meal_name: string;
+            identified_items: string[];
+            estimated_portion: string;
+          };
+          // The prepared image blob, kept only to build resultPhotoUrl on
+          // success — never sent anywhere itself (base64 above already went
+          // to Anthropic).
+          sourceFile: Blob;
         },
+    // The photo path already spent one of today's runs at the describe step
+    // (see describePhoto below) — this call is the same meal, not a new one.
+    options?: { skipRunCount?: boolean },
   ) => {
-    if (previewAiRunsRemaining() <= 0) {
-      toast.info(`You've reached today's ${PREVIEW_AI_DAILY_LIMIT} readings on this device — come back tomorrow.`);
-      return;
+    if (!options?.skipRunCount) {
+      if (previewAiRunsRemaining() <= 0) {
+        toast.info(
+          `You've reached today's ${PREVIEW_AI_DAILY_LIMIT} readings on this device — come back tomorrow.`,
+        );
+        return;
+      }
+      // Incremented before the call, not after success — a failed reading
+      // still spends tokens, so the cap has to bound attempts.
+      recordPreviewAiRun();
+      setPreviewRunsRemaining(previewAiRunsRemaining());
     }
-    // Incremented before the call, not after success — a failed reading
-    // still spends tokens, so the cap has to bound attempts.
-    recordPreviewAiRun();
-    setPreviewRunsRemaining(previewAiRunsRemaining());
     setUploading(true);
     setPreviewAnalysis(null);
+    setResultPhotoUrl(null);
     try {
-      const result = await analyzePreviewFn({ data: input });
+      const result = await analyzePreviewFn({
+        data:
+          input.inputMethod === "photo"
+            ? {
+                inputMethod: "photo",
+                base64: input.base64,
+                mime: input.mime,
+                mealLabel: input.mealLabel,
+                patientNotes: input.patientNotes,
+                confirmedDescription: input.confirmedDescription,
+              }
+            : input,
+      });
       setPreviewAnalysis(result.analysis);
       addLocalPreviewMeal(result.analysis, {
         inputMethod: input.inputMethod,
@@ -206,14 +270,46 @@ function PatientDashboard() {
         mealTiming,
       });
       qc.invalidateQueries({ queryKey: ["meals", user!.uid] });
+      if (input.inputMethod === "photo") {
+        setResultPhotoUrl(URL.createObjectURL(input.sourceFile));
+      }
       setLabel("");
       setNotes("");
       clearPhoto();
       textForm.reset();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Reading failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Reading failed"));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const describePhoto = async () => {
+    const file = photoFile;
+    if (!file) return;
+    if (previewAiRunsRemaining() <= 0) {
+      toast.info(
+        `You've reached today's ${PREVIEW_AI_DAILY_LIMIT} readings on this device — come back tomorrow.`,
+      );
+      return;
+    }
+    // Counted here, not again when the reading is confirmed below — one
+    // meal logged should spend one of today's runs, not two.
+    recordPreviewAiRun();
+    setPreviewRunsRemaining(previewAiRunsRemaining());
+    setDescribing(true);
+    try {
+      const photo = await prepareImage(file);
+      const base64 = await fileToBase64(photo);
+      const result = await describePhotoFn({ data: { base64, mime: "image/jpeg" } });
+      setPhotoDescription(result.description);
+      setDescMealName(result.description.meal_name);
+      setDescItems(result.description.identified_items.join(", "));
+      setDescPortion(result.description.estimated_portion);
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't look at that photo — try again"));
+    } finally {
+      setDescribing(false);
     }
   };
 
@@ -226,13 +322,27 @@ function PatientDashboard() {
       // function's request body size limit (also handles iPhone HEIC).
       const photo = await prepareImage(file);
       const base64 = await fileToBase64(photo);
-      return runPreviewReading({
-        inputMethod: "photo",
-        base64,
-        mime: "image/jpeg",
-        mealLabel: label || undefined,
-        patientNotes: notes || undefined,
-      });
+      return runPreviewReading(
+        {
+          inputMethod: "photo",
+          base64,
+          mime: "image/jpeg",
+          mealLabel: label || undefined,
+          patientNotes: notes || undefined,
+          confirmedDescription: photoDescription
+            ? {
+                meal_name: descMealName.trim() || photoDescription.meal_name,
+                identified_items: descItems
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+                estimated_portion: descPortion.trim() || photoDescription.estimated_portion,
+              }
+            : undefined,
+          sourceFile: photo,
+        },
+        { skipRunCount: true },
+      );
     }
     setUploading(true);
     try {
@@ -409,6 +519,31 @@ function PatientDashboard() {
                       <X className="h-4 w-4" />
                     </button>
                   </div>
+                  {isMockMode && photoDescription && (
+                    <div className="space-y-3 rounded-lg border border-border bg-secondary/40 p-3">
+                      <p className="font-label text-[11px] tracking-widest text-muted-foreground uppercase">
+                        What we noticed — edit anything that's off
+                      </p>
+                      <div>
+                        <Label className="mb-1.5">Meal name</Label>
+                        <Input
+                          value={descMealName}
+                          onChange={(e) => setDescMealName(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="mb-1.5">Items, comma separated</Label>
+                        <Input value={descItems} onChange={(e) => setDescItems(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="mb-1.5">Estimated portion</Label>
+                        <Input
+                          value={descPortion}
+                          onChange={(e) => setDescPortion(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <Label className="mb-1.5">Label (optional)</Label>
                     <Input
@@ -430,18 +565,29 @@ function PatientDashboard() {
                       rows={3}
                     />
                   </div>
-                  <Button
-                    className="w-full"
-                    onClick={upload}
-                    disabled={uploading || previewAiCapReached}
-                  >
-                    {uploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Camera className="h-4 w-4" />
-                    )}
-                    Upload meal
-                  </Button>
+                  {isMockMode && !photoDescription ? (
+                    <Button
+                      className="w-full"
+                      onClick={describePhoto}
+                      disabled={describing || previewAiCapReached}
+                    >
+                      {describing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                      See what we noticed
+                    </Button>
+                  ) : (
+                    <Button className="w-full" onClick={upload} disabled={uploading}>
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                      {isMockMode ? "Get my reading" : "Upload meal"}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -516,6 +662,15 @@ function PatientDashboard() {
               </p>
               <DownloadReadingPdf />
             </div>
+            {resultPhotoUrl && (
+              <div className="mb-4 overflow-hidden rounded-lg border border-border">
+                <img
+                  src={resultPhotoUrl}
+                  alt="Your logged meal"
+                  className="max-h-64 w-full object-contain bg-secondary"
+                />
+              </div>
+            )}
             <AnalysisView
               analysis={previewAnalysis}
               editable={false}

@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import {
   MEAL_ANALYSIS_TOOL_SCHEMA,
+  PHOTO_DESCRIPTION_TOOL_SCHEMA,
   NUTRIENT_LABELS,
   type TrackedNutrient,
 } from "@/lib/analysis.schema";
@@ -17,6 +18,24 @@ export const RECORD_READING_TOOL_NAME = "record_meal_reading";
 // meals.functions.ts's runAnalysis). Exported so the Firestore write and the
 // prompt guidance below can never drift out of sync with each other.
 export const PATIENT_ADDITION_PREFIX = "Patient added after this reading:";
+
+// The exact label prepended to the user text when a patient has confirmed
+// (and possibly corrected) the quick photo description from the two-step
+// photo flow (see dashboard.tsx) before the full reading runs. Exported for
+// the same drift-prevention reason as PATIENT_ADDITION_PREFIX above.
+export const CONFIRMED_DESCRIPTION_PREFIX = "Patient-confirmed description of this photo:";
+
+const CONFIRMED_DESCRIPTION_GUIDANCE = `
+When the user message includes a line starting with
+"${CONFIRMED_DESCRIPTION_PREFIX}", the patient has already reviewed and
+corrected the meal name, identified items, and portion size after a first
+look at their photo. Treat those three fields as ground truth — use them
+for \`meal_name\`, \`identified_items\`, and \`estimated_portion\` exactly,
+overriding your own read of the photo where they differ. Still use the photo
+itself for everything else: \`building_blocks\`, \`micronutrients\`,
+\`absorption_notes\`, \`worth_trying\`, \`protocol_fit\`, and any visible
+reference object for portion-size calibration (\`estimation_basis\`).
+`.trim();
 
 export const RECORD_READING_TOOL: Anthropic.Tool = {
   name: RECORD_READING_TOOL_NAME,
@@ -182,6 +201,8 @@ ${CLINICAL_POSITIONS}
 
 ${PATIENT_ADDITION_GUIDANCE}
 
+${CONFIRMED_DESCRIPTION_GUIDANCE}
+
 ${HARD_EXCLUSIONS}
 
 ${ESTIMATION_GUIDANCE}
@@ -199,6 +220,42 @@ photo or description is unclear, make reasonable estimates and say so plainly in
 
 DOCTOR'S ACTIVE RUBRIC(S):
 ${rubricContext || "(no rubric uploaded yet — use the clinical positions above as the protocol)"}`;
+}
+
+// The two-step photo flow's first step (see dashboard.tsx): a quick, cheap
+// look at the photo — meal name, identified items, portion guess, nothing
+// else — shown back to the patient to confirm or correct before the real
+// reading runs. Deliberately its own tiny tool/prompt rather than reusing
+// RECORD_READING_TOOL, since asking for the full schema here would mean
+// throwing away the nutrient/protocol_fit read Claude already did once the
+// patient's corrections come back in for the real reading in step two.
+
+export const DESCRIBE_PHOTO_TOOL_NAME = "record_photo_description";
+
+export const DESCRIBE_PHOTO_TOOL: Anthropic.Tool = {
+  name: DESCRIBE_PHOTO_TOOL_NAME,
+  description:
+    "Record a quick, plain description of what's visible in this meal photo. Call this exactly once.",
+  input_schema: PHOTO_DESCRIPTION_TOOL_SCHEMA as unknown as Anthropic.Tool.InputSchema,
+  strict: true,
+};
+
+export function buildDescribePhotoPrompt(): string {
+  return `You are the reading engine behind Vital Table, a meal-logging app for a
+naturopathic doctor's patients. This is explicitly not a calorie counter.
+
+Look at the attached meal photo and note plainly what you see: a short meal
+name, every distinct food item you can identify, and your best guess at the
+portion size. This is a quick first look shown back to the patient to confirm
+or correct before the real reading runs — not the reading itself, so keep it
+brief and don't speculate about nutrients, protocol fit, or anything beyond
+what's asked for.
+
+${HARD_EXCLUSIONS}
+
+If the photo is blurry or ambiguous, note your best plain guess for
+\`estimated_portion\` rather than leaving it vague — the patient can correct
+it on the next screen. Call ${DESCRIBE_PHOTO_TOOL_NAME} exactly once.`;
 }
 
 // Cultural-relevance fallback (docs/ETHOS.md, src/lib/nutrient-reference.ts): the
@@ -235,7 +292,7 @@ export const RECORD_CULTURAL_FOODS_TOOL: Anthropic.Tool = {
               type: "string",
               enum: ["fresh", "dried"],
               description:
-                "How the patient buys/stores it, not how the reason describes serving it: \"fresh\" for produce, meat, poultry, fish (fresh/frozen, not canned), dairy, eggs, tofu, or tempeh; \"dried\" for grains, legumes/beans (dry or canned), nuts, seeds, spices, dried fruit, flours, shelf-stable pastes, canned fish or vegetables, or oils.",
+                'How the patient buys/stores it, not how the reason describes serving it: "fresh" for produce, meat, poultry, fish (fresh/frozen, not canned), dairy, eggs, tofu, or tempeh; "dried" for grains, legumes/beans (dry or canned), nuts, seeds, spices, dried fruit, flours, shelf-stable pastes, canned fish or vegetables, or oils.',
             },
           },
           required: ["name", "reason", "storage"],

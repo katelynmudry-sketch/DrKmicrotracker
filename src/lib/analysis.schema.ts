@@ -394,6 +394,30 @@ export const MEAL_ANALYSIS_TOOL_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+// The AI's quick first look at a photo, shown back to the patient to confirm
+// or correct before the real reading runs (see dashboard.tsx's two-step photo
+// flow). Deliberately a subset of MealAnalysisSchema's fields — no nutrients,
+// no protocol_fit — this is a description, not a reading.
+export const PhotoDescriptionSchema = z.object({
+  meal_name: z.string().min(1),
+  identified_items: z.array(z.string().min(1)).min(1),
+  estimated_portion: z.string().min(1),
+});
+export type PhotoDescription = z.infer<typeof PhotoDescriptionSchema>;
+
+// Hand-kept in sync with PhotoDescriptionSchema above, same reasoning as
+// MEAL_ANALYSIS_TOOL_SCHEMA.
+export const PHOTO_DESCRIPTION_TOOL_SCHEMA = {
+  type: "object",
+  properties: {
+    meal_name: { type: "string" },
+    identified_items: { type: "array", items: { type: "string" } },
+    estimated_portion: { type: "string" },
+  },
+  required: ["meal_name", "identified_items", "estimated_portion"],
+  additionalProperties: false,
+} as const;
+
 // Firestore `meals/{mealId}` document shape. status/analysis/rubricIds are
 // server-owned (see meals.functions.ts) — the client only ever writes the
 // fields set at creation time.
