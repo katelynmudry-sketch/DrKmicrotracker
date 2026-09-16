@@ -157,17 +157,15 @@ export function AnalysisView({
   }
   const a = analysis;
 
-  // Simple mode = focus nutrients only (tier-only, including not_seen — "your
-  // iron didn't show up" is useful, non-overwhelming signal). Detailed mode =
-  // every nutrient that isn't not_seen, plus any not_seen focus nutrient,
-  // with focus nutrients pinned to the top. See docs/ETHOS.md principle 3.
+  // Both Simple and Detailed mode display only the current focus nutrients
+  // (including not_seen — "your iron didn't show up" is useful,
+  // non-overwhelming signal). Focus nutrients change what's emphasized and
+  // *displayed*, never what's evaluated: every tracked nutrient still gets a
+  // full tier/amount computed on every reading (untouched, in `a.micronutrients`
+  // itself) — this only scopes what's rendered here. Detailed mode additionally
+  // shows the amount-estimate range and the spotlight badge for each row below.
   const isFocus = (n: TrackedNutrient) => focusNutrients.includes(n);
-  const displayedMicronutrients =
-    mode === "simple"
-      ? a.micronutrients.filter((m) => isFocus(m.nutrient))
-      : [...a.micronutrients]
-          .filter((m) => isFocus(m.nutrient) || m.level !== "not_seen")
-          .sort((x, y) => Number(isFocus(y.nutrient)) - Number(isFocus(x.nutrient)));
+  const displayedMicronutrients = a.micronutrients.filter((m) => isFocus(m.nutrient));
 
   const startEditing = () => {
     form.reset(snapshot());
@@ -432,17 +430,19 @@ export function AnalysisView({
                 {displayedMicronutrients.map((m, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm"
+                    className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 rounded-md border border-border bg-card px-3 py-2 text-sm"
                   >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className="truncate">{NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}</span>
+                    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-medium">
+                        {NUTRIENT_LABELS[m.nutrient] ?? m.nutrient}
+                      </span>
                       {mode === "detailed" && isFocus(m.nutrient) && (
                         <Badge variant="secondary" className="shrink-0 text-[10px] font-medium">
                           {spotlightLabel}
                         </Badge>
                       )}
                     </span>
-                    <span className="shrink-0 text-muted-foreground">
+                    <span className="text-muted-foreground">
                       {LEVEL_LABELS[m.level] ?? m.level} · {m.from}
                       {mode === "detailed" && m.amount_estimate && (
                         <>
