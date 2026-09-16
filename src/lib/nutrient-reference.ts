@@ -177,7 +177,7 @@ const HAND_CURATED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = {
     },
     {
       name: "Pickled herring",
-      reason: "a pantry staple that quietly covers a lot of ground",
+      reason: "a pantry staple that covers a lot of ground",
       cuisines: ["Ukrainian / Eastern European"],
       storage: "dried",
     },
@@ -593,7 +593,7 @@ const HAND_CURATED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = {
     { name: "Chicken breast", reason: "a reliable everyday source", storage: "fresh" },
     {
       name: "Rajma (kidney beans)",
-      reason: "a weeknight staple that quietly covers some choline",
+      reason: "a weeknight staple that covers some choline",
       cuisines: ["South Asian (Indian)"],
       storage: "dried",
     },
@@ -706,7 +706,7 @@ const HAND_CURATED_FOODS: Partial<Record<TrackedNutrient, NutrientFood[]>> = {
     },
     {
       name: "Black-eyed peas",
-      reason: "an easy stew or side that quietly covers a lot of magnesium",
+      reason: "an easy stew or side that covers a lot of magnesium",
       cuisines: ["West African"],
       storage: "dried",
     },

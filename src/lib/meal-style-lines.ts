@@ -37,7 +37,7 @@ export const MEAL_STYLE_LINES: Record<MealStyleCategory, string[]> = {
     "A gathered plate that nourishes as well as anything you'd cook from scratch.",
     "Odds and ends coming together into steady, satisfying nutrition.",
     "Bits and pieces that add up well, covering protein, carbohydrate and colour.",
-    "A collected plate, well fed and quietly balanced.",
+    "A collected plate, well fed and genuinely balanced.",
   ],
   rich_celebratory: [
     "Rich, generous and worth savouring, with pleasure as part of the nourishment.",
